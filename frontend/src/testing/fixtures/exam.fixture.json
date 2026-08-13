@@ -1,0 +1,20 @@
+{
+  "id": "exam_fixture_001",
+  "title": "Standard Entrance Mock Exam",
+  "durationMinutes": 120,
+  "totalMarks": 100,
+  "passingMarks": 40,
+  "status": "Published",
+  "sections": [
+    {
+      "id": "sec_1",
+      "title": "Mathematics",
+      "questionCount": 50
+    },
+    {
+      "id": "sec_2",
+      "title": "Physics",
+      "questionCount": 50
+    }
+  ]
+}

@@ -1,0 +1,117 @@
+import type { PaperReview, ReviewHistoryItem } from '../types';
+
+export const DUMMY_PAPER_REVIEWS: PaperReview[] = [
+  {
+    id: '1',
+    paperId: 'p1',
+    paperCode: 'SCI101',
+    paperName: 'Midterm Science Exam',
+    subject: 'Science',
+    reviewerId: 'r1',
+    reviewerName: 'John Doe',
+    totalQuestions: 50,
+    totalMarks: 100,
+    status: 'Pending',
+    priority: 'High',
+    assignedDate: '2023-10-25',
+    dueDate: '2023-10-30',
+  },
+  {
+    id: '2',
+    paperId: 'p2',
+    paperCode: 'MAT201',
+    paperName: 'Final Mathematics Exam',
+    subject: 'Mathematics',
+    reviewerId: 'r2',
+    reviewerName: 'Jane Smith',
+    totalQuestions: 40,
+    totalMarks: 80,
+    status: 'In Progress',
+    priority: 'Medium',
+    assignedDate: '2023-10-24',
+    dueDate: '2023-11-01',
+  },
+  {
+    id: '3',
+    paperId: 'p3',
+    paperCode: 'HIS101',
+    paperName: 'History Quiz 1',
+    subject: 'History',
+    reviewerId: 'r1',
+    reviewerName: 'John Doe',
+    totalQuestions: 20,
+    totalMarks: 20,
+    status: 'Completed',
+    priority: 'Low',
+    assignedDate: '2023-10-20',
+    dueDate: '2023-10-27',
+  },
+  {
+    id: '4',
+    paperId: 'p4',
+    paperCode: 'PHY301',
+    paperName: 'Physics Advanced Mock',
+    subject: 'Physics',
+    reviewerId: 'r3',
+    reviewerName: 'Dr. Emily Brown',
+    totalQuestions: 30,
+    totalMarks: 100,
+    status: 'Returned',
+    priority: 'High',
+    assignedDate: '2023-10-22',
+    dueDate: '2023-10-26',
+  },
+];
+
+export const DUMMY_REVIEW_HISTORY: ReviewHistoryItem[] = [
+  {
+    id: 'h1',
+    paperId: 'p1',
+    reviewerName: 'System',
+    action: 'Assigned for Review',
+    date: '2023-10-25 09:00 AM',
+    remarks: 'Assigned to John Doe',
+  },
+  {
+    id: 'h2',
+    paperId: 'p1',
+    reviewerName: 'John Doe',
+    action: 'Review Started',
+    date: '2023-10-25 10:30 AM',
+  },
+  {
+    id: 'h3',
+    paperId: 'p4',
+    reviewerName: 'Dr. Emily Brown',
+    action: 'Needs Changes',
+    date: '2023-10-24 04:00 PM',
+    remarks: 'Questions 12 and 15 are too difficult. Please adjust difficulty.',
+  }
+];
+
+export const DUMMY_QUESTIONS = [
+  {
+    id: 'q1',
+    text: 'What is the powerhouse of the cell?',
+    type: 'MCQ',
+    difficulty: 'Easy',
+    marks: 2,
+    topic: 'Biology',
+  },
+  {
+    id: 'q2',
+    text: 'Calculate the force if mass is 10kg and acceleration is 5m/s².',
+    type: 'Descriptive',
+    difficulty: 'Medium',
+    marks: 5,
+    topic: 'Physics',
+  },
+  {
+    id: 'q3',
+    text: 'Water boils at 100 degrees Celsius.',
+    type: 'True/False',
+    difficulty: 'Easy',
+    marks: 1,
+    topic: 'Chemistry',
+  }
+];

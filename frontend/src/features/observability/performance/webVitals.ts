@@ -1,0 +1,15 @@
+/**
+ * Placeholder for reporting Web Vitals (CLS, FID, LCP, FCP, TTFB)
+ * Would typically wrap the 'web-vitals' npm package and push metrics via Adapters.
+ */
+export const reportWebVitals = (onPerfEntry?: any) => {
+  if (onPerfEntry && onPerfEntry instanceof Function) {
+    // import('web-vitals').then(({ getCLS, getFID, getFCP, getLCP, getTTFB }) => {
+    //   getCLS(onPerfEntry);
+    //   getFID(onPerfEntry);
+    //   getFCP(onPerfEntry);
+    //   getLCP(onPerfEntry);
+    //   getTTFB(onPerfEntry);
+    // });
+  }
+};

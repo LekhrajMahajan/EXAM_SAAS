@@ -1,0 +1,132 @@
+import type { FileStatistics, FileRecord, FolderRecord, CategoryRecord, FileVersion, FileActivity } from '../types';
+
+export const DUMMY_FILE_STATS: FileStatistics = {
+  totalFiles: 24780,
+  totalStorageUsedGB: 18.4,
+  images: 8320,
+  documents: 6540,
+  pdfs: 9420,
+  archivedFiles: 2140,
+  sharedFiles: 1890,
+};
+
+export const DUMMY_FILES: FileRecord[] = [
+  {
+    id: 'FILE-001',
+    name: 'admit_card_batch_2026',
+    extension: 'pdf',
+    type: 'PDF',
+    size: '2.4 MB',
+    sizeBytes: 2516582,
+    module: 'Candidates',
+    category: 'Admit Cards',
+    folder: 'Candidates / 2026 Batch',
+    owner: 'Admin User',
+    status: 'Active',
+    uploadedAt: '2026-10-20 09:00:00',
+    modifiedAt: '2026-10-20 09:00:00',
+    description: 'Bulk admit card PDF for 2026 examination batch.',
+  },
+  {
+    id: 'FILE-002',
+    name: 'candidate_photos_oct',
+    extension: 'zip',
+    type: 'Archive',
+    size: '458 MB',
+    sizeBytes: 480247808,
+    module: 'Candidates',
+    category: 'Candidate Photos',
+    folder: 'Candidates / Photos',
+    owner: 'HR Manager',
+    status: 'Active',
+    uploadedAt: '2026-10-18 14:00:00',
+    modifiedAt: '2026-10-19 09:00:00',
+  },
+  {
+    id: 'FILE-003',
+    name: 'exam_hall_layout_center_A',
+    extension: 'png',
+    type: 'Image',
+    size: '1.1 MB',
+    sizeBytes: 1153433,
+    module: 'Exams',
+    category: 'Hall Layouts',
+    folder: 'Exams / Center A',
+    owner: 'Center Coordinator',
+    status: 'Active',
+    uploadedAt: '2026-10-15 11:00:00',
+    modifiedAt: '2026-10-15 11:00:00',
+  },
+  {
+    id: 'FILE-004',
+    name: 'Q3_results_summary',
+    extension: 'xlsx',
+    type: 'Spreadsheet',
+    size: '890 KB',
+    sizeBytes: 911360,
+    module: 'Results',
+    category: 'Result Sheets',
+    folder: 'Results / Q3 2026',
+    owner: 'Exam Controller',
+    status: 'Active',
+    uploadedAt: '2026-10-10 16:00:00',
+    modifiedAt: '2026-10-12 10:30:00',
+  },
+  {
+    id: 'FILE-005',
+    name: 'merit_certificate_template_v2',
+    extension: 'docx',
+    type: 'Document',
+    size: '340 KB',
+    sizeBytes: 348160,
+    module: 'Certificates',
+    category: 'Certificate Templates',
+    folder: 'Certificates / Templates',
+    owner: 'Design Team',
+    status: 'Active',
+    uploadedAt: '2026-09-05 12:00:00',
+    modifiedAt: '2026-10-01 14:00:00',
+  },
+  {
+    id: 'FILE-006',
+    name: 'audit_report_Q2_2026',
+    extension: 'pdf',
+    type: 'PDF',
+    size: '5.2 MB',
+    sizeBytes: 5452595,
+    module: 'Reports',
+    category: 'Audit Reports',
+    folder: 'Reports / Q2 2026',
+    owner: 'Compliance Officer',
+    status: 'Archived',
+    uploadedAt: '2026-07-15 09:00:00',
+    modifiedAt: '2026-07-15 09:00:00',
+  },
+];
+
+export const DUMMY_FOLDERS: FolderRecord[] = [
+  { id: 'FLD-01', name: '2026 Batch', parentId: 'FLD-CAND', module: 'Candidates', fileCount: 4520, totalSize: '12.4 GB', createdAt: '2026-01-10', createdBy: 'Admin' },
+  { id: 'FLD-02', name: 'Photos', parentId: 'FLD-CAND', module: 'Candidates', fileCount: 8320, totalSize: '4.2 GB', createdAt: '2026-01-10', createdBy: 'Admin' },
+  { id: 'FLD-03', name: 'Q3 2026', parentId: 'FLD-RESULTS', module: 'Results', fileCount: 128, totalSize: '890 MB', createdAt: '2026-07-01', createdBy: 'Exam Controller' },
+  { id: 'FLD-04', name: 'Templates', parentId: 'FLD-CERT', module: 'Certificates', fileCount: 12, totalSize: '24 MB', createdAt: '2026-02-01', createdBy: 'Design Team' },
+];
+
+export const DUMMY_CATEGORIES: CategoryRecord[] = [
+  { id: 'CAT-01', name: 'Admit Cards', description: 'Official PDF admit cards for registered candidates.', module: 'Candidates', allowedTypes: ['PDF'], retentionDays: 365, fileCount: 9420 },
+  { id: 'CAT-02', name: 'Candidate Photos', description: 'Passport size photographs submitted during registration.', module: 'Candidates', allowedTypes: ['Image'], retentionDays: 730, fileCount: 8320 },
+  { id: 'CAT-03', name: 'Certificate Templates', description: 'Word and PDF templates for merit certificates.', module: 'Certificates', allowedTypes: ['Document', 'PDF'], fileCount: 12 },
+  { id: 'CAT-04', name: 'Result Sheets', description: 'Final result data exported in spreadsheet format.', module: 'Results', allowedTypes: ['Spreadsheet', 'PDF'], retentionDays: 1825, fileCount: 340 },
+];
+
+export const DUMMY_VERSIONS: FileVersion[] = [
+  { id: 'VER-1', fileId: 'FILE-005', version: 2, uploadedBy: 'Design Team', uploadedAt: '2026-10-01 14:00:00', size: '340 KB', changeNote: 'Updated footer branding and logo.' },
+  { id: 'VER-2', fileId: 'FILE-005', version: 1, uploadedBy: 'Design Team', uploadedAt: '2026-09-05 12:00:00', size: '318 KB', changeNote: 'Initial upload.' },
+];
+
+export const DUMMY_ACTIVITY: FileActivity[] = [
+  { id: 'ACT-1', fileId: 'FILE-001', fileName: 'admit_card_batch_2026.pdf', action: 'Upload', performedBy: 'Admin User', performedAt: '2026-10-20 09:00:00' },
+  { id: 'ACT-2', fileId: 'FILE-001', fileName: 'admit_card_batch_2026.pdf', action: 'Share', performedBy: 'Admin User', performedAt: '2026-10-20 09:05:00', details: 'Shared with 5 center coordinators.' },
+  { id: 'ACT-3', fileId: 'FILE-005', fileName: 'merit_certificate_template_v2.docx', action: 'Upload', performedBy: 'Design Team', performedAt: '2026-10-01 14:00:00', details: 'Version 2 uploaded.' },
+  { id: 'ACT-4', fileId: 'FILE-006', fileName: 'audit_report_Q2_2026.pdf', action: 'Archive', performedBy: 'Compliance Officer', performedAt: '2026-10-15 16:00:00' },
+  { id: 'ACT-5', fileId: 'FILE-003', fileName: 'exam_hall_layout_center_A.png', action: 'Download', performedBy: 'Center Coordinator', performedAt: '2026-10-16 10:00:00' },
+];

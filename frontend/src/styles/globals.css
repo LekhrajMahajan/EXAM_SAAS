@@ -1,0 +1,272 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* Colors - Enterprise Theme */
+  --color-background: #F8FAFC;
+  --color-foreground: #0F172A;
+
+  --color-card: #FFFFFF;
+  --color-card-foreground: #0F172A;
+
+  --color-popover: #FFFFFF;
+  --color-popover-foreground: #0F172A;
+
+  --color-primary: #2D3E2C;
+  --color-primary-foreground: #FFFFFF;
+
+  --color-secondary: #E4FD97;
+  --color-secondary-foreground: #2D3E2C;
+
+  --color-tertiary: #4A5D4E;
+  --color-tertiary-foreground: #FFFFFF;
+
+  --color-quaternary: #BEEF68;
+  --color-quaternary-foreground: #2D3E2C;
+
+  --color-quinary: #7B9B7B;
+  --color-quinary-foreground: #FFFFFF;
+
+  --color-muted: #F1F5F9;
+  --color-muted-foreground: #64748B;
+
+  --color-accent: #F1F5F9;
+  --color-accent-foreground: #0F172A;
+
+  --color-destructive: #EF4444;
+  --color-destructive-foreground: #FFFFFF;
+
+  --color-success: #22C55E;
+  --color-success-foreground: #FFFFFF;
+
+  --color-warning: #F59E0B;
+  --color-warning-foreground: #FFFFFF;
+
+  --color-info: #3B82F6;
+  --color-info-foreground: #FFFFFF;
+
+  --color-border: #E2E8F0;
+  --color-input: #E2E8F0;
+  --color-ring: #2D3E2C;
+
+  /* Typography */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+
+  /* Border radius */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
+  
+  /* Custom spacing extensions if needed */
+  --spacing-4_5: 1.125rem;
+  --spacing-18: 4.5rem;
+}
+
+/* ─── Base Styles ─────────────────────────────────────────────────────── */
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+    border-color: var(--color-border);
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    line-height: 1.5;
+    min-height: 100vh;
+    color-scheme: light;
+  }
+
+  .dark {
+    --color-background: #0B0F14;
+    --color-foreground: #CBD5E1;
+    --color-card: #161E2E;
+    --color-card-foreground: #CBD5E1;
+    --color-popover: #1B2433;
+    --color-popover-foreground: #CBD5E1;
+    --color-primary: #2D3E2C;
+    --color-primary-foreground: #FFFFFF;
+    --color-secondary: #E4FD97;
+    --color-secondary-foreground: #0B0F14;
+    --color-muted: #111827;
+    --color-muted-foreground: #94A3B8;
+    --color-accent: #222C3D;
+    --color-accent-foreground: #F8FAFC;
+    --color-destructive: #DC2626;
+    --color-destructive-foreground: #FFFFFF;
+    --color-success: #22C55E;
+    --color-success-foreground: #FFFFFF;
+    --color-warning: #FACC15;
+    --color-warning-foreground: #0B0F14;
+    --color-info: #38BDF8;
+    --color-info-foreground: #FFFFFF;
+    --color-border: #263244;
+    --color-input: #334155;
+    --color-ring: rgba(228, 253, 151, 0.35);
+    color-scheme: dark;
+  }
+
+  .dark input[type="date"]::-webkit-calendar-picker-indicator,
+  .dark input[type="time"]::-webkit-calendar-picker-indicator,
+  .dark input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+  .dark input[type="month"]::-webkit-calendar-picker-indicator {
+    filter: invert(1) brightness(1.2);
+  }
+}
+
+/* ─── Scrollbar Styling ───────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background-color: #CBD5E1;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: #94A3B8;
+}
+
+/* ─── Focus Styles ────────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--color-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+::selection {
+  background-color: rgba(45, 62, 44, 0.2); /* Primary with opacity */
+  color: var(--color-foreground);
+}
+
+/* ─── Utility Classes ─────────────────────────────────────────────────── */
+@layer utilities {
+  .glass {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(226, 232, 240, 0.5); /* Border with opacity */
+  }
+
+  .flex-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .flex-between {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .text-truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+/* ─── Dark Theme Overrides for Hardcoded Light Theme Utilities ─────────── */
+.dark .qa-title {
+  color: #FFFFFF !important;
+}
+.dark .qa-button {
+  border-color: #334155 !important;
+  color: #E2E8F0 !important;
+}
+.dark .empty-state-box {
+  background-color: rgba(228, 253, 151, 0.05) !important;
+  border-color: rgba(228, 253, 151, 0.15) !important;
+}
+.dark .empty-state-icon {
+  color: #BEF264 !important;
+}
+.dark .empty-state-title {
+  color: #F8FAFC !important;
+}
+.dark .empty-state-desc {
+  color: #94A3B8 !important;
+}
+.dark .health-badge-healthy {
+  background-color: rgba(190, 242, 100, 0.15) !important;
+  color: #BEF264 !important;
+}
+.dark .health-text-value {
+  color: #F8FAFC !important;
+}
+.dark .sidebar-active-text {
+  color: #BEF264 !important;
+}
+.dark .icon-bright {
+  color: #BEF264 !important;
+}
+.dark .text-primary {
+  color: #BEF264 !important;
+}
+.dark .text-slate-900 {
+  color: #FFFFFF !important;
+}
+.dark .text-slate-500 {
+  color: #94A3B8 !important;
+}
+.dark .border-slate-200 {
+  border-color: #1E293B !important;
+}
+
+/* Activity Details Dialog Dark Mode Fixes */
+.dark .activity-detail-box {
+  background-color: rgba(30, 41, 59, 0.5) !important;
+}
+.dark .activity-detail-label {
+  color: #94A3B8 !important;
+}
+.dark .activity-detail-value {
+  color: #E2E8F0 !important;
+}
+.dark .activity-detail-desc-label {
+  color: #F8FAFC !important;
+}
+.dark .activity-detail-desc-text {
+  color: #94A3B8 !important;
+}
+.dark .activity-detail-border {
+  border-color: #1E293B !important;
+}
+
+/* Form Controls Dark Mode Fixes */
+.dark input[type="date"]::-webkit-calendar-picker-indicator,
+.dark input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: brightness(0.9);
+}
+
+/* Plan Details Icon Hover */
+.plan-icon-btn:hover {
+  color: #000000 !important;
+}
+.dark .plan-icon-btn:hover {
+  color: var(--color-secondary) !important;
+}

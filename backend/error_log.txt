@@ -1,0 +1,6 @@
+{}
+ReferenceError: candAns is not defined
+    at D:\COMPANY PORJTECS\Practice exam saas\backend\src\modules\result\result.controller.ts:497:24
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Promise.all (index 0)
+    at D:\COMPANY PORJTECS\Practice exam saas\backend\src\modules\result\result.controller.ts:479:22
