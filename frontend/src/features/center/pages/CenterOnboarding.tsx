@@ -226,8 +226,7 @@ export function CenterOnboarding() {
               {centerData.commercialAgreement.map((shift: any, idx: number) => (
                 <div key={idx} className="border rounded-lg p-4 bg-muted/20">
                   <div className="font-semibold text-sm mb-1">{shift.shiftName || "Shift"}</div>
-                  <div className="text-xs text-muted-foreground mb-3">{shift.specialNotes || "Standard Timings"}</div>
-                  <div className="text-xl font-bold text-primary">₹{shift.pricePerCandidate || 250} <span className="text-sm font-normal text-muted-foreground">/ seat</span></div>
+                  <div className="text-xl font-bold text-primary mt-2">₹{shift.pricePerCandidate || 250} <span className="text-sm font-normal text-muted-foreground">/ seat</span></div>
                 </div>
               ))}
             </div>
@@ -236,8 +235,7 @@ export function CenterOnboarding() {
               {centerData.shiftRates.map((shift: any, idx: number) => (
                 <div key={idx} className="border rounded-lg p-4 bg-muted/20">
                   <div className="font-semibold text-sm mb-1">{shift.name || shift.shiftName || "Shift"}</div>
-                  <div className="text-xs text-muted-foreground mb-3">{shift.timings || shift.specialNotes || "Standard Timings"}</div>
-                  <div className="text-xl font-bold text-primary">₹{shift.price || shift.pricePerCandidate || 250} <span className="text-sm font-normal text-muted-foreground">/ seat</span></div>
+                  <div className="text-xl font-bold text-primary mt-2">₹{shift.price || shift.pricePerCandidate || 250} <span className="text-sm font-normal text-muted-foreground">/ seat</span></div>
                 </div>
               ))}
             </div>
@@ -246,8 +244,7 @@ export function CenterOnboarding() {
               {centerData.shifts.map((shift: any, idx: number) => (
                 <div key={idx} className="border rounded-lg p-4 bg-muted/20">
                   <div className="font-semibold text-sm mb-1">{shift.name || shift.shiftName || "Shift"}</div>
-                  <div className="text-xs text-muted-foreground mb-3">{shift.timings || shift.specialNotes || "Standard Timings"}</div>
-                  <div className="text-xl font-bold text-primary">₹{shift.price || shift.pricePerCandidate || 250} <span className="text-sm font-normal text-muted-foreground">/ seat</span></div>
+                  <div className="text-xl font-bold text-primary mt-2">₹{shift.price || shift.pricePerCandidate || 250} <span className="text-sm font-normal text-muted-foreground">/ seat</span></div>
                 </div>
               ))}
             </div>
@@ -261,8 +258,7 @@ export function CenterOnboarding() {
                 return (
                   <div key={idx} className="border rounded-lg p-4 bg-muted/20">
                     <div className="font-semibold text-sm mb-1">{nameAndTiming.split("(")[0]?.trim() || "Shift"}</div>
-                    <div className="text-xs text-muted-foreground mb-3">{nameAndTiming.match(/\((.*?)\)/)?.[1] || "Standard Timings"}</div>
-                    <div className="text-xl font-bold text-primary">₹{pricePart} <span className="text-sm font-normal text-muted-foreground">/ seat</span></div>
+                    <div className="text-xl font-bold text-primary mt-2">₹{pricePart} <span className="text-sm font-normal text-muted-foreground">/ seat</span></div>
                   </div>
                 );
               })}
@@ -315,7 +311,26 @@ export function CenterOnboarding() {
               <p className="text-xs text-muted-foreground">Download, sign, stamp, and re-upload the MOU below.</p>
             </div>
             {centerData?.mouFileName || centerData?.mouPdfUrl ? (
-              <Button variant="outline" size="sm" onClick={() => window.open(centerData.mouPdfUrl || '#', '_blank')}>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    const url = centerData?.mouPdfUrl;
+                    let dlUrl = '/mou_template.pdf';
+                    if (url) {
+                      dlUrl = url;
+                    }
+                    const link = document.createElement('a');
+                    link.href = dlUrl;
+                    link.target = '_blank';
+                    link.download = url ? 'Center_MOU.pdf' : 'MOU_Template.pdf';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                  }}
+              >
                 <Download className="w-4 h-4 mr-2" /> Download MOU
               </Button>
             ) : (

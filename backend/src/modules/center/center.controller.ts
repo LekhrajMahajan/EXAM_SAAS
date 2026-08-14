@@ -13,6 +13,10 @@ import Company from "../company/company.model";
 import Branch from "../branch/branch.model";
 import { BranchStatus } from "../branch/branch.types";
 import Center from "./center.model";
+import fileStorageService from "../file-storage/fileStorage.service";
+import { FileType } from "../file-storage/fileStorage.types";
+import path from "path";
+import mongoose from "mongoose";
 
 /*
 |--------------------------------------------------------------------------
@@ -261,6 +265,23 @@ export const createCenter = asyncHandler(
       let firstBranch = await Branch.findOne({ companyId: req.body.companyId, status: BranchStatus.ACTIVE });
       if (!firstBranch) firstBranch = await Branch.findOne({ status: BranchStatus.ACTIVE });
       
+      if (!firstBranch && req.body.companyId) {
+        // Auto-create a default branch
+        firstBranch = await Branch.create({
+          companyId: req.body.companyId,
+          branchCode: "MAIN-01",
+          branchName: "Main Branch",
+          status: BranchStatus.ACTIVE,
+          email: req.body.email || "admin@example.com",
+          phone: req.body.phone || "0000000000",
+          address: req.body.address || "Main Address",
+          city: req.body.city || "City",
+          state: req.body.state || "State",
+          country: req.body.country || "India",
+          postalCode: req.body.pincode || req.body.postalCode || "000000"
+        });
+      }
+
       if (firstBranch) {
         req.body.branchId = String(firstBranch._id);
         req.body.companyId = String(firstBranch.companyId); // Align company with branch
@@ -724,6 +745,40 @@ export const rejectDocument = asyncHandler(async (req: any, res: Response) => {
     data: result,
   });
 });
+
+export const uploadMou = asyncHandler(async (req: any, res: Response) => {
+  const file = req.file;
+
+  if (!file) {
+    return sendResponse(res, HTTP_STATUS.BAD_REQUEST, {
+      success: false,
+      message: "No file uploaded.",
+    });
+  }
+
+  const ext = file.originalname ? path.extname(file.originalname).replace(".", "").toLowerCase() : "";
+
+  const uploadedFile = await fileStorageService.upload({
+    fileName: `mou_${Date.now()}_${file.originalname}`,
+    originalName: file.originalname,
+    extension: ext,
+    mimeType: file.mimetype,
+    fileType: FileType.DOCUMENT,
+    uploadedBy: new mongoose.Types.ObjectId(req.user!.userId) as any,
+  }, file);
+  
+  let fileUrl = (uploadedFile as any).url;
+  if (fileUrl.startsWith('/')) {
+    fileUrl = `${req.protocol}://${req.get('host')}${fileUrl}`;
+  }
+
+  return sendResponse(res, HTTP_STATUS.OK, {
+    success: true,
+    message: "MOU uploaded successfully.",
+    data: { url: fileUrl },
+  });
+});
+
 
 export const verifyCenterSetup = asyncHandler(async (req: any, res: Response) => {
   const centerId = req.params.id || req.body.centerId || await resolveCenterId(req);

@@ -9,6 +9,7 @@ import { Plus, RefreshCw, Loader2, ChevronDown, ChevronRight } from "lucide-reac
 import { useStaffList } from "../../staff/hooks/staff.hooks";
 import { staffApi } from "../../staff/api/staff.api";
 import { examApi } from "@/features/exam-manager/api/exam.api";
+import { apiClient } from '@/core/api/http/axios-client';
 
 import type { Staff } from "../../staff/types/staff.types";
 import { toast } from "@/hooks/use-toast";
@@ -38,8 +39,15 @@ export const PaperSettersManagementPage = () => {
       if (examRes.success) {
         setExams(examRes.data.exams || []);
       }
-      
-      setAssignments([]);
+      try {
+        const assignmentRes = await apiClient.get('/staff-assignments', { params: { limit: 1000, role: 'PAPER_SETTER' } });
+        const resData = assignmentRes.data?.data;
+        const assignmentList = Array.isArray(resData) ? resData : (resData?.data || []);
+        setAssignments(assignmentList);
+      } catch (err) {
+        console.error("Failed to fetch assignments", err);
+        setAssignments([]);
+      }
     } catch (error) {
       console.error("Failed to fetch exams/assignments", error);
     } finally {

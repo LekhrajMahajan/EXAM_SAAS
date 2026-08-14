@@ -229,8 +229,12 @@ export const TopicManagementPage = () => {
         }
 
         const topicsToDelete = existingTopics.filter(t => !topicNamesToKeep.has(t._id));
-        await Promise.all(topicsToDelete.map(t => topicApi.delete(t._id)));
-        await Promise.all(newTopicsToCreate.map(payload => topicApi.create(payload)));
+        for (const t of topicsToDelete) {
+          await topicApi.delete(t._id);
+        }
+        for (const payload of newTopicsToCreate) {
+          await topicApi.create(payload);
+        }
       } else {
         const payloads = [];
         for (const block of values.subjects) {
@@ -258,7 +262,9 @@ export const TopicManagementPage = () => {
              count++;
           }
         }
-        await Promise.all(payloads.map(p => topicApi.create(p)));
+        for (const p of payloads) {
+          await topicApi.create(p);
+        }
       }
       
       toast({ title: 'Success', description: editingExamId ? 'Topics updated successfully' : 'Topics created successfully', variant: 'success' });

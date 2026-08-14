@@ -91,7 +91,7 @@ class CenterService extends BaseService<ICenter> {
         { documentType: "GST Certificate", isMandatory: true, fileName: "Pending Upload", fileUrl: "", version: 1, status: DocumentApprovalStatus.PENDING, uploadedAt: new Date() },
         { documentType: "Aadhaar Card", isMandatory: true, fileName: "Pending Upload", fileUrl: "", version: 1, status: DocumentApprovalStatus.PENDING, uploadedAt: new Date() },
         { documentType: "Cancelled Cheque", isMandatory: true, fileName: "Pending Upload", fileUrl: "", version: 1, status: DocumentApprovalStatus.PENDING, uploadedAt: new Date() },
-        { documentType: "Signed MOU", isMandatory: true, fileName: payload.mouPdfUrl ? "Initial MOU" : "Pending Upload", fileUrl: payload.mouPdfUrl || "", version: 1, status: DocumentApprovalStatus.PENDING, uploadedAt: new Date() },
+        { documentType: "Signed MOU", isMandatory: true, fileName: "Pending Upload", fileUrl: "", version: 1, status: DocumentApprovalStatus.PENDING, uploadedAt: new Date() },
       ];
     }
 

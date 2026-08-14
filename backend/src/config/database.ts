@@ -10,7 +10,9 @@ export const connectDatabase = async () => {
         mongoose.set("strictQuery", true);
 
         let uri = env.MONGODB_URI;
-        if (!uri.includes('retryWrites=false')) {
+        if (uri.includes('retryWrites=true')) {
+            uri = uri.replace('retryWrites=true', 'retryWrites=false');
+        } else if (!uri.includes('retryWrites=false')) {
             uri = uri.includes('?') ? `${uri}&retryWrites=false` : `${uri}?retryWrites=false`;
         }
 

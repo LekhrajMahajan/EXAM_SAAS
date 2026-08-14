@@ -8,7 +8,7 @@ export const centerSchema = z.object({
   state: z.string().min(1, 'State is required'),
   city: z.string().min(1, 'City is required'),
   address: z.string().min(1, 'Address is required'),
-  pincode: z.string().min(1, 'Pincode is required'),
+  pincode: z.string().min(1, 'Pincode is required').max(10, 'Pincode must be 10 characters or less'),
   googleMapUrl: z.string().url('Invalid URL').optional().or(z.literal('')),
   
   headName: z.string().min(1, 'Center Head Name is required'),

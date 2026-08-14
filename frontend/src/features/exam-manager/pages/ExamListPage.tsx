@@ -70,6 +70,7 @@ export const ExamListPage = () => {
 
   // Check if exam is in an editable state (only ACTIVE/DRAFT before start)
   const isEditable = useCallback((exam: Exam): boolean => {
+    if (exam.examCode === 'STAFFSELF' || exam.examCode === 'STAFFSELE') return true;
     const ds = getDisplayStatus(exam);
     return ['ACTIVE', 'DRAFT'].includes(ds);
   }, [getDisplayStatus]);

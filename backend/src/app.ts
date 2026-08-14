@@ -146,6 +146,7 @@ app.use("/api/v1/papers", paperRoutes);
 app.use("/api/v1/paper-questions", paperQuestionRoutes);
 app.use("/api/v1/paper-approval", paperApprovalRoutes);
 app.use("/api/v1/exams", examRoutes);
+app.use("/api/v1/staff-assignments", staffAssignmentRoutes);
 app.use("/api/v1/exam-approval", examApprovalRoutes);
 app.use("/api/v1/result-approval", resultApprovalRoutes);
 app.use("/api/v1/exam-shifts", examShiftRoutes);

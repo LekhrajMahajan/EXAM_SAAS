@@ -172,7 +172,7 @@ export const AddSeatAllocationModal = ({ isOpen, onClose, onSuccess }: AddSeatAl
               {isFull && !isOverCapacity && (
                 <div className="p-3 bg-green-50 text-green-700 rounded-md flex items-center text-sm">
                   <CheckCircle2 className="w-4 h-4 mr-2" />
-                  Lab is full. Baki ke candidates ko dusri lab me add karein.
+                  Lab is full. Please assign the remaining candidates to another lab.
                 </div>
               )}
 

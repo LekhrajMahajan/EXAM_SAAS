@@ -25,6 +25,7 @@ import { toast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { examApi } from "@/features/exam-manager/api/exam.api";
+import { apiClient } from '@/core/api/http/axios-client';
 
 
 
@@ -129,7 +130,16 @@ export const StaffForm = ({ initialValues, isEditing, fixedRole, onSuccess, onCa
         await staffApi.update(staffId, payload);
         
         if (data.role === "PAPER_SETTER" && data.examId) {
-          // staff assignment creation logic removed
+          try {
+            await apiClient.post('/staff-assignments/create', {
+              examId: data.examId,
+              role: data.role,
+              employeeId: staffId,
+              status: 'PUBLISHED'
+            });
+          } catch (e) {
+            console.error('Failed to update assignment', e);
+          }
         }
 
         toast({
@@ -141,7 +151,16 @@ export const StaffForm = ({ initialValues, isEditing, fixedRole, onSuccess, onCa
         const createRes = await staffApi.create(payload);
         
         if (data.role === "PAPER_SETTER" && data.examId && createRes.data) {
-          // staff assignment creation logic removed
+          try {
+            await apiClient.post('/staff-assignments/create', {
+              examId: data.examId,
+              role: data.role,
+              employeeId: (createRes.data as any)._id || (createRes.data as any).id,
+              status: 'PUBLISHED'
+            });
+          } catch (e) {
+            console.error('Failed to create assignment', e);
+          }
         }
 
         toast({

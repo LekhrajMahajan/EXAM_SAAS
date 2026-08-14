@@ -13,11 +13,15 @@ export class CloudinaryStorageStrategy implements IStorageStrategy {
 
   public async upload(file: Express.Multer.File | Buffer, filename: string, mimeType: string, options?: any): Promise<{ url: string; path: string; size: number; key: string }> {
     return new Promise((resolve, reject) => {
+      const isRaw = mimeType === 'application/pdf' || mimeType.includes('pdf') || mimeType.includes('document');
+      const ext = filename.includes('.') ? '.' + filename.split('.').pop() : '';
+      const publicId = isRaw ? `${filename.split('.')[0]}_${Date.now()}` : `${filename.split('.')[0]}_${Date.now()}`;
+
       const uploadStream = cloudinary.uploader.upload_stream(
         {
           folder: options?.folder || "uploads",
-          public_id: filename.split('.')[0] + "_" + Date.now(),
-          resource_type: "auto",
+          public_id: publicId,
+          resource_type: 'auto',
         },
         (error, result) => {
           if (error) {
@@ -44,8 +48,8 @@ export class CloudinaryStorageStrategy implements IStorageStrategy {
         if (file.path) {
           cloudinary.uploader.upload(file.path, {
             folder: options?.folder || "uploads",
-            public_id: filename.split('.')[0] + "_" + Date.now(),
-            resource_type: "auto",
+            public_id: publicId,
+            resource_type: 'auto',
           }).then(result => {
              resolve({
                 url: result.secure_url,

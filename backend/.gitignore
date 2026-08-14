@@ -139,3 +139,13 @@ seed-plans
 seed-plans*
 *.seed.ts
 *.seed.js
+
+# Ignored as requested by user
+test_login2.js
+test_hash.js
+set_exact_password_2.js
+fix_db.js
+error_log.txt
+error.log
+candidate.xlsx
+Backend.zip

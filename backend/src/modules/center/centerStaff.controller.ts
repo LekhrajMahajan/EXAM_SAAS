@@ -109,11 +109,18 @@ export const createCenterStaff = asyncHandler(async (req: Request, res: Response
     centerId: req.user?.centerId || req.body.centerId || null,
   });
 
-  if (role === "Entry Checker" && newStaff.email) {
+  if (newStaff.email) {
     const nameParts = name.split(" ");
     const firstName = nameParts[0] || name;
     const lastName = nameParts.slice(1).join(" ") || "Staff";
     
+    let mappedRole = UserRole.OBSERVER;
+    if (role === "Entry Checker") mappedRole = UserRole.ENTRY_CHECKER;
+    else if (role === "Supervisor" || role === "Center Superintendent") mappedRole = UserRole.CENTER_MANAGER;
+    else if (role === "Invigilator") mappedRole = UserRole.INVIGILATOR;
+    else if (role === "Biometric Coordinator") mappedRole = UserRole.BIOMETRIC_VERIFIER;
+    else if (role === "Security Lead" || role === "Technical Support") mappedRole = UserRole.TECHNICAL_MANAGER;
+
     let userDoc = await User.findOne({ email: newStaff.email });
     if (!userDoc) {
       await User.create({
@@ -122,13 +129,13 @@ export const createCenterStaff = asyncHandler(async (req: Request, res: Response
         email: newStaff.email,
         phone: cleanMobile,
         password: "placeholder", // will be updated when assigned
-        role: UserRole.ENTRY_CHECKER,
+        role: mappedRole,
         centerId: newStaff.centerId,
         isEmailVerified: true,
         isPhoneVerified: true
       });
     } else {
-       userDoc.role = UserRole.ENTRY_CHECKER;
+       userDoc.role = mappedRole;
        userDoc.centerId = newStaff.centerId;
        await userDoc.save();
     }

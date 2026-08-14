@@ -32,6 +32,7 @@ import {
   approveDocument,
   rejectDocument,
   verifyCenterSetup,
+  uploadMou,
 } from "./center.controller";
 
 import { authenticate } from "../../middleware/authenticate";
@@ -368,6 +369,14 @@ router.post(
   authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.BRANCH_MANAGER, UserRole.CENTER_MANAGER),
   upload.single('file'),
   CenterPhotoController.uploadPhoto,
+);
+
+router.post(
+  "/mou/upload",
+  authenticate,
+  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.BRANCH_MANAGER, UserRole.CENTER_MANAGER),
+  upload.single('file'),
+  uploadMou,
 );
 
 /*

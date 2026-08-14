@@ -498,7 +498,7 @@ export const CreateExamPage = () => {
                 name="passingMarks"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Passing Marks</FormLabel>
+                    <FormLabel>Positive Marks</FormLabel>
                     <FormControl>
                       <Input type="number" {...field} />
                     </FormControl>

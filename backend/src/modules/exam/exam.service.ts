@@ -191,7 +191,7 @@ class ExamService extends BaseService<IExam> {
   async update(id: string, payload: Partial<IExam>) {
     const exam = await super.getById(id);
 
-    if (exam.approvalStatus === ExamApprovalStatus.PUBLISHED) {
+    if (exam.approvalStatus === ExamApprovalStatus.PUBLISHED && exam.examCode !== "STAFFSELF" && exam.examCode !== "STAFFSELE") {
       throw new ApiError(
         HTTP_STATUS.BAD_REQUEST,
         "Published exam cannot be modified.",

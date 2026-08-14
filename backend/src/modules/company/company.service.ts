@@ -243,6 +243,7 @@ class CompanyService extends BaseService<ICompany> {
       if (existing) {
         existing.status = true;
         existing.password = rawPassword;
+        existing.companyId = company._id;
         await existing.save();
       } else {
         await authService.createUser({
@@ -329,7 +330,7 @@ class CompanyService extends BaseService<ICompany> {
         // Disconnect when inactive
         adminUser.status = false;
         await adminUser.save();
-      } else {
+      } else if (adminUser.status === false) {
         // Generate new credentials when activated again
         const rawPassword = Math.random().toString(36).slice(-8) + "A1!";
         
@@ -367,6 +368,7 @@ class CompanyService extends BaseService<ICompany> {
         if (existing) {
           existing.status = true;
           existing.password = rawPassword;
+          existing.companyId = company._id;
           await existing.save();
         } else {
           await authService.createUser({

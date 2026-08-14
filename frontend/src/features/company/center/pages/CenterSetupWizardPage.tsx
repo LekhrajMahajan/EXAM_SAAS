@@ -339,7 +339,23 @@ export const CenterSetupWizardPage: React.FC = () => {
                     </div>
                     <Button
                       type="button"
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (statusResponse?.data?.mouPdfUrl) {
+                          let downloadUrl = String(statusResponse.data.mouPdfUrl);
+                          if (downloadUrl.includes('/upload/')) {
+                            downloadUrl = downloadUrl.replace('/upload/', '/upload/fl_attachment/');
+                          }
+                          const link = document.createElement('a');
+                          link.href = downloadUrl;
+                          link.target = '_blank';
+                          link.download = String(statusResponse.data.mouFileName || 'MOU_Document.pdf');
+                          document.body.appendChild(link);
+                          link.click();
+                          document.body.removeChild(link);
+                          return;
+                        }
+
                         const content = `MEMORANDUM OF UNDERSTANDING (MOU)\n\nBetween Company Admin & ${statusResponse?.data?.centerName || 'Testing Center'}\nCenter Code: ${statusResponse?.data?.centerCode || 'N/A'}\nLocation: ${statusResponse?.data?.city || ''}, ${statusResponse?.data?.state || ''}\nCapacity: ${statusResponse?.data?.capacity || 100} Candidates\n\nThis document serves as the official operational binding SLA. Please stamp and affix authorized digital/physical signature.`;
                         const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
                         const url = URL.createObjectURL(blob);
@@ -449,15 +465,20 @@ export const CenterSetupWizardPage: React.FC = () => {
                   type="button"
                   size="sm"
                   variant="outline"
-                  onClick={() => {
-                    const content = `MEMORANDUM OF UNDERSTANDING (MOU)\n\nCenter Code: ${statusResponse?.data?.centerCode || 'N/A'}\nCenter Name: ${statusResponse?.data?.centerName || ''}\n\nAuthorized Stamp & Signature Area:\n-----------------------------------`;
-                    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-                    const url = URL.createObjectURL(blob);
+                  onClick={(e) => {
+                    e.preventDefault();
+                    const url = statusResponse?.data?.mouPdfUrl as string | undefined;
+                    let dlUrl = '/mou_template.pdf';
+                    if (url) {
+                      dlUrl = url;
+                    }
                     const link = document.createElement('a');
-                    link.href = url;
-                    link.download = `MOU_${statusResponse?.data?.centerCode || 'Agreement'}.txt`;
+                    link.href = dlUrl;
+                    link.target = '_blank';
+                    link.download = url ? 'Center_MOU.pdf' : 'MOU_Template.pdf';
+                    document.body.appendChild(link);
                     link.click();
-                    URL.revokeObjectURL(url);
+                    document.body.removeChild(link);
                   }}
                   className="border-blue-500/30 text-blue-600 hover:bg-blue-500/10 font-bold text-xs"
                 >

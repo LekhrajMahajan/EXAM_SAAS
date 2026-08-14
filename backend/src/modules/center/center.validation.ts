@@ -22,7 +22,7 @@ const centerBaseObjectSchema = z
   .object({
     companyId: objectId.optional(),
 
-    branchId: objectId,
+    branchId: objectId.optional(),
 
     centerCode: z
       .string()

@@ -38,6 +38,7 @@ import {
 } from "@/shared/components/ui/select";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import apiClient from '@/core/api/http/axios-client';
 
 interface CenterFormProps {
   initialValues?: Partial<CenterFormValues>;
@@ -160,7 +161,7 @@ export const CenterForm = ({ initialValues, isEditing }: CenterFormProps) => {
     }
   };
 
-  const onSubmit = (data: Record<string, unknown>) => {
+  const onSubmit = async (data: Record<string, unknown>) => {
     // Debug: log what was submitted
     console.warn('[CenterForm] onSubmit fired', { isEditing });
     // Resolve branchId: use selected branch, or fallback to first branch in list.
@@ -194,8 +195,9 @@ export const CenterForm = ({ initialValues, isEditing }: CenterFormProps) => {
         specialNotes: `Slot timings: ${s.timings || "Standard Hours"}`
       })),
       facilities: selectedFacilities,
-      mouFileName: mouFile ? mouFile.name : undefined,
-    };
+      mouFileName: existingMouName,
+      mouPdfUrl: (initialValues as any)?.mouPdfUrl || undefined,
+    } as any;
 
     if (resolvedBranchId && resolvedBranchId !== "[object Object]") {
       payload.branchId = resolvedBranchId;
@@ -207,6 +209,23 @@ export const CenterForm = ({ initialValues, isEditing }: CenterFormProps) => {
 
     if (payload.branch === "[object Object]") delete payload.branch;
     if (payload.branchId === "[object Object]") delete payload.branchId;
+
+    if (mouFile) {
+      try {
+        const formData = new FormData();
+        formData.append("file", mouFile);
+        const uploadRes = await apiClient.post('/centers/mou/upload', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        if (uploadRes.data?.success) {
+          payload.mouPdfUrl = uploadRes.data.data.url;
+          payload.mouFileName = mouFile.name;
+        }
+      } catch (err) {
+        console.error("MOU Upload error:", err);
+        alert("Failed to upload MOU PDF. Proceeding without it.");
+      }
+    }
 
     console.warn('[CenterForm] Final Payload:', JSON.stringify(payload, null, 2));
 
