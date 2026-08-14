@@ -161,14 +161,4 @@ const startServer = async () => {
     }
 };
 
-app.get("/health", (_, res) => {
-    res.status(200).json({
-        success: true,
-        server: "Running",
-        database: "Connected",
-        environment: env.NODE_ENV,
-        timestamp: new Date()
-    });
-});
-
 startServer();

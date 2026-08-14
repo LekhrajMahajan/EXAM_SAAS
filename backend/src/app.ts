@@ -228,6 +228,15 @@ app.get("/test", (_req, res) => {
   res.send("Server Working");
 });
 
+app.get("/health", (_, res) => {
+  res.status(200).json({
+      success: true,
+      server: "Running",
+      database: "Connected",
+      timestamp: new Date()
+  });
+});
+
 app.use(notFoundHandler);
 
 app.use(errorHandler);
