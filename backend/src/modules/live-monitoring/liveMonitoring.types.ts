@@ -129,6 +129,14 @@ export interface ILiveMonitoring {
 
   heartbeatCount: number;
 
+  faceNotDetectedCount: number;
+
+  multipleFacesCount: number;
+
+  unregisteredFaceCount: number;
+
+  referenceFaceDescriptor?: string;
+
   lastHeartbeatAt?: Date;
 
   lastSeenAt?: Date;

@@ -163,6 +163,28 @@ const LiveMonitoringSchema = new Schema<ILiveMonitoring>(
       min: 0,
     },
 
+    faceNotDetectedCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    multipleFacesCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    unregisteredFaceCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    referenceFaceDescriptor: {
+      type: String,
+    },
+
     /*
             |--------------------------------------------------------------------------
             | Activity

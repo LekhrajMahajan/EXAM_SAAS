@@ -71,6 +71,9 @@ class LiveMonitoringService {
                     copyPasteCount: 0,
                     devToolsOpenCount: 0,
                     networkDisconnectCount: 0,
+                    faceNotDetectedCount: 0,
+                    multipleFacesCount: 0,
+                    unregisteredFaceCount: 0,
                     lastHeartbeatAt: new Date(),
                     lastSeenAt: new Date(),
                 },
@@ -176,17 +179,20 @@ class LiveMonitoringService {
             monitoring.fullscreenExitCount +
             monitoring.copyPasteCount +
             monitoring.devToolsOpenCount +
-            monitoring.networkDisconnectCount;
+            monitoring.networkDisconnectCount +
+            monitoring.faceNotDetectedCount +
+            (monitoring.multipleFacesCount * 3) + // Multiple faces is a heavier violation
+            (monitoring.unregisteredFaceCount * 5); // Unregistered face is the heaviest violation
 
-        if (violations >= 15) {
+        if (violations >= 15 || monitoring.multipleFacesCount >= 4 || monitoring.unregisteredFaceCount >= 1) {
             return RiskLevel.CRITICAL;
         }
 
-        if (violations >= 10) {
+        if (violations >= 10 || monitoring.multipleFacesCount >= 2 || monitoring.faceNotDetectedCount >= 5) {
             return RiskLevel.HIGH;
         }
 
-        if (violations >= 5) {
+        if (violations >= 5 || monitoring.faceNotDetectedCount >= 2) {
             return RiskLevel.MEDIUM;
         }
 
@@ -260,6 +266,39 @@ class LiveMonitoringService {
     async networkDisconnected(id: string) {
         await liveMonitoringRepository.updateConnectionStatus(id, ConnectionStatus.DISCONNECTED);
         const monitoring = await liveMonitoringRepository.incrementCounter(id, "networkDisconnectCount");
+        await this.refreshRiskLevel(id);
+        return monitoring;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Face Not Detected
+    |--------------------------------------------------------------------------
+    */
+    async faceNotDetected(id: string) {
+        const monitoring = await liveMonitoringRepository.incrementCounter(id, "faceNotDetectedCount");
+        await this.refreshRiskLevel(id);
+        return monitoring;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Multiple Faces Detected
+    |--------------------------------------------------------------------------
+    */
+    async multipleFacesDetected(id: string) {
+        const monitoring = await liveMonitoringRepository.incrementCounter(id, "multipleFacesCount");
+        await this.refreshRiskLevel(id);
+        return monitoring;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Unregistered Face Detected
+    |--------------------------------------------------------------------------
+    */
+    async unregisteredFaceDetected(id: string) {
+        const monitoring = await liveMonitoringRepository.incrementCounter(id, "unregisteredFaceCount");
         await this.refreshRiskLevel(id);
         return monitoring;
     }
@@ -742,6 +781,9 @@ class LiveMonitoringService {
             copyPasteCount: 0,
             devToolsOpenCount: 0,
             networkDisconnectCount: 0,
+            faceNotDetectedCount: 0,
+            multipleFacesCount: 0,
+            unregisteredFaceCount: 0,
             heartbeatCount: 0,
             connectionStatus: ConnectionStatus.ONLINE,
             browserStatus: BrowserStatus.ACTIVE,

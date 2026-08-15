@@ -10,6 +10,7 @@ export interface ICandidateLogin extends Document {
   loginAt: Date;
   logoutAt?: Date;
   status: 'ACTIVE' | 'EXPIRED' | 'LOGGED_OUT';
+  referenceFaceDescriptor?: string;
 }
 
 const CandidateLoginSchema = new Schema<ICandidateLogin>(
@@ -23,6 +24,7 @@ const CandidateLoginSchema = new Schema<ICandidateLogin>(
     loginAt: { type: Date, default: Date.now },
     logoutAt: { type: Date },
     status: { type: String, enum: ['ACTIVE', 'EXPIRED', 'LOGGED_OUT'], default: 'ACTIVE' },
+    referenceFaceDescriptor: { type: String },
   },
   {
     timestamps: true,
