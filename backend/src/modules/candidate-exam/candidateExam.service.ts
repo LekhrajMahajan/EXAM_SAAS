@@ -4,6 +4,7 @@ import mongoose from "mongoose";
 import { generateAccessToken } from "../../utils/jwt"; // checking if this exists
 import fs from "fs";
 import path from "path";
+import liveMonitoringService from "../live-monitoring/liveMonitoring.service";
 
 // I'll just build a basic service
 
@@ -173,6 +174,7 @@ class CandidateExamService {
     
     if (CandidateLogin) {
       await CandidateLogin.create({
+        _id: sessionId,
         candidateId: candidate._id,
         applicationNo: candidate.applicationNo,
         examId: exam._id,
@@ -211,6 +213,15 @@ class CandidateExamService {
   */
 
   async faceVerification(payload: any) {
+    const CandidateLogin = mongoose.models.candidatelogin || mongoose.models.CandidateLogin;
+    
+    if (CandidateLogin && payload.referenceFaceDescriptor) {
+      await CandidateLogin.findByIdAndUpdate(
+        payload.sessionId,
+        { $set: { referenceFaceDescriptor: payload.referenceFaceDescriptor } }
+      );
+    }
+
     // In a full implementation, you would:
     // - Verify livenessScore against threshold
     // - Check if face matches reference image
@@ -870,6 +881,61 @@ class CandidateExamService {
           capturedAt: "2026-08-15T10:18:55.000Z"
         }
       ]
+    };
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Log Violation
+  |--------------------------------------------------------------------------
+  */
+
+  async logViolation(payload: any) {
+    const { sessionId, violationType } = payload;
+    
+    const LiveMonitoring = mongoose.models.livemonitoring || mongoose.models.LiveMonitoring;
+    let autoSubmitTriggered = false;
+    
+    if (LiveMonitoring) {
+      const monitoring = await LiveMonitoring.findOne({ sessionId: sessionId, isDeleted: false });
+      
+      if (monitoring) {
+        const id = monitoring._id.toString();
+        
+        if (violationType === 'FACE_NOT_DETECTED') {
+          await liveMonitoringService.faceNotDetected(id);
+          const updated = await LiveMonitoring.findById(id);
+          if (updated && updated.faceNotDetectedCount >= 5) {
+            autoSubmitTriggered = true;
+          }
+        } else if (violationType === 'MULTIPLE_FACES') {
+          await liveMonitoringService.multipleFacesDetected(id);
+          const updated = await LiveMonitoring.findById(id);
+          if (updated && updated.multipleFacesCount >= 4) {
+            autoSubmitTriggered = true;
+          }
+        } else if (violationType === 'UNREGISTERED_FACE') {
+          await liveMonitoringService.unregisteredFaceDetected(id);
+        }
+        
+        if (autoSubmitTriggered) {
+          // Trigger auto submit
+          await this.autoSubmitExam({
+            sessionId: sessionId,
+            candidateId: monitoring.candidateId,
+            examId: monitoring.examId,
+            submitReason: violationType + '_LIMIT_REACHED',
+            triggeredBy: 'SYSTEM'
+          });
+        }
+      }
+    }
+
+    return {
+      sessionId: payload.sessionId,
+      violationType: payload.violationType,
+      loggedAt: new Date().toISOString(),
+      autoSubmitTriggered: autoSubmitTriggered
     };
   }
 

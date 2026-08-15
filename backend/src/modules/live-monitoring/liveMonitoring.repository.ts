@@ -386,7 +386,10 @@ class LiveMonitoringRepository {
       | "fullscreenExitCount"
       | "copyPasteCount"
       | "devToolsOpenCount"
-      | "networkDisconnectCount",
+      | "networkDisconnectCount"
+      | "faceNotDetectedCount"
+      | "multipleFacesCount"
+      | "unregisteredFaceCount",
     session?: ClientSession,
   ) {
     return this.update(
@@ -716,6 +719,18 @@ class LiveMonitoringRepository {
 
                   networkDisconnects: {
                       $sum: "$networkDisconnectCount",
+                  },
+
+                  faceNotDetected: {
+                      $sum: "$faceNotDetectedCount",
+                  },
+
+                  multipleFaces: {
+                      $sum: "$multipleFacesCount",
+                  },
+
+                  unregisteredFaces: {
+                      $sum: "$unregisteredFaceCount",
                   },
               },
           },

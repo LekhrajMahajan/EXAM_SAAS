@@ -273,7 +273,23 @@ export const candidateExamViolationLogs = asyncHandler(
     });
   },
 );
+/*
+|--------------------------------------------------------------------------
+| Candidate Log Violation (POST)
+|--------------------------------------------------------------------------
+*/
 
+export const candidateExamLogViolation = asyncHandler(
+  async (req: Request, res: Response) => {
+    const result = await candidateExamService.logViolation(req.body);
+
+    return sendResponse(res, HTTP_STATUS.OK, {
+      success: true,
+      message: "Violation logged successfully.",
+      data: result,
+    });
+  },
+);
 /*
 |--------------------------------------------------------------------------
 | Candidate Session Heartbeat

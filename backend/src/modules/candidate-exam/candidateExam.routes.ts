@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { candidateExamLogin, candidateExamFaceVerification, candidateExamDeviceRegistration, candidateExamGeoVerification, candidateExamStart, candidateExamGetQuestions, candidateExamSaveAnswer, candidateExamMarkForReview, candidateExamClearResponse, candidateExamSaveNext, candidateExamPreviousQuestion, candidateExamSubmit, candidateExamAutoSubmit, candidateExamResultPreview, candidateExamViolationLogs, candidateExamSessionHeartbeat, candidateExamReconnect, candidateExamExamSummary, candidateExamFinalResult } from "./candidateExam.controller";
+import { candidateExamLogin, candidateExamFaceVerification, candidateExamDeviceRegistration, candidateExamGeoVerification, candidateExamStart, candidateExamGetQuestions, candidateExamSaveAnswer, candidateExamMarkForReview, candidateExamClearResponse, candidateExamSaveNext, candidateExamPreviousQuestion, candidateExamSubmit, candidateExamAutoSubmit, candidateExamResultPreview, candidateExamViolationLogs, candidateExamLogViolation, candidateExamSessionHeartbeat, candidateExamReconnect, candidateExamExamSummary, candidateExamFinalResult } from "./candidateExam.controller";
 import { validate } from "../../middleware/validate";
 import { candidateExamLoginSchema, faceVerificationSchema, deviceRegistrationSchema, geoVerificationSchema, startExamSchema, getQuestionsSchema, saveAnswerSchema, markForReviewSchema, clearResponseSchema, saveNextSchema, previousQuestionSchema, submitExamSchema, autoSubmitExamSchema, resultPreviewSchema, violationLogsSchema, sessionHeartbeatSchema, reconnectSchema, examSummarySchema, finalResultSchema } from "./candidateExam.validation";
 
@@ -124,6 +124,14 @@ router.get("/result-preview", validate(resultPreviewSchema), candidateExamResult
 */
 
 router.get("/violation-logs", validate(violationLogsSchema), candidateExamViolationLogs);
+
+/*
+|--------------------------------------------------------------------------
+| Candidate Log Violation (POST)
+|--------------------------------------------------------------------------
+*/
+
+router.post("/log-violation", candidateExamLogViolation);
 
 /*
 |--------------------------------------------------------------------------
