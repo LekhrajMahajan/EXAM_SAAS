@@ -123,15 +123,17 @@ class CandidateExamService {
     }
     
     // 3. Time Check
-    // examDate is Date, startTime is string like '09:30'
     let loginWindowStart: Date | null = null;
     let examEnd: Date | null = null;
     
     if (exam.examDate && exam.startTime) {
-      const dateObj = new Date(exam.examDate);
       const [hours, minutes] = exam.startTime.split(':').map(Number);
       if (!isNaN(hours) && !isNaN(minutes)) {
-        dateObj.setHours(hours, minutes, 0, 0);
+        // Force evaluation in IST to avoid server timezone offset issues
+        const istDateString = new Date(exam.examDate).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+        const isoString = `${istDateString}T${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00+05:30`;
+        const dateObj = new Date(isoString);
+        
         // Login window starts 15 minutes before
         loginWindowStart = new Date(dateObj.getTime() - 15 * 60000);
         // Exam ends at start time + duration
@@ -142,12 +144,13 @@ class CandidateExamService {
     if (loginWindowStart && examEnd) {
       const now = new Date();
       if (now < loginWindowStart) {
-        const timeStr = loginWindowStart.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+        const timeStr = loginWindowStart.toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: true });
         throw new ApiError(HTTP_STATUS.FORBIDDEN, `Login will be enabled 15 minutes before the exam starts. You can login at ${timeStr}.`);
       }
       
       if (now >= examEnd) {
-        throw new ApiError(HTTP_STATUS.FORBIDDEN, `This exam has expired. It ended at ${examEnd.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}.`);
+        const endStr = examEnd.toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: true });
+        throw new ApiError(HTTP_STATUS.FORBIDDEN, `This exam has expired. It ended at ${endStr}.`);
       }
     }
     
@@ -333,14 +336,15 @@ class CandidateExamService {
     let actualRemainingTime = (exam.duration || 120) * 60;
     if (exam.examDate && exam.startTime) {
       const now = new Date();
-      // Anchor to today's date to prevent timezone/date-shift issues from expiring the active session
-      const examStart = new Date();
       const [hours, minutes] = (exam.startTime as string).split(':').map(Number);
-      examStart.setHours(hours, minutes, 0, 0);
       
+      // Calculate start and end properly in IST
+      const istDateString = new Date(exam.examDate).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+      const isoString = `${istDateString}T${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00+05:30`;
+      const examStart = new Date(isoString);
       const examEnd = new Date(examStart.getTime() + ((exam.duration || 120) * 60000));
-      const diffSeconds = Math.floor((examEnd.getTime() - now.getTime()) / 1000);
       
+      const diffSeconds = Math.floor((examEnd.getTime() - now.getTime()) / 1000);
       actualRemainingTime = Math.max(0, diffSeconds);
     }
 

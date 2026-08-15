@@ -37,29 +37,31 @@ class ExamService extends BaseService<IExam> {
     if (exam.status === "ACTIVE" || exam.status === "EXAM_STARTED") {
       try {
         const now = new Date();
-        const examDate = new Date(exam.examDate);
+        
+        if (exam.examDate && exam.startTime) {
+          const [startH, startM] = (exam.startTime || "").split(":").map(Number);
+          if (!isNaN(startH) && !isNaN(startM)) {
+            // Force evaluation in IST
+            const istDateString = new Date(exam.examDate).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+            const startIsoString = `${istDateString}T${String(startH).padStart(2, '0')}:${String(startM).padStart(2, '0')}:00+05:30`;
+            const startDateTime = new Date(startIsoString);
 
-        // Parse startTime (HH:MM)
-        const [startH, startM] = (exam.startTime || "").split(":").map(Number);
-        if (!isNaN(startH) && !isNaN(startM)) {
-          const startDateTime = new Date(examDate);
-          startDateTime.setHours(startH, startM, 0, 0);
+            // Parse endTime (HH:MM)
+            const [endH, endM] = (exam.endTime || "").split(":").map(Number);
+            if (!isNaN(endH) && !isNaN(endM)) {
+              const endIsoString = `${istDateString}T${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}:00+05:30`;
+              const endDateTime = new Date(endIsoString);
 
-          // Parse endTime (HH:MM)
-          const [endH, endM] = (exam.endTime || "").split(":").map(Number);
-          if (!isNaN(endH) && !isNaN(endM)) {
-            const endDateTime = new Date(examDate);
-            endDateTime.setHours(endH, endM, 0, 0);
-
-            if (now >= endDateTime) return "EXAM_ENDED";
-            if (now >= startDateTime) return "EXAM_STARTED";
-          } else {
-            // Fallback: use startTime + duration
-            if (exam.duration) {
-              const endDateTime = new Date(startDateTime.getTime() + exam.duration * 60000);
               if (now >= endDateTime) return "EXAM_ENDED";
+              if (now >= startDateTime) return "EXAM_STARTED";
+            } else {
+              // Fallback: use startTime + duration
+              if (exam.duration) {
+                const endDateTime = new Date(startDateTime.getTime() + exam.duration * 60000);
+                if (now >= endDateTime) return "EXAM_ENDED";
+              }
+              if (now >= startDateTime) return "EXAM_STARTED";
             }
-            if (now >= startDateTime) return "EXAM_STARTED";
           }
         }
       } catch {

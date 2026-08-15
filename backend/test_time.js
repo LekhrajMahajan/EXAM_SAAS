@@ -1,0 +1,12 @@
+const examDate = new Date('2026-08-14T00:00:00.000Z');
+const hours = 17, minutes = 20;
+const istDateString = new Date(examDate).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+const isoString = `${istDateString}T${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00+05:30`;
+const dateObj = new Date(isoString);
+const examEnd = new Date(dateObj.getTime() + 120 * 60000);
+const now = new Date();
+console.log("Exam End time evaluated as:", examEnd.toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: true }));
+console.log("Exam Date string:", istDateString);
+console.log("ISO String:", isoString);
+console.log("Is now < login window start?", now < new Date(dateObj.getTime() - 15 * 60000));
+console.log("Is now >= examEnd?", now >= examEnd);

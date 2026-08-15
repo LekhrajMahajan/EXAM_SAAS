@@ -3,7 +3,7 @@ module.exports = {
     {
       name: "examguard-backend",
       script: "./dist/server.js",
-      instances: "max", // Use all available CPUs
+      instances: 1, // Use 1 instance to avoid OOM on Render
       exec_mode: "cluster",
       env: {
         NODE_ENV: "production",
