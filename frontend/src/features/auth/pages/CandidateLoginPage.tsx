@@ -44,7 +44,9 @@ export function CandidateLoginPage() {
         navigate('/exam/instructions');
       }
     } catch (err: any) {
-      if (err.message) {
+      if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else if (err.message) {
         setError(err.message);
       } else {
         setError('Login failed. Please check your credentials.');
