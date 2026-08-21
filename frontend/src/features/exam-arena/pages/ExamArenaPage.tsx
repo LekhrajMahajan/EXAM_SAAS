@@ -30,6 +30,7 @@ export function ExamArenaPage () {
   const [remainingTime, setRemainingTime] = useState<number>(0)
   const [timeLoaded, setTimeLoaded] = useState(false)
   const [dynamicExamName, setDynamicExamName] = useState<string>('')
+  const [showSectionWarning, setShowSectionWarning] = useState(false)
 
   // Proctoring Integration
   const [baselineDescriptor] = useState<Float32Array | null>(() => {
@@ -388,7 +389,7 @@ export function ExamArenaPage () {
                     onClick={() => {
                       if (currentSubject === sec) return
                       if (!isCurrentSectionViewed) {
-                        alert('Please view all questions in the current section before switching.')
+                        setShowSectionWarning(true)
                         return
                       }
                       setCurrentSubject(sec as string)
@@ -494,6 +495,28 @@ export function ExamArenaPage () {
           </div>
         </div>
       </div>
+
+      {showSectionWarning && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full shadow-2xl">
+            <div className="flex items-center gap-3 mb-3 text-amber-500">
+              <AlertTriangle className="w-7 h-7" />
+              <h3 className="text-xl font-bold text-slate-800">Section Locked</h3>
+            </div>
+            <p className="text-slate-600 mb-6 text-base">
+              Please view all questions in the current section before switching to another section.
+            </p>
+            <div className="flex justify-end">
+              <button
+                onClick={() => setShowSectionWarning(false)}
+                className="px-6 py-2.5 bg-primary text-white rounded-lg hover:bg-primary/90 font-semibold transition-colors"
+              >
+                Continue Exam
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </ExamLayout>
   )
 }
