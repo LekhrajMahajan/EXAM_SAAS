@@ -125,7 +125,7 @@ export function ExamArenaPage () {
   )
 
   useEffect(() => {
-    const fetchQuestion = async (qNo: number) => {
+    const fetchQuestion = async () => {
       try {
         setLoading(true)
         setError(null)
@@ -133,7 +133,7 @@ export function ExamArenaPage () {
         const sessionId = localStorage.getItem('candidate_session_id') || 'temp_session'
 
         const response = await apiClient.get('/candidate-exam/questions', {
-          params: { questionNo: qNo, examId, sessionId },
+          params: { questionNo: currentQuestionNo, examId, sessionId },
         })
 
         const resData = response.data.data
@@ -214,7 +214,7 @@ export function ExamArenaPage () {
       }
     }
 
-    fetchQuestion(currentQuestionNo)
+    fetchQuestion()
   }, [currentQuestionNo])
 
   const handleNext = () => {
@@ -427,7 +427,7 @@ export function ExamArenaPage () {
               <div className='mt-auto flex justify-between items-center gap-4 pt-6 px-4'>
                 <button
                   onClick={handlePrevious}
-                  disabled={currentQuestionNo <= 1 || loading}
+                  disabled={paletteList.findIndex(p => p.questionNumber === currentQuestionNo) <= 0 || loading}
                   className='px-6 py-3 bg-slate-900 text-white rounded font-bold hover:bg-slate-800 disabled:opacity-50'
                 >
                   &lt; Previous
@@ -444,7 +444,7 @@ export function ExamArenaPage () {
                               : 'Not Answered',
                         }))
                       }
-                      if (currentQuestionNo < paletteList.length) handleNext()
+                      handleNext()
                     }}
                     disabled={loading}
                     className='px-6 py-3 bg-white border border-slate-300 text-slate-800 rounded font-bold hover:bg-slate-50 disabled:opacity-50'
@@ -456,7 +456,7 @@ export function ExamArenaPage () {
                       if (currentQuestionData) {
                         setStatuses((prev) => ({ ...prev, [String(currentQuestionData._id)]: 'Answered' }))
                       }
-                      if (currentQuestionNo < paletteList.length) handleNext()
+                      handleNext()
                     }}
                     disabled={
                       !currentQuestionData || !answers[String(currentQuestionData._id)] || loading
