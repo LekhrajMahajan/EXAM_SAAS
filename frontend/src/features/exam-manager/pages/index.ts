@@ -5,3 +5,4 @@ export * from './TopicManagementPage';
 export * from './ExamSchedulingPage';
 export * from './ShiftManagementPage';
 export * from './CandidateImportPage';
+export * from './ExamAuditLogsPage';

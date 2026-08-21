@@ -48,8 +48,6 @@ export const uploadFileSchema = z.object({
 
     companyId: objectId.optional(),
 
-    branchId: objectId.optional(),
-
     candidateId: objectId.optional(),
 
     employeeId: objectId.optional(),

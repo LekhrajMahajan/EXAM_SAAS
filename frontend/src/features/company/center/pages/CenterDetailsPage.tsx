@@ -45,9 +45,9 @@ export const CenterDetailsPage = () => {
   }
 
   const statusColor = (status: string) => {
-    if (status === 'APPROVED') return 'bg-green-500/15 text-green-400 border-green-500/30';
-    if (status === 'REJECTED') return 'bg-rose-500/15 text-rose-400 border-rose-500/30';
-    return 'bg-amber-500/15 text-amber-400 border-amber-500/30';
+    if (status === 'APPROVED') return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+    if (status === 'REJECTED') return 'bg-rose-100 text-rose-800 border-rose-200';
+    return 'bg-amber-100 text-amber-800 border-amber-200';
   };
 
   const StatusIcon = ({ status }: { status: string }) => {
@@ -281,7 +281,7 @@ export const CenterDetailsPage = () => {
              <div className="text-sm font-bold text-foreground mb-3">MOU / Center Agreement</div>
              {center.mouFileName || center.mouFile || center.mouPdfUrl ? (
                 <div className="flex items-center gap-2 p-3 border rounded-xl bg-muted/30 w-fit pr-6">
-                   <FileCheck className="h-5 w-5 text-indigo-400" />
+                   <FileCheck className="h-5 w-5 text-primary" />
                    <span className="text-sm font-medium">{center.mouFileName || center.mouFile || center.mouPdfUrl}</span>
                 </div>
              ) : (

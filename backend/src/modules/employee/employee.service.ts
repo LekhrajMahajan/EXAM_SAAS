@@ -10,7 +10,6 @@ import auditLogService from "../audit-log/auditLog.service";
 import notificationService from "../notification/notification.service";
 import emailService from "../email/email.service";
 import importExportService from "../import-export/importExport.service";
-import branchRepository from "../branch/branch.repository";
 import centerRepository from "../center/center.repository";
 
 import { AuditAction } from "../audit-log/auditLog.types";
@@ -46,7 +45,7 @@ class EmployeeService extends BaseService<IEmployee> {
     }
 
     const roleUpper = roleName.toUpperCase();
-    if (!SUPPORTED_EMPLOYEE_ROLES.includes(roleUpper as any) && roleUpper !== "BRANCH_MANAGER" && roleUpper !== "CENTER_MANAGER") {
+    if (!SUPPORTED_EMPLOYEE_ROLES.includes(roleUpper as any) && roleUpper !== "CENTER_MANAGER" && roleUpper !== "CENTER_MANAGER") {
       throw new ApiError(
         HTTP_STATUS.BAD_REQUEST,
         `Role '${roleName}' is not an authorized enterprise employee role. Supported roles: ${SUPPORTED_EMPLOYEE_ROLES.join(", ")}`
@@ -77,32 +76,8 @@ class EmployeeService extends BaseService<IEmployee> {
   private async createOrInviteEmployee(payload: any, userIdForAudit?: string, isInvite: boolean = false, session?: ClientSession): Promise<any> {
     await companyService.getActiveById(payload.companyId);
 
-    const existingUser = await authService.checkEmailExists(payload.email);
-    if (existingUser) {
-      if (payload.role === "PAPER_SETTER" && existingUser.role === "PAPER_SETTER") {
-        const existingEmployee = await employeeRepository.findByEmail(payload.companyId, payload.email);
-        if (existingEmployee) {
-          // Re-activate the employee if they were previously deactivated after a paper submission
-          if (existingEmployee.status === EmployeeStatus.INACTIVE) {
-            existingEmployee.status = EmployeeStatus.ACTIVE;
-            await existingEmployee.save();
-          }
-          if ((existingUser as any).status === "INACTIVE") {
-            const User = require("../user/user.model").default;
-            await User.findByIdAndUpdate(existingUser._id || existingUser.id, { status: "ACTIVE" });
-          }
-          return existingEmployee;
-        } else {
-          // Orphaned user found (employee was manually deleted). Delete it so we can recreate it.
-          const authRepo = require("../auth/auth.repository").default;
-          await authRepo.hardDelete(existingUser._id || existingUser.id);
-          // Do not throw error here, let it continue to create the new user and employee
-        }
-      } else {
-        console.log(`[DEBUG EMPLOYEE CREATION] 409 Conflict. payload.role: ${payload.role}, existingUser.role: ${existingUser.role}`);
-        throw new ApiError(HTTP_STATUS.CONFLICT, "An account with this email address already exists.");
-      }
-    }
+    // We now allow duplicate emails across all roles.
+    // Login system identifies the correct account by comparing passwords.
 
     let userRole = payload.role;
     if (payload.roleId) {
@@ -148,11 +123,7 @@ class EmployeeService extends BaseService<IEmployee> {
       joiningDate: payload.joiningDate,
     });
 
-    if (payload.branchId) {
-      const branchDoc = await branchRepository.findById(payload.branchId);
-      if (!branchDoc) throw new ApiError(HTTP_STATUS.NOT_FOUND, "Branch not found");
-      payload.branchId = new mongoose.Types.ObjectId(payload.branchId as string);
-    }
+
     if (payload.centerId) {
       const centerDoc = await centerRepository.findById(payload.centerId);
       if (!centerDoc) throw new ApiError(HTTP_STATUS.NOT_FOUND, "Center not found");
@@ -724,7 +695,6 @@ class EmployeeService extends BaseService<IEmployee> {
         department: employee.department,
         designation: employee.designation,
         joiningDate: employee.joiningDate,
-        branchId: employee.branchId,
         centerId: employee.centerId,
         status: employee.status,
       },
@@ -778,24 +748,14 @@ class EmployeeService extends BaseService<IEmployee> {
       description: `Changed role for ${employee.employeeCode} to ${roleName.toUpperCase()}`,
       performedBy: performedBy ? new mongoose.Types.ObjectId(performedBy as string) : undefined,
     });
-
     return updated;
   }
 
-  async transfer(id: string, payload: { branchId?: string; centerId?: string; reason?: string }, performedBy?: string) {
+  async transfer(id: string, payload: { centerId?: string; reason?: string }, performedBy?: string) {
     const employee = await employeeRepository.findById(id);
     if (!employee) throw new ApiError(HTTP_STATUS.NOT_FOUND, "Employee not found.");
 
     const updateData: any = {};
-    if (payload.branchId !== undefined) {
-      if (payload.branchId === null || payload.branchId === "") {
-        updateData.branchId = null;
-      } else {
-        const branch = await branchRepository.findById(payload.branchId);
-        if (!branch) throw new ApiError(HTTP_STATUS.NOT_FOUND, "Target Branch not found.");
-        updateData.branchId = new mongoose.Types.ObjectId(payload.branchId);
-      }
-    }
     if (payload.centerId !== undefined) {
       if (payload.centerId === null || payload.centerId === "") {
         updateData.centerId = null;
@@ -888,8 +848,8 @@ class EmployeeService extends BaseService<IEmployee> {
 
     const authUserId = this.getAuthUserId(existingEmployee);
     if (authUserId) {
-      // Hard disable login credentials by marking the auth user as terminated/deleted
-      await authService.update(authUserId, { status: "TERMINATED", isDeleted: true } as any, [], session);
+      // Hard delete login credentials so they cannot login anymore and email can be reused
+      await authService.hardDeleteUser(authUserId, session);
     }
 
     const deletedEmployee = await super.delete(id, session);

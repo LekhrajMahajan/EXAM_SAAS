@@ -36,6 +36,7 @@ const ROLES = [
   { label: "Entry Checker", value: "ENTRY_CHECKER" },
   { label: "Observer", value: "OBSERVER" },
   { label: "Govt Authority", value: "GOVT_AUTHORITY" },
+  { label: "Private Authority", value: "PRIVATE_AUTHORITY" },
   { label: "Technical Manager", value: "TECHNICAL_MANAGER" },
   { label: "State Manager", value: "STATE_MANAGER" },
   { label: "City Manager", value: "CITY_MANAGER" },
@@ -80,7 +81,7 @@ export const StaffForm = ({ initialValues, isEditing, fixedRole, onSuccess, onCa
   const selectedState = form.watch("state");
 
   useEffect(() => {
-    if (selectedRole === "PAPER_SETTER") {
+    if (selectedRole === "PAPER_SETTER" || selectedRole === "PRIVATE_AUTHORITY") {
       const fetchExams = async () => {
         try {
           const res = await examApi.getAll({ limit: 100 });
@@ -100,7 +101,27 @@ export const StaffForm = ({ initialValues, isEditing, fixedRole, onSuccess, onCa
       if (isEditing && initialValues) {
         const staffId = initialValues.id || initialValues._id;
         if (staffId) {
-          // assignment fetch removed
+          const fetchAssignment = async () => {
+            try {
+              const res = await apiClient.get('/staff-assignments', {
+                params: { employeeId: staffId }
+              });
+              const responseData = res.data?.data;
+              const assignments = Array.isArray(responseData) 
+                ? responseData 
+                : (responseData?.assignments || responseData?.data || []);
+              
+              const assignment = Array.isArray(assignments) ? assignments[0] : null;
+
+              if (assignment && assignment.examId) {
+                const examIdValue = typeof assignment.examId === 'object' ? assignment.examId._id : assignment.examId;
+                form.setValue("examId", examIdValue);
+              }
+            } catch (error) {
+              console.error('Failed to fetch assignment', error);
+            }
+          };
+          fetchAssignment();
         }
       }
     }
@@ -122,14 +143,14 @@ export const StaffForm = ({ initialValues, isEditing, fixedRole, onSuccess, onCa
         role: data.role,
         state: (data.role === "STATE_MANAGER" || data.role === "CITY_MANAGER") ? data.state : undefined,
         city: data.role === "CITY_MANAGER" ? data.city : undefined,
-        examId: data.role === "PAPER_SETTER" ? data.examId : undefined,
+        examId: (data.role === "PAPER_SETTER" || data.role === "PRIVATE_AUTHORITY") ? data.examId : undefined,
       };
 
       const staffId = isEditing ? (initialValues?.id || initialValues?._id) : null;
       if (staffId) {
         await staffApi.update(staffId, payload);
         
-        if (data.role === "PAPER_SETTER" && data.examId) {
+        if ((data.role === "PAPER_SETTER" || data.role === "PRIVATE_AUTHORITY") && data.examId) {
           try {
             await apiClient.post('/staff-assignments/create', {
               examId: data.examId,
@@ -150,7 +171,7 @@ export const StaffForm = ({ initialValues, isEditing, fixedRole, onSuccess, onCa
       } else {
         const createRes = await staffApi.create(payload);
         
-        if (data.role === "PAPER_SETTER" && data.examId && createRes.data) {
+        if ((data.role === "PAPER_SETTER" || data.role === "PRIVATE_AUTHORITY") && data.examId && createRes.data) {
           try {
             await apiClient.post('/staff-assignments/create', {
               examId: data.examId,
@@ -198,7 +219,7 @@ export const StaffForm = ({ initialValues, isEditing, fixedRole, onSuccess, onCa
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <Card className="border-slate-800 bg-slate-900/50">
+        <Card className="shadow-none border-0 bg-transparent">
           <CardHeader>
             <CardTitle>{isEditing ? 'Update Role' : 'Assign New Role'}</CardTitle>
             <CardDescription>{isEditing ? 'Update staff details and their role.' : 'Enter staff details and assign their role.'}</CardDescription>
@@ -211,7 +232,7 @@ export const StaffForm = ({ initialValues, isEditing, fixedRole, onSuccess, onCa
                 <FormItem>
                   <FormLabel>First Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter first name" {...field} className="bg-slate-900 border-slate-700" />
+                    <Input placeholder="Enter first name" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -225,7 +246,7 @@ export const StaffForm = ({ initialValues, isEditing, fixedRole, onSuccess, onCa
                 <FormItem>
                   <FormLabel>Last Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter last name" {...field} className="bg-slate-900 border-slate-700" />
+                    <Input placeholder="Enter last name" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -239,7 +260,7 @@ export const StaffForm = ({ initialValues, isEditing, fixedRole, onSuccess, onCa
                 <FormItem className="md:col-span-2">
                   <FormLabel>Email Address</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="staff@example.com" {...field} className="bg-slate-900 border-slate-700" />
+                    <Input type="email" placeholder="staff@example.com" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -258,7 +279,7 @@ export const StaffForm = ({ initialValues, isEditing, fixedRole, onSuccess, onCa
                     form.setValue("city", "");
                   }} defaultValue={field.value} disabled={fixedRole}>
                     <FormControl>
-                      <SelectTrigger className="bg-slate-900 border-slate-700">
+                      <SelectTrigger>
                         <SelectValue placeholder="Select a role" />
                       </SelectTrigger>
                     </FormControl>
@@ -275,16 +296,16 @@ export const StaffForm = ({ initialValues, isEditing, fixedRole, onSuccess, onCa
               )}
             />
 
-            {selectedRole === "PAPER_SETTER" && (
+            {(selectedRole === "PAPER_SETTER" || selectedRole === "PRIVATE_AUTHORITY") && (
               <FormField
                 control={form.control}
                 name="examId"
                 render={({ field }) => (
                   <FormItem className="md:col-span-2">
                     <FormLabel>Assign Exam</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value} disabled={!isEditing && !!initialValues?.examId}>
+                    <Select key={`${field.value}-${exams.length}`} onValueChange={field.onChange} value={field.value} disabled={!isEditing && !!initialValues?.examId}>
                       <FormControl>
-                        <SelectTrigger className="bg-slate-900 border-slate-700">
+                        <SelectTrigger>
                           <SelectValue placeholder="Select an exam" />
                         </SelectTrigger>
                       </FormControl>
@@ -314,7 +335,7 @@ export const StaffForm = ({ initialValues, isEditing, fixedRole, onSuccess, onCa
                       form.setValue("city", "");
                     }} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger className="bg-slate-900 border-slate-700">
+                        <SelectTrigger>
                           <SelectValue placeholder="Select a state" />
                         </SelectTrigger>
                       </FormControl>
@@ -341,7 +362,7 @@ export const StaffForm = ({ initialValues, isEditing, fixedRole, onSuccess, onCa
                     <FormLabel>City</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!selectedState}>
                       <FormControl>
-                        <SelectTrigger className="bg-slate-900 border-slate-700">
+                        <SelectTrigger>
                           <SelectValue placeholder="Select a city" />
                         </SelectTrigger>
                       </FormControl>
@@ -363,8 +384,8 @@ export const StaffForm = ({ initialValues, isEditing, fixedRole, onSuccess, onCa
           </CardContent>
         </Card>
 
-        <div className="flex justify-end gap-4">
-          <Button type="button" variant="outline" onClick={handleCancel} className="border-slate-700 hover:bg-slate-800">
+        <div className="flex justify-end gap-4 pt-4">
+          <Button type="button" variant="outline" onClick={handleCancel}>
             Cancel
           </Button>
           <Button type="submit" disabled={isSubmitting}>

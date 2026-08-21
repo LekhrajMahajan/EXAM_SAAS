@@ -14,7 +14,7 @@ import {
   AccordionTrigger,
 } from '@/shared/components/ui/accordion'
 import { Button } from '@/shared/components/ui/button'
-import { Eye, Edit, Trash2, Send } from 'lucide-react'
+import { Eye, Edit, Trash2, Send, Check, Loader2, User } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -28,6 +28,8 @@ import { ViewCandidateModal } from './ViewCandidateModal'
 import { EditCandidateModal } from './EditCandidateModal'
 import { useCandidateImportStore } from '../../../../stores/candidate/candidateImport.store'
 import { toast } from '@/hooks/use-toast'
+import { getDisplayStatus } from '@/shared/utils/exam-status'
+import { ExamStatusBadge } from '@/shared/components/badges/ExamStatusBadge'
 
 interface CandidateTableProps {
   candidates: ImportedCandidate[]
@@ -39,10 +41,16 @@ export const CandidateTable = ({ candidates }: CandidateTableProps) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [unmatchedCenters, setUnmatchedCenters] = useState<string[]>([])
   const [isWarningModalOpen, setIsWarningModalOpen] = useState(false)
+  const [sendingStates, setSendingStates] = useState<Record<string, boolean>>({})
   const { deleteCandidate, sendToCenter, fetchImportedCandidates } = useCandidateImportStore()
 
-  const handleSendToCenter = async (examId: string, e: React.MouseEvent) => {
+  const handleSendToCenter = async (examId: string, e: React.MouseEvent, groupKey: string) => {
     e.stopPropagation()
+    setSendingStates(prev => ({ ...prev, [groupKey]: true }))
+    
+    // Simulate 2 sec loader
+    await new Promise(resolve => setTimeout(resolve, 2000))
+    
     const result = await sendToCenter(examId)
     if (result.success) {
       if (result.data?.unmatchedCenters?.length > 0) {
@@ -51,8 +59,9 @@ export const CandidateTable = ({ candidates }: CandidateTableProps) => {
       } else {
         toast({ title: 'Success', description: `${result.data?.sentCount || 0} candidates sent successfully.` })
       }
-      fetchImportedCandidates()
+      fetchImportedCandidates(false) // Silent fetch so table doesn't disappear
     }
+    setSendingStates(prev => ({ ...prev, [groupKey]: false }))
   }
 
   const handleView = (candidate: ImportedCandidate) => {
@@ -87,32 +96,6 @@ export const CandidateTable = ({ candidates }: CandidateTableProps) => {
   }, {} as Record<string, ImportedCandidate[]>)
 
   const examNames = Object.keys(groupedCandidates)
-
-  const getExamStatus = (exam: any) => {
-    if (!exam) return null;
-    
-    if (exam.isResultPublished) {
-      return { label: 'Result Published', color: 'bg-blue-100 text-blue-700 border-blue-200' };
-    }
-    
-    if (exam.examDate && exam.endTime) {
-      const examDate = new Date(exam.examDate);
-      // Try parsing HH:mm from endTime
-      if (exam.endTime.includes(':')) {
-        const [hours, minutes] = exam.endTime.split(':').map(Number);
-        if (!isNaN(hours) && !isNaN(minutes)) {
-          examDate.setHours(hours, minutes, 0, 0);
-          const now = new Date();
-          if (now > examDate) {
-            return { label: 'Pending Result', color: 'bg-yellow-100 text-yellow-700 border-yellow-200' };
-          }
-        }
-      }
-    }
-    
-    return { label: 'Active', color: 'bg-emerald-100 text-emerald-700 border-emerald-200' };
-  };
-
   return (
     <>
       <div className='rounded-md border bg-card p-4'>
@@ -125,87 +108,132 @@ export const CandidateTable = ({ candidates }: CandidateTableProps) => {
             {examNames.map((examName) => {
               const examCandidates = groupedCandidates[examName]
               const populatedExam = examCandidates[0]?.examId
-              const status = getExamStatus(populatedExam)
+              const dynamicColumnKeys = Array.from(new Set(examCandidates.flatMap(c => Object.keys(c.dynamicFields || {}))));
+
+              const hasUnsentCandidates = examCandidates.some(c => !c.isSentToCenter);
 
               return (
                 <AccordionItem
                   key={examName}
                   value={examName}
-                  className='border rounded-md overflow-hidden bg-background'
+                  className='border border-border rounded-md overflow-hidden bg-card shadow-sm'
                 >
                   <AccordionTrigger className='px-4 hover:bg-muted/50 transition-colors'>
-                    <div className='flex items-center text-base font-semibold text-left'>
-                      {status && (
-                        <span className={`mr-3 rounded-md border px-2 py-0.5 text-xs font-semibold whitespace-nowrap ${status.color}`}>
-                          {status.label}
-                        </span>
+                    <div className='flex flex-1 items-center text-base font-semibold text-left pr-4'>
+                      {populatedExam && getDisplayStatus(populatedExam) && (
+                        <ExamStatusBadge exam={populatedExam} className="mr-3 h-6" />
                       )}
                       {examName}
-                      <span className='ml-3 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary whitespace-nowrap'>
+                      <span className='ml-3 rounded-full bg-[#E4FD97] px-2.5 py-0.5 text-xs font-medium text-[#2D3E2C] whitespace-nowrap'>
                         {examCandidates.length} Candidates
                       </span>
-                      <div
-                        role='button'
-                        className={`ml-auto inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium transition-colors h-8 px-3 text-xs bg-blue-600 hover:bg-blue-700 text-white ${!populatedExam?._id ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}
+                      <Button
+                        size="sm"
+                        variant="default"
+                        className={`ml-auto shadow-sm ${
+                          !populatedExam?._id || (!hasUnsentCandidates && !sendingStates[examName])
+                            ? 'opacity-70 cursor-not-allowed pointer-events-none'
+                            : ''
+                        }`}
                         onClick={(e) => {
                           e.stopPropagation();
-                          if (populatedExam?._id) handleSendToCenter(populatedExam._id, e);
+                          if (populatedExam?._id && hasUnsentCandidates && !sendingStates[examName]) {
+                            handleSendToCenter(populatedExam._id, e, examName);
+                          }
                         }}
+                        disabled={sendingStates[examName] || (!hasUnsentCandidates && !sendingStates[examName])}
                       >
-                        <Send className='mr-2 h-4 w-4' />
-                        Send to Center
-                      </div>
+                        {sendingStates[examName] ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Sending...
+                          </>
+                        ) : !hasUnsentCandidates ? (
+                          <>
+                            <Check className='mr-2 h-4 w-4' />
+                            Sended
+                          </>
+                        ) : (
+                          <>
+                            <Send className='mr-2 h-4 w-4' />
+                            Send to Center
+                          </>
+                        )}
+                      </Button>
                     </div>
                   </AccordionTrigger>
-                  <AccordionContent className='pt-0 pb-0'>
-                    <div className='overflow-x-auto border-t'>
+                  <AccordionContent className='pt-0 pb-0 bg-background'>
+                    <div className='overflow-x-auto border-t border-border'>
                       <Table>
-                        <TableHeader className='bg-muted/30'>
+                        <TableHeader className='bg-muted/10'>
                           <TableRow>
+                            <TableHead className="w-12">Photo</TableHead>
                             <TableHead>Candidate ID</TableHead>
                             <TableHead>Application No</TableHead>
-                            <TableHead>Center Name</TableHead>
                             <TableHead>Full Name</TableHead>
-                            <TableHead>Mother&apos:s Name</TableHead>
                             <TableHead>DOB</TableHead>
-                            <TableHead>Gender</TableHead>
+                            <TableHead>Aadhaar No.</TableHead>
+                            {dynamicColumnKeys.map(col => (
+                              <TableHead key={col} className='capitalize'>
+                                {col.replace(/([A-Z])/g, ' $1').trim()}
+                              </TableHead>
+                            ))}
                             <TableHead className='text-right'>Actions</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {examCandidates.map((candidate) => (
                             <TableRow key={candidate._id}>
+                              <TableCell>
+                                {candidate.candidatePhoto ? (
+                                  <img
+                                    src={candidate.candidatePhoto}
+                                    alt={candidate.candidateFullName}
+                                    className='w-12 h-12 rounded-full object-cover border-2 border-border shrink-0 shadow-sm'
+                                  />
+                                ) : (
+                                  <div className='w-12 h-12 rounded-full bg-muted flex items-center justify-center border-2 border-border shrink-0 shadow-sm'>
+                                    <User className='w-6 h-6 text-muted-foreground' />
+                                  </div>
+                                )}
+                              </TableCell>
                               <TableCell className='font-medium'>{candidate.candidateId}</TableCell>
                               <TableCell>{candidate.applicationNo}</TableCell>
-                              <TableCell>{candidate.centerName}</TableCell>
                               <TableCell>{candidate.candidateFullName}</TableCell>
-                              <TableCell>{candidate.motherName}</TableCell>
                               <TableCell>{candidate.dateOfBirth}</TableCell>
-                              <TableCell>{candidate.gender}</TableCell>
+                              <TableCell>{candidate.aadharNumber}</TableCell>
+                              {dynamicColumnKeys.map(col => (
+                                <TableCell key={col}>
+                                  {candidate.dynamicFields?.[col] || '—'}
+                                </TableCell>
+                              ))}
                               <TableCell className='text-right space-x-2 whitespace-nowrap'>
                                 <Button
                                   variant='ghost'
                                   size='icon'
                                   onClick={() => handleView(candidate)}
                                   title='View'
+                                  className='text-[#4A5D23] hover:text-[#4A5D23] hover:bg-[#4A5D23]/10 transition-colors'
                                 >
-                                  <Eye className='h-4 w-4 text-blue-500' />
+                                  <Eye className='h-4 w-4' />
                                 </Button>
                                 <Button
                                   variant='ghost'
                                   size='icon'
                                   onClick={() => handleEdit(candidate)}
                                   title='Edit'
+                                  className='text-[#4A5D23] hover:text-[#4A5D23] hover:bg-[#4A5D23]/10 transition-colors'
                                 >
-                                  <Edit className='h-4 w-4 text-yellow-500' />
+                                  <Edit className='h-4 w-4' />
                                 </Button>
                                 <Button
                                   variant='ghost'
                                   size='icon'
                                   onClick={() => handleDelete(candidate._id)}
                                   title='Delete'
+                                  className='text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/50 transition-colors'
                                 >
-                                  <Trash2 className='h-4 w-4 text-red-500' />
+                                  <Trash2 className='h-4 w-4' />
                                 </Button>
                               </TableCell>
                             </TableRow>

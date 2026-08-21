@@ -10,8 +10,6 @@ import { sendResponse } from "../../utils/response";
 import { HTTP_STATUS } from "../../constants/httpStatus";
 import ApiError from "../../utils/ApiError";
 import Company from "../company/company.model";
-import Branch from "../branch/branch.model";
-import { BranchStatus } from "../branch/branch.types";
 import Center from "./center.model";
 import fileStorageService from "../file-storage/fileStorage.service";
 import { FileType } from "../file-storage/fileStorage.types";
@@ -159,7 +157,6 @@ export const testValidation = asyncHandler(async (req: Request, res: Response) =
 
   const payload = {
     ...mockFrontendData,
-    branchId: mockFrontendData.branch,
     capacity: Number(mockFrontendData.maxCandidates) || 100,
     availableCapacity: Number(mockFrontendData.maxCandidates) || 100,
     managerName: mockFrontendData.headName,
@@ -204,7 +201,6 @@ export const testCreateMock = asyncHandler(async (req: any, res: Response) => {
   const payload = {
     centerName: "Test Email Center 999",
     centerCode: "TEC-999",
-    branchId: "65a000000000000000000001",
     capacity: 100,
     availableCapacity: 100,
     managerName: "Test Manager",
@@ -260,38 +256,9 @@ export const createCenter = asyncHandler(
       }
     }
 
-    // 2. Ensure branchId
-    if (!req.body.branchId || req.body.branchId === "65a000000000000000000001") {
-      let firstBranch = await Branch.findOne({ companyId: req.body.companyId, status: BranchStatus.ACTIVE });
-      if (!firstBranch) firstBranch = await Branch.findOne({ status: BranchStatus.ACTIVE });
-      
-      if (!firstBranch && req.body.companyId) {
-        // Auto-create a default branch
-        firstBranch = await Branch.create({
-          companyId: req.body.companyId,
-          branchCode: "MAIN-01",
-          branchName: "Main Branch",
-          status: BranchStatus.ACTIVE,
-          email: req.body.email || "admin@example.com",
-          phone: req.body.phone || "0000000000",
-          address: req.body.address || "Main Address",
-          city: req.body.city || "City",
-          state: req.body.state || "State",
-          country: req.body.country || "India",
-          postalCode: req.body.pincode || req.body.postalCode || "000000"
-        });
-      }
-
-      if (firstBranch) {
-        req.body.branchId = String(firstBranch._id);
-        req.body.companyId = String(firstBranch.companyId); // Align company with branch
-      }
-    }
-
     // 3. Ensure unique centerCode to prevent E11000 or duplicate errors
     let codeExists = await Center.findOne({ 
       companyId: req.body.companyId, 
-      branchId: req.body.branchId, 
       centerCode: req.body.centerCode 
     });
     if (codeExists) {
@@ -301,7 +268,6 @@ export const createCenter = asyncHandler(
     // Ensure unique centerName to prevent duplicate errors
     let nameExists = await Center.findOne({
       companyId: req.body.companyId, 
-      branchId: req.body.branchId, 
       centerName: req.body.centerName
     });
     if (nameExists) {
@@ -375,7 +341,6 @@ export const getCenters = asyncHandler(async (req: Request, res: Response) => {
     limit: Number(req.query.limit) || 10,
     search: req.query.search as string,
     companyId: req.query.companyId as string,
-    branchId: req.query.branchId as string,
     city: req.query.city as string,
     state: req.query.state as string,
     centerType: req.query.centerType as string,
@@ -717,7 +682,7 @@ export const getCommercialAgreement = asyncHandler(async (req: any, res: Respons
 });
 
 export const getPendingVerifications = asyncHandler(async (req: any, res: Response) => {
-  const result = await centerService.getPendingVerifications(req.query.companyId as string, req.query.branchId as string);
+  const result = await centerService.getPendingVerifications(req.query.companyId as string);
   return sendResponse(res, HTTP_STATUS.OK, {
     success: true,
     message: "Pending center verifications fetched successfully.",

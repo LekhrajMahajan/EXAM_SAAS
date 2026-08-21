@@ -14,6 +14,7 @@ export const CenterListPage = () => {
   const [search, setSearch] = useState("");
   const [centerFilter, setCenterFilter] = useState("all");
   const [stateFilter, setStateFilter] = useState("all");
+  const [cityFilter, setCityFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [approvalFilter, setApprovalFilter] = useState("all");
 
@@ -29,6 +30,7 @@ export const CenterListPage = () => {
       if (search && !c.centerName?.toLowerCase().includes(search.toLowerCase()) && !c.centerCode?.toLowerCase().includes(search.toLowerCase())) return false;
       if (centerFilter !== 'all' && c.centerName !== centerFilter) return false;
       if (stateFilter !== 'all' && c.state !== stateFilter) return false;
+      if (cityFilter !== 'all' && c.city !== cityFilter) return false;
       
       const statusVal = (c.status || ((c as any).setupStatus === 'ACTIVE' ? 'Active' : 'Inactive')).toLowerCase();
       if (statusFilter !== 'all' && statusVal !== statusFilter) return false;
@@ -38,7 +40,7 @@ export const CenterListPage = () => {
       
       return true;
     });
-  }, [centersList, search, centerFilter, stateFilter, statusFilter, approvalFilter]);
+  }, [centersList, search, centerFilter, stateFilter, cityFilter, statusFilter, approvalFilter]);
 
   const handleExport = () => {
     if (!filteredCenters || filteredCenters.length === 0) return;
@@ -77,25 +79,29 @@ export const CenterListPage = () => {
             <Button 
               variant="outline" 
               size="sm" 
-              className="inline-flex items-center gap-1.5 border-slate-700 hover:bg-slate-800 text-slate-200" 
+              className="hidden md:flex bg-white border border-slate-200 text-slate-900 hover:bg-[#2D3E2C] hover:text-[#E4FD97] dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100 transition-colors" 
               onClick={() => refetch()}
               disabled={isLoading || isRefetching}
             >
-              <RefreshCw className={`h-4 w-4 ${isRefetching ? 'animate-spin text-indigo-400' : ''}`} />
+              <RefreshCw className={`h-4 w-4 mr-1.5 ${isRefetching ? 'animate-spin' : ''}`} />
               Refresh
             </Button>
             <Button 
               variant="outline" 
               size="sm" 
-              className="inline-flex items-center gap-1.5 border-slate-700 hover:bg-slate-800 text-slate-200"
+              className="hidden md:flex bg-white border border-slate-200 text-slate-900 hover:bg-[#2D3E2C] hover:text-[#E4FD97] dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100 transition-colors"
               onClick={handleExport}
               disabled={!centersList || centersList.length === 0}
             >
-              <Download className="h-4 w-4 text-emerald-400" />
+              <Download className="h-4 w-4 mr-1.5" />
               Export
             </Button>
             <Link to="/company/centers/create">
-              <Button size="sm" className="bg-primary hover:bg-primary/90 font-semibold shadow-sm">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="bg-white border border-slate-200 text-slate-900 hover:bg-[#2D3E2C] hover:text-[#E4FD97] dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100 transition-colors font-semibold"
+              >
                 <Plus className="h-4 w-4 mr-1.5" />
                 Add Center
               </Button>
@@ -112,6 +118,8 @@ export const CenterListPage = () => {
         onCenterFilterChange={setCenterFilter}
         stateFilter={stateFilter}
         onStateFilterChange={setStateFilter}
+        cityFilter={cityFilter}
+        onCityFilterChange={setCityFilter}
         statusFilter={statusFilter}
         onStatusFilterChange={setStatusFilter}
         approvalFilter={approvalFilter}

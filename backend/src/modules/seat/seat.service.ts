@@ -75,7 +75,6 @@ class SeatService extends BaseService<ISeat> {
       for (let c = 1; c <= columns; c++) {
         seats.push({
           companyId: room.companyId._id,
-          branchId: room.branchId._id,
           centerId: room.centerId._id,
           roomId: room._id,
 

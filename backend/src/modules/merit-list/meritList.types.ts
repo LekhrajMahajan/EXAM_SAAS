@@ -42,9 +42,6 @@ export interface IMeritList {
   candidateId: Types.ObjectId;
 
   companyId: Types.ObjectId;
-
-  branchId: Types.ObjectId;
-
   examCenterId: Types.ObjectId;
 
   subjectId: Types.ObjectId;

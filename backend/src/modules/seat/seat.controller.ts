@@ -54,7 +54,6 @@ export const getSeats = asyncHandler(async (req: Request, res: Response) => {
     limit: Number(req.query.limit) || 10,
     search: req.query.search as string,
     companyId: req.query.companyId as string,
-    branchId: req.query.branchId as string,
     centerId: req.query.centerId as string,
     roomId: req.query.roomId as string,
 

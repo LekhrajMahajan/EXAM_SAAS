@@ -1,5 +1,4 @@
 import companyService from "../company/company.service";
-import branchService from "../branch/branch.service";
 import centerService from "../center/center.service";
 import seatService from "../seat/seat.service";
 
@@ -23,7 +22,6 @@ class CandidateService extends BaseService<ICandidate> {
 
   async create(payload: Partial<ICandidate>) {
     await companyService.getActiveById(payload.companyId!.toString());
-    await branchService.getActiveById(payload.branchId!.toString());
     await centerService.getActiveById(payload.centerId!.toString());
 
     const candidateCode = await candidateRepository.findByCandidateCode(

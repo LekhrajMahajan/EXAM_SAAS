@@ -24,6 +24,8 @@ export interface ICompany {
   mouDocument?: string;
   panCardDocument?: string;
   gstDocument?: string;
+  aadharCardDocument?: string;
+  msmeCertificateDocument?: string;
   paymentStatus?: "PENDING" | "SUCCESS" | "FAILED";
 
   address?: string;
@@ -51,7 +53,7 @@ export interface ICompany {
 
   subscriptionEndDate?: Date;
 
-  maxBranches?: number;
+
 
   maxCenters?: number;
 

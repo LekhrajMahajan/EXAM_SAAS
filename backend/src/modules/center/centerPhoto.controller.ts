@@ -11,9 +11,11 @@ export class CenterPhotoController {
   static async getPhotos(req: Request, res: Response) {
     try {
       let centerId = req.user?.centerId;
-      if (req.user?.role === "COMPANY_ADMIN" && req.query.centerId) {
+      
+      if (req.query.centerId) {
         centerId = req.query.centerId as string;
       }
+
       if (!centerId) {
         return res.status(401).json({ message: 'Unauthorized. Center ID not found.' });
       }

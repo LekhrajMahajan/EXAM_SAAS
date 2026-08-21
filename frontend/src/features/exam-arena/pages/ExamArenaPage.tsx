@@ -9,6 +9,7 @@ import { useProctoring } from '../hooks/useProctoring'
 import { ProctoringOverlay } from '../components/ProctoringOverlay'
 import { ProctoringVideoCard } from '../components/ProctoringVideoCard'
 import { useNavigate } from 'react-router-dom'
+import { seededShuffle } from '@/utils/seedShuffle'
 
 export function ExamArenaPage () {
   const [loading, setLoading] = useState(true)
@@ -19,7 +20,11 @@ export function ExamArenaPage () {
   const navigate = useNavigate()
 
   const [answers, setAnswers] = useState<Record<string, string>>({})
+  const answersRef = useRef<Record<string, string>>({})
+  
   const [statuses, setStatuses] = useState<Record<string, string>>({})
+  const statusesRef = useRef<Record<string, string>>({})
+  
   const [paletteList, setPaletteList] = useState<any[]>([])
   const [currentSubject, setCurrentSubject] = useState<string>('')
   const [remainingTime, setRemainingTime] = useState<number>(0)
@@ -34,16 +39,28 @@ export function ExamArenaPage () {
 
   const [baselineImage] = useState<string | null>(() => localStorage.getItem('baseline_face_image'))
 
-  const candidateInfoStr = localStorage.getItem('candidate_info')
-  const candidateInfo = candidateInfoStr
-    ? JSON.parse(candidateInfoStr)
-    : { candidateName: 'Student', rollNumber: 'N/A' }
+  const [candidateInfo] = useState(() => {
+    const candidateInfoStr = localStorage.getItem('candidate_info')
+    return candidateInfoStr
+      ? JSON.parse(candidateInfoStr)
+      : { candidateName: 'Student', rollNumber: 'N/A' }
+  })
 
-  const examMetaStr =
-    localStorage.getItem('candidate_exam_meta') || localStorage.getItem('exam_meta')
-  const examMeta = examMetaStr
-    ? JSON.parse(examMetaStr)
-    : { examTitle: 'Practice Exam', durationMinutes: 120 }
+  const [examMeta] = useState(() => {
+    const examMetaStr =
+      localStorage.getItem('candidate_exam_meta') || localStorage.getItem('exam_meta')
+    return examMetaStr
+      ? JSON.parse(examMetaStr)
+      : { examTitle: 'Practice Exam', durationMinutes: 120 }
+  })
+
+  useEffect(() => {
+    answersRef.current = answers
+  }, [answers])
+
+  useEffect(() => {
+    statusesRef.current = statuses
+  }, [statuses])
 
   const submitExamToServer = async (submitType: string, reason?: string) => {
     try {
@@ -56,8 +73,8 @@ export function ExamArenaPage () {
         candidateId: candidateInfo._id || 'candidate_placeholder',
         submitType,
         submitReason: reason,
-        answers,
-        statuses,
+        answers: answersRef.current,
+        statuses: statusesRef.current,
       }
 
       const endpoint =
@@ -101,7 +118,11 @@ export function ExamArenaPage () {
     }
   }
 
-  const { state: proctoringState, videoRef } = useProctoring(baselineDescriptor, handleAutoSubmit)
+  const { state: proctoringState, videoRef } = useProctoring(
+    baselineDescriptor,
+    examMeta?.securitySettings || {},
+    handleAutoSubmit
+  )
 
   useEffect(() => {
     const fetchQuestion = async (qNo: number) => {
@@ -123,10 +144,46 @@ export function ExamArenaPage () {
         }
 
         if (resData.paletteList && paletteList.length === 0) {
-          setPaletteList(resData.paletteList)
-          const sections = [...new Set(resData.paletteList.map((p: any) => p.section))]
-          if (sections.length > 0 && !currentSubject) {
-            setCurrentSubject(sections[0] as string)
+          let processedPalette = [...resData.paletteList]
+
+          // Use Candidate ID or a fallback as the seed
+          const seedStr = candidateInfo?._id || 'default_seed'
+
+          if (examMeta?.shuffleQuestions) {
+            // Group by section, shuffle each, and put them back
+            const sections = [...new Set(processedPalette.map((p: any) => p.section))]
+            const newPalette: any[] = []
+            sections.forEach((sec) => {
+              const secQuestions = processedPalette.filter((p: any) => p.section === sec)
+              newPalette.push(...seededShuffle(secQuestions, seedStr + sec))
+            })
+            processedPalette = newPalette
+          }
+
+          if (examMeta?.shuffleSubjects) {
+            // Get unique sections in order of their first appearance
+            const sections = [...new Set(processedPalette.map((p: any) => p.section))]
+            const shuffledSections = seededShuffle(sections, seedStr + 'subjects')
+            const newPalette: any[] = []
+            shuffledSections.forEach((sec) => {
+              newPalette.push(...processedPalette.filter((p: any) => p.section === sec))
+            })
+            processedPalette = newPalette
+          }
+
+          // Assign sequential display numbers
+          processedPalette = processedPalette.map((p: any, index: number) => ({
+            ...p,
+            displayNumber: index + 1
+          }))
+
+          setPaletteList(processedPalette)
+          const finalSections = [...new Set(processedPalette.map((p: any) => p.section))]
+          if (finalSections.length > 0 && !currentSubject) {
+            setCurrentSubject(finalSections[0] as string)
+          }
+          if (processedPalette.length > 0 && processedPalette[0].questionNumber !== currentQuestionNo) {
+            setCurrentQuestionNo(processedPalette[0].questionNumber)
           }
         }
 
@@ -136,10 +193,18 @@ export function ExamArenaPage () {
         }
 
         setStatuses((prev) => {
-          if (!prev[String(resData.currentQuestion._id)]) {
-            return { ...prev, [String(resData.currentQuestion._id)]: 'Not Answered' }
+          const qId = String(resData.currentQuestion._id);
+          const currentStatus = prev[qId];
+          
+          if (!currentStatus) {
+            return { ...prev, [qId]: 'Not Answered' };
           }
-          return prev
+          
+          if (currentStatus === 'Answered') {
+            return { ...prev, [qId]: 'Marked for Review' };
+          }
+          
+          return prev;
         })
       } catch (err: any) {
         console.error('Failed to load question', err)
@@ -153,27 +218,46 @@ export function ExamArenaPage () {
   }, [currentQuestionNo])
 
   const handleNext = () => {
-    const nextQNo = currentQuestionNo + 1
-    setCurrentQuestionNo(nextQNo)
-    const nextQ = paletteList.find((p) => p.questionNumber === nextQNo)
-    if (nextQ && nextQ.section !== currentSubject) {
-      setCurrentSubject(nextQ.section)
+    const currentIndex = paletteList.findIndex(p => p.questionNumber === currentQuestionNo)
+    if (currentIndex >= 0 && currentIndex < paletteList.length - 1) {
+      const nextQ = paletteList[currentIndex + 1]
+      setCurrentQuestionNo(nextQ.questionNumber)
+      if (nextQ.section !== currentSubject) {
+        setCurrentSubject(nextQ.section)
+      }
     }
   }
 
   const handlePrevious = () => {
-    const prevQNo = currentQuestionNo - 1
-    setCurrentQuestionNo(prevQNo)
-    const prevQ = paletteList.find((p) => p.questionNumber === prevQNo)
-    if (prevQ && prevQ.section !== currentSubject) {
-      setCurrentSubject(prevQ.section)
+    const currentIndex = paletteList.findIndex(p => p.questionNumber === currentQuestionNo)
+    if (currentIndex > 0) {
+      const prevQ = paletteList[currentIndex - 1]
+      setCurrentQuestionNo(prevQ.questionNumber)
+      if (prevQ.section !== currentSubject) {
+        setCurrentSubject(prevQ.section)
+      }
     }
   }
 
   const handleOptionSelect = (optionId: string) => {
     if (currentQuestionData) {
-      setAnswers((prev) => ({ ...prev, [String(currentQuestionData._id)]: optionId }))
-      setStatuses((prev) => ({ ...prev, [String(currentQuestionData._id)]: 'Answered' }))
+      const qId = String(currentQuestionData._id)
+      
+      setAnswers((prev) => {
+        if (prev[qId] === optionId) {
+          const newAnswers = { ...prev }
+          delete newAnswers[qId]
+          return newAnswers
+        }
+        return { ...prev, [qId]: optionId }
+      })
+      
+      setStatuses((prev) => {
+        if (answersRef.current[qId] === optionId) {
+           return { ...prev, [qId]: 'Not Answered' }
+        }
+        return { ...prev, [qId]: 'Answered' }
+      })
     }
   }
 
@@ -183,6 +267,7 @@ export function ExamArenaPage () {
       .map((p) => ({
         id: String(p.questionNumber),
         questionNumber: p.questionNumber,
+        displayNumber: p.displayNumber,
         type: p.questionType,
         text: '',
         status: (statuses[String(p.id)] as QuestionStatus) || 'Not Visited',
@@ -271,7 +356,7 @@ export function ExamArenaPage () {
           <button
             onClick={() => {
               localStorage.removeItem('candidate_exam_token')
-              navigate('/auth/candidate-login')
+              window.location.href = '/auth/candidate-login'
             }}
             className='w-full bg-slate-900 text-white font-medium py-3 rounded-lg hover:bg-slate-800 transition-colors'
           >
@@ -328,7 +413,7 @@ export function ExamArenaPage () {
               <QuestionCard
                 question={{
                   id: String(currentQuestionData._id),
-                  questionNumber: currentQuestionData.questionNumber,
+                  questionNumber: paletteList.find(p => p.questionNumber === currentQuestionData.questionNumber)?.displayNumber || currentQuestionData.questionNumber,
                   type: currentQuestionData.questionType,
                   text: currentQuestionData.questionText,
                   options: currentQuestionData.options,
@@ -354,8 +439,8 @@ export function ExamArenaPage () {
                         setStatuses((prev) => ({
                           ...prev,
                           [String(currentQuestionData._id)]:
-                            prev[String(currentQuestionData._id)] === 'Answered'
-                              ? 'Answered'
+                            (prev[String(currentQuestionData._id)] === 'Answered' || prev[String(currentQuestionData._id)] === 'Marked for Review')
+                              ? prev[String(currentQuestionData._id)]
                               : 'Not Answered',
                         }))
                       }
@@ -368,6 +453,9 @@ export function ExamArenaPage () {
                   </button>
                   <button
                     onClick={() => {
+                      if (currentQuestionData) {
+                        setStatuses((prev) => ({ ...prev, [String(currentQuestionData._id)]: 'Answered' }))
+                      }
                       if (currentQuestionNo < paletteList.length) handleNext()
                     }}
                     disabled={
@@ -384,23 +472,25 @@ export function ExamArenaPage () {
         )}
       </div>
 
-      <div className='w-80 bg-slate-100 flex-shrink-0 flex-col hidden xl:flex h-full overflow-y-auto'>
-        <div className='p-4 flex-1 flex flex-col space-y-4'>
+      <div className='w-80 bg-slate-100 flex-shrink-0 flex-col hidden xl:flex h-full overflow-hidden'>
+        <div className='p-4 flex-1 flex flex-col space-y-4 min-h-0'>
           <ProctoringVideoCard
             title='Live Proctoring'
             videoRef={videoRef}
             statusMessage={proctoringState.statusMessage}
-            baselineImage={baselineImage}
+            baselineImage={candidateInfo.photo}
           />
-          <div className='flex-1 bg-slate-400 p-4 rounded-md'>
-            <h3 className='text-center font-bold text-slate-800 mb-4'>
+          <div className='flex-1 bg-slate-400 p-4 rounded-md flex flex-col min-h-0'>
+            <h3 className='text-center font-bold text-slate-800 mb-4 shrink-0'>
               {currentSubject} Questions
             </h3>
-            <QuestionPalette
-              questions={displayQuestionsList}
-              currentQuestionId={String(currentQuestionNo)}
-              onQuestionSelect={(id) => setCurrentQuestionNo(Number(id))}
-            />
+            <div className='flex-1 min-h-0'>
+              <QuestionPalette
+                questions={displayQuestionsList}
+                currentQuestionId={String(currentQuestionNo)}
+                onQuestionSelect={(id) => setCurrentQuestionNo(Number(id))}
+              />
+            </div>
           </div>
         </div>
       </div>

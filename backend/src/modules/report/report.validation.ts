@@ -23,8 +23,6 @@ const reportFilterSchema = z.object({
 
   companyId: objectId.optional(),
 
-  branchId: objectId.optional(),
-
   centerId: objectId.optional(),
 
   examId: objectId.optional(),

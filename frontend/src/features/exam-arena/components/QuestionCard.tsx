@@ -14,7 +14,6 @@ export function QuestionCard({ question, selectedOption, onSelect }: QuestionCar
     <div className="flex flex-col flex-1 space-y-4">
       {/* Question Text */}
       <div className="bg-slate-200 rounded-md p-4 min-h-[80px] flex items-start text-slate-800 text-lg">
-        <span className="font-bold mr-3 whitespace-nowrap">Question {question.questionNumber}:</span>
         <span className="font-medium">{question.text || `Question content...`}</span>
       </div>
 

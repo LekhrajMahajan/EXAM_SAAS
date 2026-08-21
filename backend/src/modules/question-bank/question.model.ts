@@ -203,10 +203,7 @@ QuestionSchema.index(
   {
     companyId: 1,
     questionCode: 1,
-  },
-  {
-    unique: true,
-  },
+  }
 );
 
 QuestionSchema.index({

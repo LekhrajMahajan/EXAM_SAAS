@@ -114,9 +114,6 @@ export interface INotification {
   recipientId: Types.ObjectId;
 
   companyId?: Types.ObjectId;
-
-  branchId?: Types.ObjectId;
-
   examId?: Types.ObjectId;
 
   candidateId?: Types.ObjectId;

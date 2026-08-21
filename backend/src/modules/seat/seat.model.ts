@@ -13,13 +13,6 @@ const SeatSchema = new Schema<ISeat>(
       index: true,
     },
 
-    branchId: {
-      type: Schema.Types.ObjectId,
-      ref: "Branch",
-      required: true,
-      index: true,
-    },
-
     centerId: {
       type: Schema.Types.ObjectId,
       ref: "Center",
@@ -139,7 +132,6 @@ SeatSchema.index(
 // Fast lookup
 SeatSchema.index({
   companyId: 1,
-  branchId: 1,
   centerId: 1,
   roomId: 1,
 });

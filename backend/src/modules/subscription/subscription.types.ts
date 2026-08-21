@@ -38,7 +38,7 @@ export interface ISubscription extends Document {
   autoRenewal: boolean;
   
   // Custom Usage Limits (Overrides plan limits if set)
-  maxBranches?: number;
+
   maxCenters?: number;
   maxEmployees?: number;
   maxCandidates?: number;

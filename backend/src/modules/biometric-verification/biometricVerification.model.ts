@@ -107,11 +107,6 @@ const BiometricVerificationSchema = new Schema<IBiometricVerification>(
       ref: "Company",
     },
 
-    branchId: {
-      type: Schema.Types.ObjectId,
-      ref: "Branch",
-    },
-
     shiftId: {
       type: Schema.Types.ObjectId,
       ref: "ExamShift",

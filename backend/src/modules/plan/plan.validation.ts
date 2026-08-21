@@ -21,7 +21,7 @@ export const createPlanSchema = z.object({
       razorpayPlanIdYearly: z.string().optional(),
     }),
     usageLimits: z.object({
-      maxBranches: z.number().min(0),
+
       maxCenters: z.number().min(0),
       maxEmployees: z.number().min(0),
       maxCandidates: z.number().min(0),

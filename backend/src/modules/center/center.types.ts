@@ -193,7 +193,6 @@ export interface ICenterComplianceChecklist {
 
 export interface ICenter {
   companyId: Types.ObjectId;
-  branchId: Types.ObjectId;
   centerManagerId?: Types.ObjectId | null;
 
   centerCode: string;

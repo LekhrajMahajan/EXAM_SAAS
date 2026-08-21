@@ -36,9 +36,6 @@ export interface IExamSubmission {
   subjectId: Types.ObjectId;
 
   companyId: Types.ObjectId;
-
-  branchId: Types.ObjectId;
-
   examCenterId: Types.ObjectId;
 
   examRoomId: Types.ObjectId;

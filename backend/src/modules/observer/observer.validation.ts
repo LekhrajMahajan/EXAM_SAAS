@@ -26,8 +26,6 @@ export const assignObserverSchema = z.object({
 
     companyId: objectId,
 
-    branchId: objectId,
-
     centerId: objectId,
 
     shiftId: objectId,

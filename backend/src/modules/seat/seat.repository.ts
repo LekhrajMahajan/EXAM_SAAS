@@ -6,7 +6,7 @@ class SeatRepository extends BaseRepository<ISeat> {
   constructor() {
     super(
       Seat,
-      ["companyId", "branchId", "centerId", "roomId"],
+      ["companyId", "centerId", "roomId"],
       ["seatNumber", "row"]
     );
   }

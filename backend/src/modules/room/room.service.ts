@@ -1,6 +1,5 @@
 import roomRepository from "./room.repository";
 import companyRepository from "../company/company.repository";
-import branchRepository from "../branch/branch.repository";
 import centerRepository from "../center/center.repository";
 
 import ApiError from "../../utils/ApiError";
@@ -29,27 +28,12 @@ class RoomService extends BaseService<IRoom> {
       throw new ApiError(HTTP_STATUS.NOT_FOUND, "Company not found.");
     }
 
-    const branch = await branchRepository.findById(
-      payload.branchId!.toString(),
-    );
-
-    if (!branch) {
-      throw new ApiError(HTTP_STATUS.NOT_FOUND, "Branch not found.");
-    }
-
     const center = await centerRepository.findById(
       payload.centerId!.toString(),
     );
 
     if (!center) {
       throw new ApiError(HTTP_STATUS.NOT_FOUND, "Center not found.");
-    }
-
-    if (branch.companyId._id.toString() !== payload.companyId!.toString()) {
-      throw new ApiError(
-        HTTP_STATUS.BAD_REQUEST,
-        "Branch does not belong to the selected company.",
-      );
     }
 
     if (center.companyId._id.toString() !== payload.companyId!.toString()) {
@@ -59,16 +43,8 @@ class RoomService extends BaseService<IRoom> {
       );
     }
 
-    if (center.branchId._id.toString() !== payload.branchId!.toString()) {
-      throw new ApiError(
-        HTTP_STATUS.BAD_REQUEST,
-        "Center does not belong to the selected branch.",
-      );
-    }
-
     const existingCode = await roomRepository.findByRoomCode(
       payload.companyId!.toString(),
-      payload.branchId!.toString(),
       payload.centerId!.toString(),
       payload.roomCode!,
     );
@@ -79,7 +55,6 @@ class RoomService extends BaseService<IRoom> {
 
     const existingName = await roomRepository.findByRoomName(
       payload.companyId!.toString(),
-      payload.branchId!.toString(),
       payload.centerId!.toString(),
       payload.roomName!,
     );
@@ -139,7 +114,6 @@ class RoomService extends BaseService<IRoom> {
     if (payload.roomCode && payload.roomCode !== room.roomCode) {
       const existingCode = await roomRepository.findByRoomCode(
         room.companyId._id.toString(),
-        room.branchId._id.toString(),
         room.centerId._id.toString(),
         payload.roomCode,
       );
@@ -152,7 +126,6 @@ class RoomService extends BaseService<IRoom> {
     if (payload.roomName && payload.roomName !== room.roomName) {
       const existingName = await roomRepository.findByRoomName(
         room.companyId._id.toString(),
-        room.branchId._id.toString(),
         room.centerId._id.toString(),
         payload.roomName,
       );

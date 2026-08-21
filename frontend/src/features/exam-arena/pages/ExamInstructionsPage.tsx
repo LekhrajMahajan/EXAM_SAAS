@@ -13,6 +13,7 @@ interface CandidateInfo {
   fullName?: string
   applicationNo?: string
   examId?: string
+  photo?: string
 }
 
 interface ExamMeta {
@@ -22,6 +23,15 @@ interface ExamMeta {
   examDate: string
   startTime: string
   duration: number
+  securitySettings?: {
+    faceDetectionEnabled?: boolean
+    faceDetectionLimit?: number
+    multipleFacesEnabled?: boolean
+    multipleFacesLimit?: number
+    proctoringWarningEnabled?: boolean
+    proctoringWarningLimit?: number
+    tabSwitchingEnabled?: boolean
+  }
 }
 
 export function ExamInstructionsPage () {
@@ -34,8 +44,10 @@ export function ExamInstructionsPage () {
 
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null)
   const [isFaceCaptureMode, setIsFaceCaptureMode] = useState(false)
+  const [snapshotBase64, setSnapshotBase64] = useState<string | null>(null)
   const [capturedImage, setCapturedImage] = useState<string | null>(null)
   const [faceApiLoaded, setFaceApiLoaded] = useState(false)
+  const [isScanning, setIsScanning] = useState(false)
   const [faceCaptureStatus, setFaceCaptureStatus] = useState('Loading camera...')
   const videoRef = useRef<HTMLVideoElement>(null)
 
@@ -73,6 +85,15 @@ export function ExamInstructionsPage () {
         const meta: ExamMeta = JSON.parse(examMetaStr)
         setCandidateInfo(cInfo)
         setExamMeta(meta)
+        
+        setAgreements({
+          faceMonitoring: !meta.securitySettings?.faceDetectionEnabled,
+          multipleFaces: !meta.securitySettings?.multipleFacesEnabled,
+          warningsLimit: !meta.securitySettings?.proctoringWarningEnabled,
+          tabSwitching: !meta.securitySettings?.tabSwitchingEnabled,
+          autoSubmit: false,
+          noRefresh: false
+        })
 
         const examId = meta._id
         const sessionId = localStorage.getItem('candidate_session_id')
@@ -88,10 +109,10 @@ export function ExamInstructionsPage () {
 
         setExamData(response.data.data)
 
-        // Pre-load face API models in background
+        // Load face-api models
         const MODEL_URL = 'https://cdn.jsdelivr.net/gh/vladmandic/face-api/model/'
         await Promise.all([
-          faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+          faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
           faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
           faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
         ])
@@ -138,83 +159,152 @@ export function ExamInstructionsPage () {
     }
   }, [examMeta])
 
-  const captureBaselineFace = async () => {
+  const takeSnapshot = () => {
     if (!videoRef.current) return
 
-    setFaceCaptureStatus('Analyzing face...')
-    const detections = await faceapi
-      .detectAllFaces(videoRef.current, new faceapi.TinyFaceDetectorOptions())
-      .withFaceLandmarks()
-      .withFaceDescriptors()
-
-    if (detections && detections.length === 1) {
-      setFaceCaptureStatus('Face captured successfully!')
-
-      // Save the baseline descriptor array to localStorage
-      localStorage.setItem(
-        'baseline_face_descriptor',
-        JSON.stringify(Array.from(detections[0].descriptor)),
-      )
-
-      // Capture baseline image frame
-      if (videoRef.current) {
-        const canvas = document.createElement('canvas')
-        canvas.width = videoRef.current.videoWidth
-        canvas.height = videoRef.current.videoHeight
-        const ctx = canvas.getContext('2d')
-        if (ctx) {
-          ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height)
-          const imageUrl = canvas.toDataURL('image/jpeg', 0.8)
-          localStorage.setItem('baseline_face_image', imageUrl)
-          setCapturedImage(imageUrl)
-        }
-      }
-
-      // Stop video track
+    const canvas = document.createElement('canvas')
+    canvas.width = videoRef.current.videoWidth
+    canvas.height = videoRef.current.videoHeight
+    const ctx = canvas.getContext('2d')
+    if (ctx) {
+      ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height)
+    }
+    const capturedBase64 = canvas.toDataURL('image/jpeg')
+    
+    setSnapshotBase64(capturedBase64)
+    
+    // Stop video track
+    if (videoRef.current.srcObject) {
       const stream = videoRef.current.srcObject as MediaStream
       if (stream) {
         stream.getTracks().forEach((track) => track.stop())
       }
-      
-      setIsFaceCaptureMode(false)
-    } else if (detections && detections.length > 1) {
-      setFaceCaptureStatus('Multiple faces detected! Please ensure only your single face is visible.')
-    } else {
-      setFaceCaptureStatus('No face detected. Please face the camera properly and try again.')
+    }
+    setFaceCaptureStatus('Photo captured. Click "Scan & Verify" to proceed.')
+  }
+
+  const verifySnapshot = async () => {
+    if (!snapshotBase64) return
+
+    setIsScanning(true)
+    setFaceCaptureStatus('Scanning face and verifying...')
+
+    try {
+      const snapshotImg = document.createElement('img')
+      snapshotImg.src = snapshotBase64
+      await new Promise((resolve, reject) => {
+        snapshotImg.onload = resolve
+        snapshotImg.onerror = reject
+      })
+
+      const liveDetections = await faceapi
+        .detectAllFaces(snapshotImg, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.3 }))
+        .withFaceLandmarks()
+        .withFaceDescriptors()
+
+      if (liveDetections && liveDetections.length === 1) {
+        if (!candidateInfo?.photo) {
+          setFaceCaptureStatus('Verification failed. No profile photo found for this candidate.')
+          setIsScanning(false)
+          return
+        }
+
+        setFaceCaptureStatus('Verifying against profile photo...')
+        
+        const imgElement = document.createElement('img')
+        imgElement.crossOrigin = 'anonymous'
+        imgElement.src = candidateInfo.photo
+        
+        await new Promise((resolve, reject) => {
+          imgElement.onload = resolve
+          imgElement.onerror = reject
+        })
+
+        const originalDetection = await faceapi
+          .detectSingleFace(imgElement, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.3 }))
+          .withFaceLandmarks()
+          .withFaceDescriptor()
+
+        if (!originalDetection) {
+          setFaceCaptureStatus('Could not detect face in profile photo. Verification failed.')
+          setIsScanning(false)
+          return
+        } else {
+          const distance = faceapi.euclideanDistance(originalDetection.descriptor, liveDetections[0].descriptor)
+          if (distance > 0.6) {
+            setFaceCaptureStatus(`Verification failed. Face does not match profile photo. Please try again.`)
+            setIsScanning(false)
+            return
+          }
+        }
+
+        setFaceCaptureStatus('Face verified successfully!')
+
+        // Save the live baseline descriptor array to localStorage (robust for proctoring)
+        localStorage.setItem(
+          'baseline_face_descriptor',
+          JSON.stringify(Array.from(liveDetections[0].descriptor)),
+        )
+
+        localStorage.setItem('baseline_face_image', snapshotBase64)
+        setCapturedImage(snapshotBase64)
+
+        setIsFaceCaptureMode(false)
+        setSnapshotBase64(null)
+        setIsScanning(false)
+      } else if (liveDetections && liveDetections.length > 1) {
+        setFaceCaptureStatus('Multiple faces detected! Please retake photo.')
+        setIsScanning(false)
+      } else {
+        setFaceCaptureStatus('No face detected. Please retake photo.')
+        setIsScanning(false)
+      }
+    } catch (e) {
+      console.error("Error verifying against profile photo:", e)
+      setFaceCaptureStatus('Error loading profile photo. Verification failed.')
+      setIsScanning(false)
     }
   }
 
-  // Handle Face Capture Initialization only when user is ready
+  // Handle Face Capture Initialization only when user is ready and no snapshot taken
   useEffect(() => {
-    if (isFaceCaptureMode && videoRef.current) {
-      navigator.mediaDevices
-        .getUserMedia({ video: true })
-        .then((stream) => {
-          if (videoRef.current) {
-            videoRef.current.srcObject = stream
-            videoRef.current.play()
-            setFaceCaptureStatus('Please position your face and click "Capture Now".')
-          }
-        })
-        .catch((err) => {
-          console.error('Camera error:', err)
-          setFaceCaptureStatus('Camera access denied. Please allow camera access to proceed.')
-        })
+    if (isFaceCaptureMode && !snapshotBase64) {
+      // Need a small timeout to ensure videoRef is available after state change
+      setTimeout(() => {
+        if (videoRef.current) {
+          navigator.mediaDevices
+            .getUserMedia({ video: true })
+            .then((stream) => {
+              if (videoRef.current) {
+                videoRef.current.srcObject = stream
+                videoRef.current.play()
+                setFaceCaptureStatus('Please position your face and click "Take Photo".')
+              }
+            })
+            .catch((err) => {
+              console.error('Camera error:', err)
+              setFaceCaptureStatus('Camera access denied. Please allow camera access to proceed.')
+            })
+        }
+      }, 100)
     }
-  }, [isFaceCaptureMode])
+  }, [isFaceCaptureMode, snapshotBase64])
 
   const handleTakePhotoClick = () => {
     if (!faceApiLoaded) {
       alert('Proctoring models are still loading, please wait a moment.')
       return
     }
+    setSnapshotBase64(null)
+    setCapturedImage(null)
     setIsFaceCaptureMode(true)
+    setIsScanning(false)
     setFaceCaptureStatus('Starting camera...')
   }
 
   const handleStartExamClick = () => {
     if (!capturedImage) {
-      alert('Please capture your face photo first.')
+      alert('Please verify your identity first.')
       return
     }
     navigate('/exam-arena')
@@ -283,12 +373,19 @@ export function ExamInstructionsPage () {
               Please read all instructions carefully before starting.
             </p>
           </div>
-          <div className='text-right'>
-            <p className='text-sm font-medium text-muted-foreground'>Candidate</p>
-            <p className='text-lg font-bold text-primary'>
-              {candidateInfo?.candidateName || candidateInfo?.fullName || 'Candidate'}
-            </p>
-            <p className='text-xs text-muted-foreground'>{candidateInfo?.applicationNo}</p>
+          <div className='flex items-center gap-4 text-right'>
+            {candidateInfo?.photo && (
+              <div className="w-16 h-16 rounded-md overflow-hidden border border-border shadow-sm flex-shrink-0">
+                <img src={candidateInfo.photo} alt="Candidate Profile" className="w-full h-full object-cover" crossOrigin="anonymous" />
+              </div>
+            )}
+            <div>
+              <p className='text-sm font-medium text-muted-foreground'>Candidate</p>
+              <p className='text-lg font-bold text-primary'>
+                {candidateInfo?.candidateName || candidateInfo?.fullName || 'Candidate'}
+              </p>
+              <p className='text-xs text-muted-foreground'>{candidateInfo?.applicationNo}</p>
+            </div>
           </div>
         </div>
 
@@ -300,52 +397,66 @@ export function ExamInstructionsPage () {
                 <CardTitle className='text-base'>Proctoring & Anti-Cheat Guidelines</CardTitle>
               </CardHeader>
               <CardContent className='pt-4 space-y-3 text-foreground/80 text-sm leading-snug flex-grow'>
-                <div className='flex items-start gap-3'>
-                  <Checkbox 
-                    id="faceMonitoring" 
-                    checked={agreements.faceMonitoring}
-                    onCheckedChange={(c) => setAgreements(prev => ({...prev, faceMonitoring: !!c}))}
-                    className="mt-1"
-                  />
-                  <label htmlFor="faceMonitoring" className="cursor-pointer">
-                    <strong>Face Monitoring:</strong> Your webcam will be active during the entire
-                    exam. If your face is not detected for 15 seconds, you will receive a warning.
-                  </label>
-                </div>
-                <div className='flex items-start gap-3'>
-                  <Checkbox 
-                    id="multipleFaces" 
-                    checked={agreements.multipleFaces}
-                    onCheckedChange={(c) => setAgreements(prev => ({...prev, multipleFaces: !!c}))}
-                    className="mt-1"
-                  />
-                  <label htmlFor="multipleFaces" className="cursor-pointer">
-                    <strong>Multiple/Wrong Faces:</strong> If multiple faces or someone else&apos;s face is detected for 15 seconds, you will receive a warning.
-                  </label>
-                </div>
-                <div className='flex items-start gap-3'>
-                  <Checkbox 
-                    id="warningsLimit" 
-                    checked={agreements.warningsLimit}
-                    onCheckedChange={(c) => setAgreements(prev => ({...prev, warningsLimit: !!c}))}
-                    className="mt-1"
-                  />
-                  <label htmlFor="warningsLimit" className="cursor-pointer">
-                    <strong>3 Warnings Limit:</strong> After 3 proctoring warnings (no face or wrong face), the exam will <strong>auto-submit immediately</strong>.
-                  </label>
-                </div>
-                <div className='flex items-start gap-3'>
-                  <Checkbox 
-                    id="tabSwitching" 
-                    checked={agreements.tabSwitching}
-                    onCheckedChange={(c) => setAgreements(prev => ({...prev, tabSwitching: !!c}))}
-                    className="mt-1"
-                  />
-                  <label htmlFor="tabSwitching" className="cursor-pointer">
-                    <strong>Tab Switching:</strong> Switching tabs, minimizing the browser window,
-                    or navigating away will result in an <strong>instant auto-submission</strong>.
-                  </label>
-                </div>
+                {examMeta?.securitySettings?.faceDetectionEnabled && (
+                  <div className='flex items-start gap-3'>
+                    <Checkbox 
+                      id="faceMonitoring" 
+                      checked={agreements.faceMonitoring}
+                      onCheckedChange={(c) => setAgreements(prev => ({...prev, faceMonitoring: !!c}))}
+                      className="mt-1"
+                    />
+                    <label htmlFor="faceMonitoring" className="cursor-pointer">
+                      <strong>Face Monitoring:</strong> Your webcam will be active during the entire
+                      exam. If your face is not detected for {(() => {
+                        const limit = examMeta.securitySettings?.faceDetectionLimit || 15;
+                        return limit >= 60 && limit % 60 === 0 ? `${limit / 60} minute${limit / 60 > 1 ? 's' : ''}` : `${limit} second${limit > 1 ? 's' : ''}`;
+                      })()}, you will receive a warning.
+                    </label>
+                  </div>
+                )}
+                {examMeta?.securitySettings?.multipleFacesEnabled && (
+                  <div className='flex items-start gap-3'>
+                    <Checkbox 
+                      id="multipleFaces" 
+                      checked={agreements.multipleFaces}
+                      onCheckedChange={(c) => setAgreements(prev => ({...prev, multipleFaces: !!c}))}
+                      className="mt-1"
+                    />
+                    <label htmlFor="multipleFaces" className="cursor-pointer">
+                      <strong>Multiple/Wrong Faces:</strong> If multiple faces or someone else&apos;s face is detected for {(() => {
+                        const limit = examMeta.securitySettings?.multipleFacesLimit || 15;
+                        return limit >= 60 && limit % 60 === 0 ? `${limit / 60} minute${limit / 60 > 1 ? 's' : ''}` : `${limit} second${limit > 1 ? 's' : ''}`;
+                      })()}, you will receive a warning.
+                    </label>
+                  </div>
+                )}
+                {examMeta?.securitySettings?.proctoringWarningEnabled && (
+                  <div className='flex items-start gap-3'>
+                    <Checkbox 
+                      id="warningsLimit" 
+                      checked={agreements.warningsLimit}
+                      onCheckedChange={(c) => setAgreements(prev => ({...prev, warningsLimit: !!c}))}
+                      className="mt-1"
+                    />
+                    <label htmlFor="warningsLimit" className="cursor-pointer">
+                      <strong>{examMeta.securitySettings.proctoringWarningLimit || 3} Warnings Limit:</strong> After {examMeta.securitySettings.proctoringWarningLimit || 3} proctoring warnings (no face or wrong face), the exam will <strong>auto-submit immediately</strong>.
+                    </label>
+                  </div>
+                )}
+                {examMeta?.securitySettings?.tabSwitchingEnabled && (
+                  <div className='flex items-start gap-3'>
+                    <Checkbox 
+                      id="tabSwitching" 
+                      checked={agreements.tabSwitching}
+                      onCheckedChange={(c) => setAgreements(prev => ({...prev, tabSwitching: !!c}))}
+                      className="mt-1"
+                    />
+                    <label htmlFor="tabSwitching" className="cursor-pointer">
+                      <strong>Tab Switching:</strong> Switching tabs, minimizing the browser window,
+                      or navigating away will result in an <strong>instant auto-submission</strong>.
+                    </label>
+                  </div>
+                )}
                 <div className='flex items-start gap-3'>
                   <Checkbox 
                     id="autoSubmit" 
@@ -404,10 +515,10 @@ export function ExamInstructionsPage () {
                 {!isFaceCaptureMode && !capturedImage && (
                   <div className="text-center w-full">
                     <p className="text-sm text-muted-foreground mb-4">
-                      Please take a clear photo of your face. This will be used for live proctoring during the exam.
+                      Please position your face to verify your identity against your registered profile photo.
                     </p>
                     <Button onClick={handleTakePhotoClick} className="w-full">
-                      <Camera className="mr-2 h-4 w-4" /> Take Photo
+                      <Camera className="mr-2 h-4 w-4" /> Verify Identity
                     </Button>
                   </div>
                 )}
@@ -415,26 +526,69 @@ export function ExamInstructionsPage () {
                 {isFaceCaptureMode && (
                   <div className="w-full">
                     <div className="relative w-full aspect-video bg-black rounded-lg overflow-hidden border border-border shadow-inner mb-3 group">
-                      <video
-                        ref={videoRef}
-                        className="w-full h-full object-cover"
-                        autoPlay
-                        playsInline
-                        muted
-                      />
-                      <div className="absolute inset-0 flex items-end justify-center pb-4 bg-gradient-to-t from-black/60 to-transparent">
-                        <Button 
-                          onClick={captureBaselineFace} 
-                          className="shadow-lg shadow-black/50 bg-primary hover:bg-primary/90 text-white font-bold"
-                        >
-                          <Camera className="mr-2 h-4 w-4" />
-                          Capture Now
-                        </Button>
-                      </div>
+                      {!snapshotBase64 ? (
+                        <>
+                          <video
+                            ref={videoRef}
+                            className="w-full h-full object-cover"
+                            autoPlay
+                            playsInline
+                            muted
+                          />
+                          <div className="absolute inset-0 flex items-end justify-center pb-4 bg-gradient-to-t from-black/60 to-transparent">
+                            <Button 
+                              onClick={takeSnapshot} 
+                              className="shadow-lg shadow-black/50 bg-primary hover:bg-primary/90 text-white font-bold"
+                            >
+                              <Camera className="mr-2 h-4 w-4" />
+                              Take Photo
+                            </Button>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <img src={snapshotBase64} alt="Snapshot" className="w-full h-full object-cover" />
+                          {isScanning && (
+                            <div className="absolute inset-0 z-20 bg-black/40 flex flex-col items-center justify-center backdrop-blur-[2px]">
+                              <style>{`
+                                @keyframes scanline {
+                                  0% { top: 0%; }
+                                  50% { top: 100%; }
+                                  100% { top: 0%; }
+                                }
+                              `}</style>
+                              <div className="relative w-2/3 h-2/3 border-2 border-primary/50 rounded-lg overflow-hidden flex items-center justify-center">
+                                <div className="absolute left-0 right-0 h-1 bg-primary shadow-[0_0_15px_3px_hsl(var(--primary))]" style={{ animation: 'scanline 2s ease-in-out infinite' }} />
+                                <Loader2 className="w-8 h-8 text-primary animate-spin opacity-50" />
+                              </div>
+                              <p className="mt-4 text-primary font-bold animate-pulse tracking-wide text-sm bg-black/50 px-3 py-1 rounded-full">{faceCaptureStatus}</p>
+                            </div>
+                          )}
+                          {!isScanning && (
+                            <div className="absolute inset-0 flex items-end justify-center pb-4 gap-3 bg-linear-to-t from-black/60 to-transparent">
+                              <Button 
+                                variant="secondary"
+                                onClick={() => setSnapshotBase64(null)} 
+                                className="shadow-lg shadow-black/50 font-bold"
+                              >
+                                Retake Photo
+                              </Button>
+                              <Button 
+                                onClick={verifySnapshot} 
+                                className="shadow-lg shadow-black/50 bg-primary hover:bg-primary/90 text-white font-bold"
+                              >
+                                Scan & Verify
+                              </Button>
+                            </div>
+                          )}
+                        </>
+                      )}
                     </div>
-                    <p className="text-xs font-medium text-foreground/80 animate-pulse text-center">
-                      {faceCaptureStatus}
-                    </p>
+                    {!isScanning && (
+                      <p className={`text-xs font-medium text-foreground/80 animate-pulse text-center`}>
+                        {faceCaptureStatus}
+                      </p>
+                    )}
                   </div>
                 )}
 
@@ -444,10 +598,10 @@ export function ExamInstructionsPage () {
                       <img src={capturedImage} alt="Captured Face" className="w-full h-full object-cover opacity-90" />
                     </div>
                     <p className="text-sm font-medium text-success flex items-center justify-center gap-2">
-                      <CheckCircle2 className="h-4 w-4" /> Photo Captured Successfully
+                      <CheckCircle2 className="h-4 w-4" /> Identity Verified Successfully
                     </p>
                     <Button variant="outline" size="sm" onClick={handleTakePhotoClick} className="mt-3 w-full">
-                      Retake Photo
+                      Retry Scan
                     </Button>
                   </div>
                 )}

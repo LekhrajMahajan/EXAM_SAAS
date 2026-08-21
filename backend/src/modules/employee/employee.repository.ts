@@ -5,7 +5,7 @@ import { BaseRepository } from "../../common/base.repository";
 
 class EmployeeRepository extends BaseRepository<IEmployee> {
   constructor() {
-    super(Employee as any, ["companyId", "branchId", "centerId", "reportingManager", "userId"]);
+    super(Employee as any, ["companyId", "centerId", "reportingManager", "userId"]);
   }
 
   /*
@@ -44,7 +44,7 @@ class EmployeeRepository extends BaseRepository<IEmployee> {
     }
 
     // 2. Handle Filters (Branch, Center, Role, Status, Verification, Joining Date, Reporting Manager)
-    if (rest.branchId) modifiedExtraQuery.branchId = new mongoose.Types.ObjectId(rest.branchId as string);
+
     if (rest.centerId) modifiedExtraQuery.centerId = new mongoose.Types.ObjectId(rest.centerId as string);
     if (rest.role) modifiedExtraQuery.role = rest.role;
     if (rest.status) modifiedExtraQuery.status = rest.status;
@@ -92,7 +92,7 @@ class EmployeeRepository extends BaseRepository<IEmployee> {
     return Employee.findOne({
       userId: new mongoose.Types.ObjectId(userId),
       isDeleted: false,
-    }).populate(["branchId", "centerId", "reportingManager"]);
+    }).populate(["centerId", "reportingManager"]);
   }
 
   /*

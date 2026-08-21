@@ -10,5 +10,4 @@ export { requirePolicy, requirePolicy as PolicyMiddleware } from "./policy.middl
 export { auditLogMiddleware, auditLogMiddleware as AuditMiddleware } from "./audit-log";
 export { activityLogMiddleware } from "./activity-log";
 export * from "./decorators";
-export { checkPasswordChange, checkBranchSetup, BranchManagerGuard } from "./branchManagerGuard.middleware";
 export { checkCenterPasswordChange, checkCenterSetup, CenterManagerGuard } from "./centerManagerGuard.middleware";

@@ -37,8 +37,6 @@ export const createNotificationSchema = z.object({
 
     companyId: objectId.optional(),
 
-    branchId: objectId.optional(),
-
     examId: objectId.optional(),
 
     candidateId: objectId.optional(),

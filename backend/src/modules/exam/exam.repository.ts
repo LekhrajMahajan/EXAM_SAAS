@@ -53,14 +53,14 @@ class ExamRepository extends BaseRepository<IExam> {
     search?: string;
 
     companyId?: string;
-    branchId?: string;
+
     centerId?: string;
     shiftId?: string;
     subjectId?: string;
     paperId?: string;
 
     approvalStatus?: ExamApprovalStatus;
-    status?: ExamStatus;
+    status?: ExamStatus | string;
     [key: string]: any;
   }): Promise<any> {
     const {
@@ -69,7 +69,7 @@ class ExamRepository extends BaseRepository<IExam> {
       search,
 
       companyId,
-      branchId,
+
       centerId,
       shiftId,
       subjectId,
@@ -77,14 +77,17 @@ class ExamRepository extends BaseRepository<IExam> {
 
       approvalStatus,
       status,
+      
+      _id,
     } = filters;
 
     const query: Record<string, unknown> = {
       isDeleted: false,
     };
 
+    if (_id) query._id = _id;
     if (companyId) query.companyId = companyId;
-    if (branchId) query.branchId = branchId;
+
     if (centerId) query.centerId = centerId;
     if (shiftId) query.shiftId = shiftId;
     if (subjectId) query.subjectId = subjectId;
@@ -92,7 +95,22 @@ class ExamRepository extends BaseRepository<IExam> {
 
     if (approvalStatus) query.approvalStatus = approvalStatus;
 
-    if (status) query.status = status;
+    if (status) {
+      const statusStr = status as string;
+      if (statusStr === 'PENDING_RESULT_GENERATE') {
+        query.status = { $in: ['EXAM_ENDED', 'COMPLETED'] };
+        query.isResultGenerated = { $ne: true };
+      } else if (statusStr === 'PENDING_PUBLISH_RESULT') {
+        query.isResultGenerated = true;
+        query.isResultPublished = { $ne: true };
+      } else if (statusStr === 'RESULT_PUBLISHED') {
+        query.isResultPublished = true;
+      } else if (statusStr === 'EXAM_STARTED') {
+        query.status = { $in: ['ACTIVE', 'EXAM_STARTED'] };
+      } else {
+        query.status = status;
+      }
+    }
 
     if (search) {
       query.$text = {
@@ -105,7 +123,7 @@ class ExamRepository extends BaseRepository<IExam> {
     const [exams, total] = await Promise.all([
       Exam.find(query)
         .populate("companyId")
-        .populate("branchId")
+
         .populate("centerId")
         .populate("shiftId")
         .populate("subjectId")
@@ -139,7 +157,7 @@ class ExamRepository extends BaseRepository<IExam> {
   async getPreview(id: string) {
     return await Exam.findOne({ _id: id, isDeleted: false })
       .populate("companyId")
-      .populate("branchId")
+
       .populate("centerId")
       .populate("shiftId")
       .populate("subjectId")

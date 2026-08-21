@@ -1,18 +1,16 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
-import { useConfirm } from "@/providers/ConfirmProvider";
+import { useNavigate, useLocation } from "react-router-dom";
 import { MasterAdminStatCard as StatCard } from "../components/cards/MasterAdminStatCard";
 import { GenericDataTable } from "@/shared/components/datatable/GenericDataTable";
 import { GenericPagination } from "@/shared/components/pagination/GenericPagination";
-import { useCompanies, useApproveCompany, useRejectCompany, useApprovalStatistics } from "../hooks/company.hooks";
+import { useCompanies, useApprovalStatistics } from "../hooks/company.hooks";
 import type { TableColumn } from "@/shared/types";
 import type { Company } from "../types/company.types";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
-import { Search, CheckCircle, XCircle, Clock, FileCheck, XSquare, AlertCircle, Eye } from "lucide-react";
+import { Search, CheckCircle, Clock, FileCheck, XSquare, AlertCircle, Eye } from "lucide-react";
 import { Badge } from "@/shared/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
 
 export const CompanyApprovalPage = () => {
   const navigate = useNavigate();
@@ -20,10 +18,10 @@ export const CompanyApprovalPage = () => {
   const [pageSize, setPageSize] = useState(10);
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
-  const [currentTab, setCurrentTab] = useState<string>("PENDING");
+  const location = useLocation();
+  const [currentTab, setCurrentTab] = useState<string>(location.state?.defaultTab || "PENDING");
   
-  const { toast } = useToast();
-  const confirm = useConfirm();
+
 
   const { data: stats } = useApprovalStatistics();
 
@@ -35,8 +33,7 @@ export const CompanyApprovalPage = () => {
     paymentStatus: "PENDING",
   });
 
-  const { mutateAsync: approveCompany } = useApproveCompany();
-  const { mutateAsync: rejectCompany } = useRejectCompany();
+
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,22 +41,7 @@ export const CompanyApprovalPage = () => {
     setPageIndex(0);
   };
 
-  const handleApprove = async (company: Company) => {
-    if (await confirm(`Are you sure you want to approve ${company.companyName}?`)) {
-      await approveCompany(company._id);
-    }
-  };
 
-  const handleReject = async (company: Company) => {
-    if (await confirm(`Are you sure you want to reject ${company.companyName}?`)) {
-      // For now, prompt for reason. Later, we can have a full Dialog for this if needed, 
-      // but a simple prompt works for quick rejection from table.
-      const reason = window.prompt("Please enter a rejection reason:");
-      if (reason) {
-        await rejectCompany({ id: company._id, reason, remarks: "" });
-      }
-    }
-  };
 
   const columns: TableColumn<Company>[] = [
     {
@@ -128,16 +110,7 @@ export const CompanyApprovalPage = () => {
           <Button variant="ghost" size="icon" title="View Details" onClick={() => navigate(`/master-admin/company-approvals/${row._id}`)}>
             <Eye className="w-4 h-4 text-primary" />
           </Button>
-          {(row.approvalStatus === "PENDING" || row.approvalStatus === "UNDER_REVIEW") && (
-            <>
-              <Button variant="ghost" size="icon" title="Approve" onClick={() => handleApprove(row)}>
-                <CheckCircle className="w-4 h-4 text-primary" />
-              </Button>
-              <Button variant="ghost" size="icon" title="Reject" onClick={() => handleReject(row)}>
-                <XCircle className="w-4 h-4 text-primary" />
-              </Button>
-            </>
-          )}
+          {/* Quick approve/reject removed to enforce document preview inside details page */}
         </div>
       ),
     },

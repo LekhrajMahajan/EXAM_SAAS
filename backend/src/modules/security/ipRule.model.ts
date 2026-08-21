@@ -35,10 +35,6 @@ const ipRuleSchema = new Schema<IIpRule>(
       ref: "Company",
       index: true,
     },
-    branchId: {
-      type: Schema.Types.ObjectId,
-      ref: "Branch",
-    },
     examCenterId: {
       type: Schema.Types.ObjectId,
       ref: "ExamCenter",

@@ -62,7 +62,8 @@ const router = Router();
 router.get(
   "/statistics",
   authenticate,
-  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.BRANCH_MANAGER),
+  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN,
+    ),
   getCenterStatistics,
 );
 
@@ -78,7 +79,8 @@ router.get("/test-create-mock", testCreateMock);
 router.get(
   "/pending-verifications",
   authenticate,
-  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.BRANCH_MANAGER),
+  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN,
+    ),
   getPendingVerifications,
 );
 
@@ -91,28 +93,32 @@ router.get(
 router.get(
   "/dashboard",
   authenticate,
-  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.BRANCH_MANAGER, UserRole.CENTER_MANAGER),
+  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN,
+    UserRole.CENTER_MANAGER),
   getCenterDashboard,
 );
 
 router.get(
   "/readiness",
   authenticate,
-  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.BRANCH_MANAGER, UserRole.CENTER_MANAGER),
+  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN,
+    UserRole.CENTER_MANAGER),
   getCenterReadiness,
 );
 
 router.get(
   "/compliance",
   authenticate,
-  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.BRANCH_MANAGER, UserRole.CENTER_MANAGER),
+  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN,
+    UserRole.CENTER_MANAGER),
   getCenterCompliance,
 );
 
 router.get(
   "/commercial-agreement",
   authenticate,
-  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.BRANCH_MANAGER, UserRole.CENTER_MANAGER),
+  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN,
+    UserRole.CENTER_MANAGER),
   getCommercialAgreement,
 );
 
@@ -125,21 +131,24 @@ router.get(
 router.post(
   "/onboarding/start",
   authenticate,
-  authorize(UserRole.CENTER_MANAGER, UserRole.COMPANY_ADMIN, UserRole.BRANCH_MANAGER),
+  authorize(UserRole.CENTER_MANAGER, UserRole.COMPANY_ADMIN,
+    ),
   startOnboarding,
 );
 
 router.get(
   "/onboarding/status",
   authenticate,
-  authorize(UserRole.CENTER_MANAGER, UserRole.COMPANY_ADMIN, UserRole.BRANCH_MANAGER),
+  authorize(UserRole.CENTER_MANAGER, UserRole.COMPANY_ADMIN,
+    ),
   getOnboardingStatus,
 );
 
 router.put(
   "/onboarding/agreement",
   authenticate,
-  authorize(UserRole.CENTER_MANAGER, UserRole.COMPANY_ADMIN, UserRole.BRANCH_MANAGER),
+  authorize(UserRole.CENTER_MANAGER, UserRole.COMPANY_ADMIN,
+    ),
   validate(saveOnboardingStepSchema),
   saveOnboardingAgreement,
 );
@@ -147,7 +156,8 @@ router.put(
 router.put(
   "/onboarding/profile",
   authenticate,
-  authorize(UserRole.CENTER_MANAGER, UserRole.COMPANY_ADMIN, UserRole.BRANCH_MANAGER),
+  authorize(UserRole.CENTER_MANAGER, UserRole.COMPANY_ADMIN,
+    ),
   validate(saveOnboardingStepSchema),
   saveOnboardingProfile,
 );
@@ -155,7 +165,8 @@ router.put(
 router.put(
   "/onboarding/documents",
   authenticate,
-  authorize(UserRole.CENTER_MANAGER, UserRole.COMPANY_ADMIN, UserRole.BRANCH_MANAGER),
+  authorize(UserRole.CENTER_MANAGER, UserRole.COMPANY_ADMIN,
+    ),
   validate(saveOnboardingStepSchema),
   saveOnboardingDocuments,
 );
@@ -163,7 +174,8 @@ router.put(
 router.put(
   "/onboarding/staff",
   authenticate,
-  authorize(UserRole.CENTER_MANAGER, UserRole.COMPANY_ADMIN, UserRole.BRANCH_MANAGER),
+  authorize(UserRole.CENTER_MANAGER, UserRole.COMPANY_ADMIN,
+    ),
   validate(saveOnboardingStepSchema),
   saveOnboardingStaff,
 );
@@ -171,7 +183,8 @@ router.put(
 router.put(
   "/onboarding/infrastructure",
   authenticate,
-  authorize(UserRole.CENTER_MANAGER, UserRole.COMPANY_ADMIN, UserRole.BRANCH_MANAGER),
+  authorize(UserRole.CENTER_MANAGER, UserRole.COMPANY_ADMIN,
+    ),
   validate(saveOnboardingStepSchema),
   saveOnboardingInfrastructure,
 );
@@ -179,7 +192,8 @@ router.put(
 router.put(
   "/onboarding/shift-planning",
   authenticate,
-  authorize(UserRole.CENTER_MANAGER, UserRole.COMPANY_ADMIN, UserRole.BRANCH_MANAGER),
+  authorize(UserRole.CENTER_MANAGER, UserRole.COMPANY_ADMIN,
+    ),
   validate(saveOnboardingStepSchema),
   saveOnboardingShiftPlanning,
 );
@@ -187,7 +201,8 @@ router.put(
 router.put(
   "/onboarding/compliance",
   authenticate,
-  authorize(UserRole.CENTER_MANAGER, UserRole.COMPANY_ADMIN, UserRole.BRANCH_MANAGER),
+  authorize(UserRole.CENTER_MANAGER, UserRole.COMPANY_ADMIN,
+    ),
   validate(saveOnboardingStepSchema),
   saveOnboardingCompliance,
 );
@@ -195,7 +210,8 @@ router.put(
 router.post(
   "/onboarding/submit",
   authenticate,
-  authorize(UserRole.CENTER_MANAGER, UserRole.COMPANY_ADMIN, UserRole.BRANCH_MANAGER),
+  authorize(UserRole.CENTER_MANAGER, UserRole.COMPANY_ADMIN,
+    ),
   submitOnboarding,
 );
 
@@ -251,35 +267,40 @@ import {
 router.get(
   "/staff/all",
   authenticate,
-  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.BRANCH_MANAGER, UserRole.CENTER_MANAGER),
+  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN,
+    UserRole.CENTER_MANAGER),
   getCenterStaffs,
 );
 
 router.post(
   "/staff/create",
   authenticate,
-  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.BRANCH_MANAGER, UserRole.CENTER_MANAGER),
+  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN,
+    UserRole.CENTER_MANAGER),
   createCenterStaff,
 );
 
 router.put(
   "/staff/:id",
   authenticate,
-  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.BRANCH_MANAGER, UserRole.CENTER_MANAGER),
+  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN,
+    UserRole.CENTER_MANAGER),
   updateCenterStaff,
 );
 
 router.delete(
   "/staff/:id",
   authenticate,
-  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.BRANCH_MANAGER, UserRole.CENTER_MANAGER),
+  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN,
+    UserRole.CENTER_MANAGER),
   deleteCenterStaff,
 );
 
 router.patch(
   "/staff/:id/verify-otp",
   authenticate,
-  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.BRANCH_MANAGER, UserRole.CENTER_MANAGER),
+  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN,
+    UserRole.CENTER_MANAGER),
   verifyCenterStaffOtp,
 );
 
@@ -292,28 +313,32 @@ router.patch(
 router.get(
   "/labs",
   authenticate,
-  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.BRANCH_MANAGER, UserRole.CENTER_MANAGER),
+  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN,
+    UserRole.CENTER_MANAGER),
   getCenterLabs,
 );
 
 router.post(
   "/labs",
   authenticate,
-  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.BRANCH_MANAGER, UserRole.CENTER_MANAGER),
+  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN,
+    UserRole.CENTER_MANAGER),
   createCenterLab,
 );
 
 router.put(
   "/labs/:id",
   authenticate,
-  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.BRANCH_MANAGER, UserRole.CENTER_MANAGER),
+  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN,
+    UserRole.CENTER_MANAGER),
   updateCenterLab,
 );
 
 router.delete(
   "/labs/:id",
   authenticate,
-  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.BRANCH_MANAGER, UserRole.CENTER_MANAGER),
+  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN,
+    UserRole.CENTER_MANAGER),
   deleteCenterLab,
 );
 
@@ -331,14 +356,16 @@ const upload = multer({ storage: multer.memoryStorage() });
 router.get(
   "/infrastructure",
   authenticate,
-  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.BRANCH_MANAGER, UserRole.CENTER_MANAGER),
+  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN,
+    UserRole.CENTER_MANAGER),
   CenterInfrastructureController.getInfrastructure,
 );
 
 router.post(
   "/infrastructure",
   authenticate,
-  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.BRANCH_MANAGER, UserRole.CENTER_MANAGER),
+  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN,
+    UserRole.CENTER_MANAGER),
   CenterInfrastructureController.saveInfrastructure,
 );
 
@@ -352,21 +379,24 @@ router.post(
 router.get(
   "/photos",
   authenticate,
-  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.BRANCH_MANAGER, UserRole.CENTER_MANAGER),
+  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN,
+    UserRole.CENTER_MANAGER),
   CenterPhotoController.getPhotos,
 );
 
 router.post(
   "/photos",
   authenticate,
-  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.BRANCH_MANAGER, UserRole.CENTER_MANAGER),
+  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN,
+    UserRole.CENTER_MANAGER),
   CenterPhotoController.updatePhoto,
 );
 
 router.post(
   "/photos/upload",
   authenticate,
-  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.BRANCH_MANAGER, UserRole.CENTER_MANAGER),
+  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN,
+    UserRole.CENTER_MANAGER),
   upload.single('file'),
   CenterPhotoController.uploadPhoto,
 );
@@ -374,7 +404,8 @@ router.post(
 router.post(
   "/mou/upload",
   authenticate,
-  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.BRANCH_MANAGER, UserRole.CENTER_MANAGER),
+  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN,
+    UserRole.CENTER_MANAGER),
   upload.single('file'),
   uploadMou,
 );
@@ -389,14 +420,16 @@ import { CenterLocationController } from "./centerLocation.controller";
 router.get(
   "/location",
   authenticate,
-  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.BRANCH_MANAGER, UserRole.CENTER_MANAGER),
+  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN,
+    UserRole.CENTER_MANAGER),
   CenterLocationController.getLocation,
 );
 
 router.patch(
   "/location",
   authenticate,
-  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.BRANCH_MANAGER, UserRole.CENTER_MANAGER),
+  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN,
+    UserRole.CENTER_MANAGER),
   CenterLocationController.updateLocation,
 );
 
@@ -409,7 +442,8 @@ router.patch(
 router.post(
   "/",
   authenticate,
-  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.BRANCH_MANAGER),
+  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN,
+    ),
   validate(createCenterSchema),
   checkUsageLimit("maxCenters", Center),
   createCenter,
@@ -418,28 +452,32 @@ router.post(
 router.post(
   "/send-credentials",
   authenticate,
-  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.BRANCH_MANAGER),
+  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN,
+    ),
   sendCredentialsEmail,
 );
 
 router.get(
   "/",
   authenticate,
-  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.BRANCH_MANAGER, UserRole.CENTER_MANAGER),
+  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN,
+    UserRole.CENTER_MANAGER),
   getCenters,
 );
 
 router.get(
   "/:id",
   authenticate,
-  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.BRANCH_MANAGER, UserRole.CENTER_MANAGER, UserRole.ENTRY_CHECKER),
+  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN,
+    UserRole.CENTER_MANAGER, UserRole.ENTRY_CHECKER),
   getCenterById,
 );
 
 router.patch(
   "/:id",
   authenticate,
-  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.BRANCH_MANAGER),
+  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN,
+    ),
   validate(updateCenterSchema),
   updateCenter,
 );

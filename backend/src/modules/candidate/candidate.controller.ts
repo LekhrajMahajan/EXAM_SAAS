@@ -37,7 +37,6 @@ export const getCandidates = asyncHandler(
       limit: Number(req.query.limit) || 10,
       search: req.query.search as string,
       companyId: req.query.companyId as string,
-      branchId: req.query.branchId as string,
       centerId: req.query.centerId as string,
       examId: req.query.examId as string,
       seatId: req.query.seatId as string,

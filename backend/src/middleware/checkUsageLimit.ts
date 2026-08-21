@@ -36,7 +36,7 @@ function logLimitViolation(req: Request, reason: string): void {
  * Middleware to check if creating a new resource exceeds the company's plan usage limit.
  * Master Admins bypass this check.
  * 
- * @param limitKey - The usage limit key from IPlanUsageLimits (e.g., 'maxBranches')
+ * @param limitKey - The usage limit key from IPlanUsageLimits (e.g., 'maxCenters')
  * @param model - The Mongoose Model to count current usage against (e.g., Branch)
  * @param queryField - The field to filter by company ID (default: 'companyId')
  */

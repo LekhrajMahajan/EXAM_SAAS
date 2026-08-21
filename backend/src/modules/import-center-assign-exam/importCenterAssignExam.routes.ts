@@ -7,10 +7,10 @@ import {
   sendToCenters,
   getAssignedExamsForCenter,
 } from './importCenterAssignExam.controller';
-// import { protect } from '../../middleware/auth.middleware';
-// import { authorize } from '../../middleware/role.middleware';
+import { authenticate } from '../../middleware/authenticate';
 
 const router = Router();
+router.use(authenticate);
 
 // Define routes
 // TODO: Add auth and RBAC middleware as per your app's standard if needed

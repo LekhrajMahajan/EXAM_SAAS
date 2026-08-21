@@ -20,7 +20,6 @@ export interface ExamSubmissionQuery {
     examId?: string;
     paperId?: string;
     companyId?: string;
-    branchId?: string;
     examCenterId?: string;
     submissionStatus?: SubmissionStatus;
 }

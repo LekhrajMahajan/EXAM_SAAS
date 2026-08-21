@@ -2,6 +2,11 @@ import { Request, Response } from 'express';
 import { ImportCenterAssignExamModel } from './importCenterAssignExam.model';
 import mongoose from 'mongoose';
 import Center from '../center/center.model';
+import Employee from '../employee/employee.model';
+import StaffAssignmentModel from '../staff-assignment/staffAssignment.model';
+import notificationService from '../notification/notification.service';
+import { NotificationType, NotificationChannel, NotificationPriority } from '../notification/notification.types';
+import Candidate from '../candidate/candidate.model';
 
 export const createImportCenterAssignExam = async (req: Request, res: Response) => {
   try {
@@ -100,8 +105,33 @@ export const getAllImportCenterAssignExams = async (req: Request, res: Response)
       query.isSentToCompanyAdmin = true;
     }
 
+    if (req.user && req.user.role === 'PRIVATE_AUTHORITY') {
+      // Find employee to get their StaffAssignment examId
+      const employee = await Employee.findOne({ userId: (req.user as any).userId });
+      if (employee) {
+        const assignments = await StaffAssignmentModel.find({ employeeId: employee._id, isDeleted: false });
+        const assignedExamIds = assignments.map((a: any) => a.examId).filter((id: any) => id);
+        
+        if (assignedExamIds.length > 0) {
+          query.examId = { $in: assignedExamIds };
+        } else {
+          // No assignment found, restrict access
+          query.examId = new mongoose.Types.ObjectId();
+        }
+      } else {
+        query.examId = new mongoose.Types.ObjectId();
+      }
+    } else if (req.user && req.user.role === 'GOVT_AUTHORITY') {
+      // Govt Authority sees all exams except those explicitly assigned to Private Authority
+      const privateAssignments = await StaffAssignmentModel.find({ role: 'PRIVATE_AUTHORITY' }).select('examId');
+      const privateExamIds = privateAssignments.map((a: any) => a.examId).filter((id: any) => id);
+      if (privateExamIds.length > 0) {
+        query.examId = { $nin: privateExamIds };
+      }
+    }
+
     const importData = await ImportCenterAssignExamModel.find(query)
-      .populate('examId', 'examName examTitle examCode status')
+      .populate('examId', 'examName examTitle examCode status examDate startTime endTime isResultGenerated isResultPublished')
       .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -171,6 +201,23 @@ export const sendToCenters = async (req: Request, res: Response) => {
 
       if (match) {
         centerData.matchedCenterId = match._id as mongoose.Types.ObjectId;
+
+        // Generate notification if center has a manager
+        if (match.centerManagerId) {
+          try {
+            await notificationService.create({
+              title: "New Exam Assigned",
+              message: `An exam (${centerData.examName}) has been assigned to your center (${match.centerName}).`,
+              type: NotificationType.SYSTEM,
+              channel: NotificationChannel.IN_APP,
+              priority: NotificationPriority.HIGH,
+              recipientId: match.centerManagerId as mongoose.Types.ObjectId,
+              companyId: match.companyId as mongoose.Types.ObjectId,
+            });
+          } catch (notifErr) {
+            console.error("Failed to create exam assignment notification:", notifErr);
+          }
+        }
       }
     }
 
@@ -211,19 +258,26 @@ export const getAssignedExamsForCenter = async (req: Request, res: Response) => 
       })
       .sort({ createdAt: -1 });
 
-    const formattedExams = assignedExams.map(record => {
+    const formattedExams = await Promise.all(assignedExams.map(async (record: any) => {
       const centerDetails = record.centers.find(
-        (c) => c.matchedCenterId?.toString() === centerId
+        (c: any) => c.matchedCenterId?.toString() === centerId
       );
+
+      const { ImportCandidate } = require('../import-candidate/importcandidate.model');
+      const count = await ImportCandidate.countDocuments({
+        centerId: new mongoose.Types.ObjectId(centerId as string),
+        examId: record.examId?._id || record.examId,
+        isSentToCenter: true
+      });
 
       return {
         id: record._id,
         examId: record.examId,
-        assignedCandidatesCount: 0,
+        assignedCandidatesCount: count,
         status: 'Assigned & Active',
         venueDetails: centerDetails
       };
-    });
+    }));
 
     res.status(200).json({
       success: true,

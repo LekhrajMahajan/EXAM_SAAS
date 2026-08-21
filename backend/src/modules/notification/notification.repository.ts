@@ -38,7 +38,7 @@ export interface NotificationQuery {
 
 class NotificationRepository extends BaseRepository<INotification> {
   constructor() {
-    super(Notification, ["candidateId", "employeeId", "companyId", "branchId", "examId", "createdBy"]);
+    super(Notification, ["candidateId", "employeeId", "companyId", "examId", "createdBy"]);
   }
 
   /*

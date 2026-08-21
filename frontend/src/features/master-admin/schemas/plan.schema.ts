@@ -22,7 +22,6 @@ export const planSchema = z.object({
   }),
   
   usageLimits: z.object({
-    maxBranches: z.coerce.number().min(0),
     maxCenters: z.coerce.number().min(0),
     maxEmployees: z.coerce.number().min(0),
     maxCandidates: z.coerce.number().min(0),

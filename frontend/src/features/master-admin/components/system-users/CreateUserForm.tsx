@@ -51,7 +51,7 @@ export const CreateUserForm: React.FC<CreateUserFormProps> = ({ onSubmit, isSubm
       pincode: "",
       employeeCode: "",
       companyId: "",
-      branchId: "",
+
       department: "",
       designation: "",
       joiningDate: new Date().toISOString().split("T")[0],
@@ -66,27 +66,8 @@ export const CreateUserForm: React.FC<CreateUserFormProps> = ({ onSubmit, isSubm
   const { data: companiesResponse, isLoading: isLoadingCompanies } = useCompanies({ page: 1, limit: 100 });
   const companies = companiesResponse?.data || [];
 
-  const selectedCompanyId = form.watch("companyId");
-  
-  const { data: branchesResponse, isLoading: isLoadingBranches } = useBranches({ 
-    page: 1,
-    limit: 100,
-    companyId: selectedCompanyId || undefined 
-  });
-  const branches = Array.isArray(branchesResponse?.data) ? branchesResponse.data : ((branchesResponse?.data as any)?.data || []);
-
-  const { data: rolesResponse, isLoading: isLoadingRoles } = useRoles({ page: 1, limit: 50 });
+  const { data: rolesResponse, isLoading: isLoadingRoles } = useRoles({ page: 1, limit: 100 });
   const roles = rolesResponse?.data || [];
-
-  // Reset branch if company changes
-  useEffect(() => {
-    const subscription = form.watch((_, { name, type }) => {
-      if (name === "companyId" && type === "change") {
-        form.setValue("branchId", "");
-      }
-    });
-    return () => subscription.unsubscribe();
-  }, [form]);
 
   return (
     <Form {...form}>
@@ -321,34 +302,7 @@ export const CreateUserForm: React.FC<CreateUserFormProps> = ({ onSubmit, isSubm
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="branchId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Branch <span className="text-red-500">*</span></FormLabel>
-                  <Select 
-                    onValueChange={field.onChange} 
-                    value={field.value} 
-                    disabled={!selectedCompanyId || isLoadingBranches}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder={!selectedCompanyId ? "Select Company First" : isLoadingBranches ? "Loading..." : "Select Branch"} />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {branches.map((branch) => (
-                        <SelectItem key={branch._id} value={branch._id}>
-                          {branch.branchName}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+
             <FormField
               control={form.control}
               name="department"

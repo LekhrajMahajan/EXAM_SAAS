@@ -32,7 +32,6 @@ export const CreateUserPage = () => {
       pincode: values.pincode,
       employeeCode: values.employeeCode,
       companyId: values.companyId,
-      branchId: values.branchId,
       department: values.department,
       designation: values.designation,
       joiningDate: values.joiningDate,

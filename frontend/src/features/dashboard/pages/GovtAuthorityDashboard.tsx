@@ -1,45 +1,73 @@
 
+import { useEffect, useState } from 'react';
+import api from '@/services/api';
 import { PageHeader } from '@/shared/components/layout/page-header';
 import { DashboardLayout } from '../components/DashboardLayout';
-import { DashboardGrid } from '../components/DashboardGrid';
 import { WelcomeBanner } from '../components/WelcomeBanner';
 import { LiveStatsGrid } from '../components/LiveStatsGrid';
-import { ActivityFeed } from '../components/ActivityFeed';
-import { QuickActionCard } from '../components/QuickActionCard';
-import { NotificationWidget } from '../components/NotificationWidget';
 import { useRoleDashboard } from '../hooks/dashboard.hooks';
-import type { ActivityItem, NotificationItem } from '../types';
-
-const FA: ActivityItem[] = [{ id: '1', title: 'Govt Authority Ready', description: 'Regulatory workspace initialized.', timestamp: 'Just now', type: 'info', iconName: 'Building2' }];
-const FN: NotificationItem[] = [{ id: '1', title: 'Welcome', message: 'Platform-wide compliance overview is ready.', timestamp: 'Just now', isRead: false, priority: 'low' }];
+import { useAuthStore } from '@/features/auth/store/useAuthStore';
+import type { StatItem } from '../types';
 
 export function GovtAuthorityDashboard() {
-  const { data, isLoading } = useRoleDashboard();
+  const { data } = useRoleDashboard();
+  const { user } = useAuthStore();
+  const isPrivate = user?.role === 'PRIVATE_AUTHORITY';
 
-  const stats = data?.stats || [];
-  const quickActions = data?.quickActions || [];
-  const activities: ActivityItem[] = data?.activities?.length ? data.activities : FA;
-  const notifications: NotificationItem[] = data?.notifications?.length ? data.notifications : FN;
+  const [importedCandidateCount, setImportedCandidateCount] = useState(0);
+  const [importedCenterCount, setImportedCenterCount] = useState(0);
+  const [isCountsLoading, setIsCountsLoading] = useState(true);
+
+  // Both Govt Authority AND Private Authority show the same two cards
+  useEffect(() => {
+    Promise.all([
+      api.get('/import-candidate').catch(() => ({ data: { success: false } })),
+      api.get('/import-center-assign-exam').catch(() => ({ data: { success: false } }))
+    ]).then(([candidateRes, centerRes]) => {
+      if (candidateRes.data?.success) {
+        setImportedCandidateCount(candidateRes.data.data.length || 0);
+      }
+      if (centerRes.data?.success) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const totalCenters = centerRes.data.data.reduce((acc: number, item: any) => acc + (item.centers?.length || 0), 0);
+        setImportedCenterCount(totalCenters);
+      }
+    }).finally(() => {
+      setIsCountsLoading(false);
+    });
+  }, []);
+
+  const customStats: StatItem[] = [
+    {
+      id: 'imported_candidates',
+      label: 'IMPORTED CANDIDATES',
+      value: importedCandidateCount,
+      change: 'Imported',
+      iconName: 'Users',
+      colorScheme: 'indigo'
+    },
+    {
+      id: 'imported_centers',
+      label: 'IMPORT CENTER ASSIGN EXAM',
+      value: importedCenterCount,
+      change: 'Centers Assigned',
+      iconName: 'Building2',
+      colorScheme: 'emerald'
+    }
+  ];
+
   const unreadCount = data?.unreadCount || 0;
 
   return (
     <DashboardLayout>
-      <PageHeader title="Government Authority Dashboard" description="Platform compliance, transparency, and national exam analytics." />
+      <PageHeader 
+        title={isPrivate ? "Private Authority Dashboard" : "Government Authority Dashboard"} 
+        description={isPrivate ? "Manage and monitor your assigned examination center." : "Platform compliance, transparency, and national exam analytics."} 
+      />
 
       <WelcomeBanner unreadCount={unreadCount} />
 
-      <LiveStatsGrid stats={stats} isLoading={isLoading} />
-
-      <DashboardGrid columns={3}>
-        <div className="lg:col-span-2">
-          <ActivityFeed activities={activities} />
-        </div>
-        <div className="lg:col-span-1">
-          <QuickActionCard actions={quickActions} />
-        </div>
-      </DashboardGrid>
-
-      <NotificationWidget notifications={notifications} />
+      <LiveStatsGrid stats={customStats} isLoading={isCountsLoading} />
     </DashboardLayout>
   );
 }

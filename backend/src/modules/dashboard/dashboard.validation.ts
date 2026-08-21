@@ -26,8 +26,6 @@ export const dashboardFilterSchema = z.object({
 
     companyId: objectId.optional(),
 
-    branchId: objectId.optional(),
-
     centerId: objectId.optional(),
   }),
 });

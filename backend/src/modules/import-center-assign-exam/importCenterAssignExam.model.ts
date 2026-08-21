@@ -4,7 +4,6 @@ export interface IImportCenterData {
   centerName: string;
   centerType: string;
   centerCode: string;
-  examCenterCode?: string;
   examName: string;
   streetAddress: string;
   city: string;
@@ -27,7 +26,6 @@ const ImportCenterDataSchema = new Schema<IImportCenterData>({
   centerName: { type: String, required: true },
   centerType: { type: String, required: true },
   centerCode: { type: String, required: true },
-  examCenterCode: { type: String, required: false },
   examName: { type: String, required: true },
   streetAddress: { type: String, required: true },
   city: { type: String, required: true },

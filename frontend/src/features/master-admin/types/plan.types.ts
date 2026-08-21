@@ -101,7 +101,6 @@ export interface IPlanPricing {
 }
 
 export interface IPlanUsageLimits {
-  maxBranches: number;
   maxCenters: number;
   maxEmployees: number;
   maxCandidates: number;

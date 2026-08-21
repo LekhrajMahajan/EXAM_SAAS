@@ -23,6 +23,8 @@ export enum TopicStatus {
 export interface ITopic {
   companyId: Types.ObjectId;
 
+  examId?: Types.ObjectId;
+
   subjectId: Types.ObjectId;
   subjectName?: string;
 

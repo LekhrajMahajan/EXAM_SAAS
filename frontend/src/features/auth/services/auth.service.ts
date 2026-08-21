@@ -12,9 +12,7 @@ export const normalizeRole = (role: string): string => {
   if (!role) return role;
   const roleMap: Record<string, string> = {
     'MASTER_ADMIN': 'Master Admin',
-    'COMPANY_ADMIN': 'Company Admin',
-    'BRANCH_MANAGER': 'Branch Manager',
-    'CENTER_MANAGER': 'Center Manager',
+    'COMPANY_ADMIN': 'Company Admin','CENTER_MANAGER': 'Center Manager',
     'EXAM_MANAGER': 'Exam Manager',
     'PAPER_SETTER': 'Paper Setter',
     'QUESTION_SETTER': 'Question Setter',

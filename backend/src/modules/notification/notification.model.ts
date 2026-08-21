@@ -104,14 +104,6 @@ const notificationSchema = new Schema<INotification>(
       index: true,
     },
 
-    branchId: {
-      type: Schema.Types.ObjectId,
-
-      ref: "Branch",
-
-      index: true,
-    },
-
     examId: {
       type: Schema.Types.ObjectId,
 
@@ -298,11 +290,7 @@ notificationSchema.index({
   createdAt: -1,
 });
 
-notificationSchema.index({
-  companyId: 1,
 
-  branchId: 1,
-});
 
 notificationSchema.index({
   examId: 1,

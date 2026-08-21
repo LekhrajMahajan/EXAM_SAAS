@@ -44,9 +44,6 @@ export enum SeatType {
 
 export interface ISeat {
   companyId: Types.ObjectId;
-
-  branchId: Types.ObjectId;
-
   centerId: Types.ObjectId;
 
   roomId: Types.ObjectId;

@@ -7,7 +7,7 @@ class StaffAssignmentRepository extends BaseRepository<IStaffAssignment> {
   constructor() {
     super(
       StaffAssignment,
-      ["examId", "branchId", "centerId", "roomId", "shiftId", "employeeId"],
+      ["examId", "centerId", "roomId", "shiftId", "employeeId"],
       ["role", "employeeCode", "employeeName", "building", "floor", "instructions", "rejectionReason"]
     );
   }
@@ -16,7 +16,7 @@ class StaffAssignmentRepository extends BaseRepository<IStaffAssignment> {
     const query: Record<string, any> = {
       employeeId,
       isDeleted: false,
-      status: { $ne: AssignmentStatus.CANCELLED },
+      status: { $nin: [AssignmentStatus.CANCELLED, AssignmentStatus.INACTIVE, AssignmentStatus.COMPLETED, AssignmentStatus.REJECTED] },
     };
     if (companyId) query.companyId = companyId;
     return await StaffAssignment.find(query).populate(this.defaultPopulate).exec();
@@ -57,12 +57,11 @@ class StaffAssignmentRepository extends BaseRepository<IStaffAssignment> {
     return await StaffAssignment.find(query).exec();
   }
 
-  async getDashboardStats(companyId: string, branchId?: string, centerId?: string, employeeId?: string) {
+  async getDashboardStats(companyId: string, centerId?: string, employeeId?: string) {
     const match: Record<string, any> = {
       companyId: new Types.ObjectId(companyId),
       isDeleted: false,
     };
-    if (branchId) match.branchId = new Types.ObjectId(branchId);
     if (centerId) match.centerId = new Types.ObjectId(centerId);
     if (employeeId) match.employeeId = new Types.ObjectId(employeeId);
 

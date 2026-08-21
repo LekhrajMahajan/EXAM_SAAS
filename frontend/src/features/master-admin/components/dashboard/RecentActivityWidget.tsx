@@ -11,7 +11,9 @@ export const RecentActivityWidget = () => {
     <Card className="col-span-full md:col-span-1">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <History className="h-5 w-5 text-primary" />
+          <div className="p-1.5 bg-[#E4FD97] text-[#2D3E2C] border border-[#2D3E2C]/20 rounded-md shrink-0">
+            <History className="h-4 w-4" />
+          </div>
           Recent Activity
         </CardTitle>
       </CardHeader>

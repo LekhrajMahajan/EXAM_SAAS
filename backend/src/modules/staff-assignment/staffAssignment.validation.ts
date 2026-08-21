@@ -7,7 +7,6 @@ export const createAssignmentSchema = z.object({
   body: z.object({
     companyId: objectId.optional(),
     examId: objectId,
-    branchId: objectId.optional().nullable(),
     centerId: objectId.optional().nullable(),
     roomId: objectId.optional().nullable(),
     shiftId: objectId.optional().nullable(),
@@ -33,7 +32,6 @@ export const autoAssignmentSchema = z.object({
     requiredCount: z.coerce.number().min(1).default(1),
     shiftId: objectId.optional(),
     centerId: objectId.optional(),
-    branchId: objectId.optional(),
     roomId: objectId.optional(),
     scheduledDate: z.string().or(z.date()).optional(),
     startTime: z.string().optional(),

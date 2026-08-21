@@ -1,5 +1,5 @@
 {}
-TypeError: Cannot read properties of undefined (reading 'toString')
-    at CenterService.create (D:\COMPANY PORJTECS\Practice exam saas\backend\src\modules\center\center.service.ts:40:72)
-    at processTicksAndRejections (node:internal/process/task_queues:103:5)
-    at D:\COMPANY PORJTECS\Practice exam saas\backend\src\modules\center\center.controller.ts:295:20
+TypeError: Cannot read properties of undefined (reading 'findById')
+    at ExamService.update (D:\COMPANY PORJTECS\Practice exam saas\backend\src\modules\exam\exam.service.ts:255:51)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async <anonymous> (D:\COMPANY PORJTECS\Practice exam saas\backend\src\modules\exam\exam.controller.ts:109:18)

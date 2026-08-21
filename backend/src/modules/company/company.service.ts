@@ -130,7 +130,7 @@ class CompanyService extends BaseService<ICompany> {
       endDate: end,
       status: SubscriptionStatus.ACTIVE,
       autoRenewal: false,
-      maxBranches: company.maxBranches || plan.usageLimits?.maxBranches,
+
       maxCenters: company.maxCenters || plan.usageLimits?.maxCenters,
       maxEmployees: company.maxEmployees || plan.usageLimits?.maxEmployees,
       maxCandidates: company.maxCandidates || plan.usageLimits?.maxCandidates,

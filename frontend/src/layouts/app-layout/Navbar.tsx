@@ -4,6 +4,8 @@ import { Menu, Search, Bell, Moon, Sun, User as UserIcon, Settings, LogOut } fro
 import { useAppShell } from "@/hooks/useAppShell";
 import { useTheme } from "@/providers/theme-context";
 import { useAuthStore } from "@/features/auth/store/useAuthStore";
+import { useQueryClient } from "@tanstack/react-query";
+import { apiClient } from "@/core/api/http/axios-client";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/components/ui/avatar";
@@ -35,6 +37,7 @@ export const Navbar = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const { data: dashboardData } = useRoleDashboard();
   const unreadCount = dashboardData?.unreadCount || 0;
+  const queryClient = useQueryClient();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,10 +46,57 @@ export const Navbar = () => {
     }
   };
 
+  const handleMarkAllAsRead = async () => {
+    const unreadNotifications = (dashboardData?.notifications ?? []).filter((n) => !n.isRead);
+    if (unreadNotifications.length === 0) return;
+
+    const dynamicNotifs = unreadNotifications.filter(n => String(n.id).startsWith('dynamic-'));
+    const serverNotifs = unreadNotifications.filter(n => !String(n.id).startsWith('dynamic-'));
+
+    if (dynamicNotifs.length > 0) {
+       const readNotifs = JSON.parse(localStorage.getItem('dynamicReadNotifs') || '[]');
+       const newReadNotifs = [...new Set([...readNotifs, ...dynamicNotifs.map(n => n.id)])];
+       localStorage.setItem('dynamicReadNotifs', JSON.stringify(newReadNotifs));
+    }
+
+    if (serverNotifs.length > 0) {
+      try {
+        await Promise.all(
+          serverNotifs.map((n) => apiClient.patch(`/notifications/${n.id}/read`))
+        );
+      } catch (error) {
+        console.error('Failed to mark notifications as read', error);
+      }
+    }
+
+    queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+  };
+
+  const handleMarkAsRead = async (id: string | number) => {
+    if (String(id).startsWith('dynamic-')) {
+      const readNotifs = JSON.parse(localStorage.getItem('dynamicReadNotifs') || '[]');
+      if (!readNotifs.includes(String(id))) {
+        localStorage.setItem('dynamicReadNotifs', JSON.stringify([...readNotifs, String(id)]));
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      }
+      return;
+    }
+
+    try {
+      await apiClient.patch(`/notifications/${id}/read`);
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    } catch (error) {
+      console.error('Failed to mark notification as read', error);
+    }
+  };
+
   const getProfileLink = (role?: string) => {
     switch (role) {
+      case 'MASTER_ADMIN':
       case 'Master Admin': return '/master-admin/profile';
+      case 'COMPANY_ADMIN':
       case 'Company Admin': return '/company/profile';
+      case 'CANDIDATE':
       case 'Candidate': return '/candidate/profile';
       default: return '/profile';
     }
@@ -54,8 +104,11 @@ export const Navbar = () => {
 
   const getSettingsLink = (role?: string) => {
     switch (role) {
+      case 'MASTER_ADMIN':
       case 'Master Admin': return '/master-admin/system-settings';
+      case 'COMPANY_ADMIN':
       case 'Company Admin': return '/company/settings';
+      case 'CANDIDATE':
       case 'Candidate': return '/candidate/settings';
       default: return '/settings';
     }
@@ -151,14 +204,27 @@ export const Navbar = () => {
             <Button variant="ghost" size="icon" className="rounded-full shrink-0 relative">
               <Bell className="h-5 w-5" />
               {unreadCount > 0 && (
-                <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-600 animate-pulse" />
+                <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-primary animate-pulse" />
               )}
               <span className="sr-only">Notifications</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-80">
             <DropdownMenuLabel className="flex items-center justify-between">
-              <span>Notifications</span>
+              <div className="flex items-center gap-4">
+                <span>Notifications</span>
+                {unreadCount > 0 && (
+                  <button 
+                    className="text-xs font-medium text-slate-500 hover:text-primary transition-colors cursor-pointer"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleMarkAllAsRead();
+                    }}
+                  >
+                    Mark all as read
+                  </button>
+                )}
+              </div>
               {unreadCount > 0 && (
                 <span className="text-xs font-medium bg-rose-100 text-rose-600 rounded-full px-2 py-0.5">{unreadCount} unread</span>
               )}
@@ -167,14 +233,27 @@ export const Navbar = () => {
             <div className="max-h-[300px] overflow-y-auto">
               {(dashboardData?.notifications ?? []).length > 0 ? (
                 (dashboardData?.notifications ?? []).slice(0, 5).map((n) => (
-                  <div key={n.id} className={`px-4 py-3 border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors ${!n.isRead ? 'bg-indigo-50/30' : ''}`}>
+                  <div key={n.id} className={`px-4 py-3 border-b border-border last:border-0 transition-colors ${!n.isRead ? 'bg-secondary/30 hover:bg-secondary/50 dark:bg-secondary/10 dark:hover:bg-secondary/20' : 'hover:bg-muted/50'}`}>
                     <div className="flex items-start gap-2">
                       <div className="flex-1 min-w-0">
-                        <p className={`text-sm ${!n.isRead ? 'font-bold text-slate-900' : 'font-medium text-slate-700'}`}>{n.title}</p>
-                        <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">{n.message}</p>
-                        <p className="text-[10px] text-slate-400 mt-1">{n.timestamp}</p>
+                        <div className="flex items-center justify-between">
+                          <p className={`text-sm ${!n.isRead ? 'font-bold text-foreground' : 'font-medium text-muted-foreground'}`}>{n.title}</p>
+                          {!n.isRead && (
+                            <button
+                              className="text-xs font-medium text-primary hover:underline ml-2 whitespace-nowrap"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                handleMarkAsRead(n.id);
+                              }}
+                            >
+                              Mark as read
+                            </button>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{n.message}</p>
+                        <p className="text-[10px] text-muted-foreground/70 mt-1">{n.timestamp}</p>
                       </div>
-                      {!n.isRead && <span className="mt-1 h-2 w-2 rounded-full bg-indigo-500 shrink-0" />}
+                      {!n.isRead && <span className="mt-1 h-2 w-2 rounded-full bg-primary shrink-0" />}
                     </div>
                   </div>
                 ))

@@ -1,16 +1,40 @@
 import { Request, Response } from 'express';
 import * as xlsx from 'xlsx';
 import mongoose from 'mongoose';
+import AdmZip from 'adm-zip';
+import path from 'path';
 import { ImportCandidate } from './importcandidate.model';
+import Employee from '../employee/employee.model';
+import StaffAssignmentModel from '../staff-assignment/staffAssignment.model';
 import Center from '../center/center.model';
 import { CenterStatus } from '../center/center.types';
 import Company from '../company/company.model';
 import httpStatus from 'http-status';
+import { v2 as cloudinary } from 'cloudinary';
+import streamifier from 'streamifier';
+
+// Upload image buffer directly to cloudinary, returns the secure_url
+const uploadBufferToCloudinary = (buffer: Buffer, folder: string, publicId: string): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      { folder, public_id: publicId, resource_type: 'image' },
+      (error, result) => {
+        if (error) return reject(error);
+        if (!result) return reject(new Error('Cloudinary returned no result'));
+        resolve(result.secure_url);
+      }
+    );
+    streamifier.createReadStream(buffer).pipe(uploadStream);
+  });
+};
 
 export const uploadCandidateExcel = async (req: Request, res: Response): Promise<void> => {
   try {
+    // Now accepts ONE zip file (field name: "file") containing:
+    //   - one Excel/CSV file (.xlsx, .xls, .csv)
+    //   - photo files named as CandidateID.jpg/jpeg/png (in any folder or root)
     if (!req.file) {
-      res.status(httpStatus.BAD_REQUEST).json({ success: false, message: 'Please upload an Excel file.' });
+      res.status(httpStatus.BAD_REQUEST).json({ success: false, message: 'Please upload a ZIP file.' });
       return;
     }
 
@@ -27,38 +51,93 @@ export const uploadCandidateExcel = async (req: Request, res: Response): Promise
       }
     }
 
-    // Parse the Excel file
-    const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
-    const sheetName = workbook.SheetNames[0];
-    const sheet = workbook.Sheets[sheetName];
-    
-    // Convert to JSON
-    // We expect the first row to be headers, and it should match our keys roughly, 
-    // or we map by exact column names as requested by the user.
-    const data: any[] = xlsx.utils.sheet_to_json(sheet);
+    // Configure cloudinary from env
+    cloudinary.config({
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET,
+    });
 
-    if (!data || data.length === 0) {
-      res.status(httpStatus.BAD_REQUEST).json({ success: false, message: 'The uploaded file is empty.' });
+    // --- Extract the ZIP ---
+    let zip: AdmZip;
+    try {
+      zip = new AdmZip(req.file.buffer);
+    } catch {
+      res.status(httpStatus.BAD_REQUEST).json({ success: false, message: 'Invalid or corrupted ZIP file.' });
       return;
     }
 
-    const requiredFieldsMap = {
+    const zipEntries = zip.getEntries();
+
+    // Find the Excel/CSV file inside ZIP
+    const EXCEL_EXTS = ['.xlsx', '.xls', '.csv'];
+    const IMAGE_EXTS = ['.jpg', '.jpeg', '.png'];
+
+    let excelBuffer: Buffer | null = null;
+    let excelExt = '';
+    const zipImagesMap = new Map<string, { buffer: Buffer; ext: string }>();
+
+    zipEntries.forEach(entry => {
+      if (entry.isDirectory) return;
+      const basename = path.basename(entry.entryName);
+      const ext = path.extname(basename).toLowerCase();
+      const nameWithoutExt = path.basename(basename, ext).toLowerCase();
+
+      if (!excelBuffer && EXCEL_EXTS.includes(ext)) {
+        excelBuffer = entry.getData();
+        excelExt = ext;
+      } else if (IMAGE_EXTS.includes(ext)) {
+        // Index image by its filename-without-extension (lowercase)
+        zipImagesMap.set(nameWithoutExt, { buffer: entry.getData(), ext });
+      }
+    });
+
+    if (!excelBuffer) {
+      res.status(httpStatus.BAD_REQUEST).json({
+        success: false,
+        message: 'No Excel/CSV file found inside the ZIP. Please include a .xlsx, .xls, or .csv file.'
+      });
+      return;
+    }
+
+    if (zipImagesMap.size === 0) {
+      res.status(httpStatus.BAD_REQUEST).json({
+        success: false,
+        message: 'No images found inside the ZIP. Please include candidate photos (.jpg, .jpeg, .png) named by Candidate ID.'
+      });
+      return;
+    }
+
+    // --- Parse Excel ---
+    const workbook = xlsx.read(excelBuffer, { type: 'buffer' });
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    const data: any[] = xlsx.utils.sheet_to_json(sheet);
+
+    if (!data || data.length === 0) {
+      res.status(httpStatus.BAD_REQUEST).json({ success: false, message: 'The Excel file inside the ZIP is empty.' });
+      return;
+    }
+
+    const requiredFieldsMap: Record<string, string> = {
       'Candidate ID / Registration No.': 'candidateId',
       'Application No.': 'applicationNo',
       'Center Name / Address Location': 'centerName',
       'Exam Name': 'examName',
       'Candidate Full Name': 'candidateFullName',
+      'Father\'s Name': 'fatherName',
       'Mother\'s Name': 'motherName',
       'Date of Birth': 'dateOfBirth',
-      'Gender': 'gender'
+      'Gender': 'gender',
+      'Aadhaar No.': 'aadharNumber'
     };
 
-    const optionalFieldsMap = {
+    const optionalFieldsMap: Record<string, string> = {
       'Organization/Exam Body': 'organization',
       'Exam Code': 'examCode',
       'Advertisement/Notification No.': 'notificationNo',
       'Roll/Seat No.': 'rollNo',
-      'Roll No.': 'rollNo', // keeping older variant just in case
+      'Roll No.': 'rollNo',
       'Category': 'category',
       'Post Name': 'postName',
       'Paper/Subject': 'paperSubject',
@@ -85,69 +164,140 @@ export const uploadCandidateExcel = async (req: Request, res: Response): Promise
       'Important Instructions': 'importantInstructions',
       'Candidate Declaration': 'candidateDeclaration',
       'Biometric/Verification Info': 'biometricInfo',
-      'Candidate Photo': 'candidatePhoto',
       'Candidate Signature': 'candidateSignature',
-      'Father\'s Name': 'fatherName',
       'PwD Status': 'pwdStatus',
       'PwD Type': 'pwdType'
     };
 
-    const validCandidates = [];
+    const validCandidates: any[] = [];
+    const errors: string[] = [];
+    const seenCandidateIds = new Set<string>();
 
-    // Validate rows
     for (let i = 0; i < data.length; i++) {
       const row = data[i];
       const parsedRow: any = {};
-      const rowNumber = i + 2; // +1 for 0-index, +1 for header row
+      const rowNumber = i + 2;
+      let isRowValid = true;
 
-      // Check required fields
+      // Validate required fields
       for (const [excelCol, dbField] of Object.entries(requiredFieldsMap)) {
         if (!row[excelCol] || String(row[excelCol]).trim() === '') {
-          res.status(httpStatus.BAD_REQUEST).json({ 
-            success: false, 
-            message: `Row ${rowNumber}: '${excelCol}' is missing. Please add it and try again.`
-          });
-          return;
+          errors.push(`Row ${rowNumber}: Required column '${excelCol}' is missing or empty.`);
+          isRowValid = false;
+          break;
         }
         parsedRow[dbField] = String(row[excelCol]).trim();
       }
+      if (!isRowValid) continue;
 
-      // Map optional fields
+      const candidateId = parsedRow.candidateId as string;
+
+      // Duplicate Candidate ID check
+      if (seenCandidateIds.has(candidateId.toLowerCase())) {
+        errors.push(`Row ${rowNumber}: Duplicate Candidate ID "${candidateId}".`);
+        continue;
+      }
+      seenCandidateIds.add(candidateId.toLowerCase());
+
+      // Match photo from ZIP images by Candidate ID (case-insensitive)
+      const imageEntry = zipImagesMap.get(candidateId.toLowerCase());
+      if (!imageEntry) {
+        errors.push(`Row ${rowNumber}: Photo missing for ID "${candidateId}" — expected ${candidateId}.jpg / .jpeg / .png inside ZIP.`);
+        continue;
+      }
+
+      // Map optional fields (missing = OK)
       for (const [excelCol, dbField] of Object.entries(optionalFieldsMap)) {
         if (row[excelCol] !== undefined && row[excelCol] !== null && String(row[excelCol]).trim() !== '') {
           parsedRow[dbField] = String(row[excelCol]).trim();
         }
       }
 
+      // Capture dynamic extra columns
+      const dynamicFields: Record<string, any> = {};
+      const knownExcelCols = new Set([...Object.keys(requiredFieldsMap), ...Object.keys(optionalFieldsMap)]);
+      for (const excelCol of Object.keys(row)) {
+        if (!knownExcelCols.has(excelCol)) {
+          dynamicFields[excelCol] = row[excelCol];
+        }
+      }
+      parsedRow.dynamicFields = dynamicFields;
+
       if (examId) {
         parsedRow.examId = examId;
       }
 
-      validCandidates.push(parsedRow);
+      // Upload image to Cloudinary
+      try {
+        const photoUrl = await uploadBufferToCloudinary(
+          imageEntry.buffer,
+          'candidate-photos',
+          `${candidateId}_${Date.now()}`
+        );
+        parsedRow.candidatePhoto = photoUrl;
+        validCandidates.push(parsedRow);
+      } catch (uploadErr: any) {
+        console.error(`Photo upload failed for ${candidateId}:`, uploadErr);
+        errors.push(`Row ${rowNumber}: Photo upload failed for ID "${candidateId}": ${uploadErr.message}`);
+      }
     }
 
-    // Insert into DB
-    await ImportCandidate.insertMany(validCandidates);
+    // Bulk insert valid candidates
+    if (validCandidates.length > 0) {
+      await ImportCandidate.insertMany(validCandidates);
+    }
 
-    res.status(httpStatus.OK).json({ 
-      success: true, 
-      message: `${validCandidates.length} candidates imported successfully.` 
+    const successCount = validCandidates.length;
+    const errorCount = errors.length;
+
+    res.status(httpStatus.OK).json({
+      success: true,
+      message: `Import complete. ${successCount} candidate(s) imported successfully${errorCount > 0 ? `, ${errorCount} skipped` : ''}.`,
+      data: { successCount, errorCount, errors }
     });
 
   } catch (error: any) {
     console.error('Candidate Import Error:', error);
-    res.status(httpStatus.INTERNAL_SERVER_ERROR).json({ 
-      success: false, 
-      message: 'Failed to process Excel file', 
-      error: error.message 
+    res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: 'Failed to process import files.',
+      error: error.message
     });
   }
 };
 
+
+
 export const getImportedCandidates = async (req: Request, res: Response): Promise<void> => {
   try {
-    const candidates = await ImportCandidate.find({})
-      .populate('examId', 'examDate startTime endTime isResultPublished status')
+    const { examId } = req.query;
+    const query: any = examId ? { examId } : {};
+
+    if ((req as any).user && (req as any).user.role === 'PRIVATE_AUTHORITY') {
+      const employee = await Employee.findOne({ userId: (req as any).user.userId });
+      if (employee) {
+        const assignments = await StaffAssignmentModel.find({ employeeId: employee._id, isDeleted: false });
+        const assignedExamIds = assignments.map((a: any) => a.examId).filter((id: any) => id);
+        
+        if (assignedExamIds.length > 0) {
+          query.examId = { $in: assignedExamIds };
+        } else {
+          query.examId = new mongoose.Types.ObjectId();
+        }
+      } else {
+        query.examId = new mongoose.Types.ObjectId();
+      }
+    } else if ((req as any).user && (req as any).user.role === 'GOVT_AUTHORITY') {
+      const privateAssignments = await StaffAssignmentModel.find({ role: 'PRIVATE_AUTHORITY' }).select('examId');
+      const privateExamIds = privateAssignments.map((a: any) => a.examId).filter((id: any) => id);
+      if (privateExamIds.length > 0) {
+        query.examId = { $nin: privateExamIds };
+      }
+    }
+
+    const candidates = await ImportCandidate.find(query)
+      .populate('examId', 'examName examTitle examCode examDate startTime endTime isResultGenerated isResultPublished status')
+      .populate('centerId', 'centerName centerCode city state')
       .sort({ importedAt: -1 });
     
     if (candidates.length > 0) {
@@ -170,6 +320,33 @@ export const getImportedCandidates = async (req: Request, res: Response): Promis
     res.status(500).json({
       success: false,
       message: error.message || "Failed to fetch candidates",
+    });
+  }
+};
+
+export const sendToCompanyAdmin = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { examId } = req.body;
+    if (!examId) {
+      res.status(400).json({ success: false, message: 'examId is required' });
+      return;
+    }
+
+    const result = await ImportCandidate.updateMany(
+      { examId: new mongoose.Types.ObjectId(examId as string) },
+      { $set: { isSentToCompanyAdmin: true } }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: 'Candidates sent to Company Admin successfully',
+      data: result
+    });
+  } catch (error: any) {
+    console.error("Error sending to company admin:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to send to company admin",
     });
   }
 };
@@ -448,7 +625,10 @@ export const getLabAllocations = async (req: Request, res: Response): Promise<vo
   try {
     const { examId } = req.params;
     const centerId = req.query.centerId || (req as any).user?.centerId;
-    const filter: any = { examId };
+    const filter: any = {};
+    if (examId && examId !== 'ALL') {
+      filter.examId = examId;
+    }
     if (centerId) {
       filter.centerId = centerId;
     }

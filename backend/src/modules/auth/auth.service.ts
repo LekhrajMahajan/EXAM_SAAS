@@ -17,6 +17,7 @@ import emailService from "../email/email.service";
 import systemSettingsService from "../system-settings/systemSettings.service";
 import Role from "../role/role.model";
 import Company from "../company/company.model";
+import Employee from "../employee/employee.model";
 
 class AuthService extends BaseService<IUser> {
   constructor() {
@@ -101,12 +102,40 @@ class AuthService extends BaseService<IUser> {
   }
 
   async login(email: string, password: string) {
-    const user = await authRepository.findByEmailWithPassword(email);
+    const users = await authRepository.findManyByEmailWithPassword(email);
 
-    if (!user) {
+    if (!users || users.length === 0) {
       console.log(`[DEBUG LOGIN] User not found for email: ${email}`);
       throw new ApiError(HTTP_STATUS.UNAUTHORIZED, "Invalid email or password");
     }
+
+    let matchedUser = null;
+    const settingsCache = require("../system-settings/settingsCache.service").default;
+    const maxAttempts = Number(settingsCache.get("MAX_FAILED_LOGIN_ATTEMPTS", 5));
+    const lockDuration = Number(settingsCache.get("ACCOUNT_LOCK_DURATION", 15)); // in minutes
+
+    for (const u of users) {
+      const isPasswordCorrect = await comparePassword(password, u.password);
+      if (isPasswordCorrect) {
+        matchedUser = u;
+        break;
+      } else {
+        u.loginAttempts = (u.loginAttempts || 0) + 1;
+        if (u.loginAttempts >= maxAttempts && maxAttempts > 0) {
+          const lockoutTime = new Date();
+          lockoutTime.setMinutes(lockoutTime.getMinutes() + lockDuration);
+          u.lockoutUntil = lockoutTime;
+        }
+        await u.save();
+      }
+    }
+
+    if (!matchedUser) {
+      console.log(`[DEBUG LOGIN] Password mismatch for all accounts with email ${email}. Login failed.`);
+      throw new ApiError(HTTP_STATUS.UNAUTHORIZED, "Invalid email or password");
+    }
+
+    const user = matchedUser;
 
     // Check if account is active or disconnected
     if ((user as any).status === "DISCONNECTED") {
@@ -115,6 +144,51 @@ class AuthService extends BaseService<IUser> {
 
     if ((user as any).status === false || (user as any).status === "INACTIVE") {
       throw new ApiError(HTTP_STATUS.UNAUTHORIZED, "Your account is inactive. Please contact your administrator.");
+    }
+
+    const employeeRoles = [
+      "EXAM_MANAGER", "PAPER_SETTER", "EVALUATOR", "REVIEWER", 
+      "INVIGILATOR", "COMMAND_CENTER", 
+      "AI_PROCTOR", "BIOMETRIC_VERIFIER", "ENTRY_CHECKER", 
+      "OBSERVER", "GOVT_AUTHORITY", "TECHNICAL_MANAGER", "PRIVATE_AUTHORITY"
+    ];
+
+    if (employeeRoles.includes(user.role)) {
+      const linkedEmployee = await Employee.findOne({ userId: user._id });
+      if (!linkedEmployee) {
+        // Fallback for roles that might be CenterStaff (e.g. ENTRY_CHECKER, INVIGILATOR, BIOMETRIC_VERIFIER)
+        const centerStaffRoles = ["ENTRY_CHECKER", "INVIGILATOR", "BIOMETRIC_VERIFIER", "OBSERVER", "TECHNICAL_MANAGER"];
+        if (centerStaffRoles.includes(user.role)) {
+          const CenterStaffModel = require("../center/centerStaff.model").default;
+          // CenterStaff are linked by email when created via CenterManager
+          const linkedStaff = await CenterStaffModel.findOne({ email: user.email });
+          if (!linkedStaff) {
+            throw new ApiError(HTTP_STATUS.UNAUTHORIZED, "Your account is no longer active or has been permanently deleted.");
+          }
+          if (linkedStaff.status === "INACTIVE" || linkedStaff.status === "DELETED") {
+            throw new ApiError(HTTP_STATUS.UNAUTHORIZED, "Your account has been deactivated or deleted. Please contact your center manager.");
+          }
+        } else {
+          throw new ApiError(HTTP_STATUS.UNAUTHORIZED, "Your account is no longer active or has been permanently deleted.");
+        }
+      } else if (linkedEmployee.isDeleted) {
+        throw new ApiError(HTTP_STATUS.UNAUTHORIZED, "Your account has been deleted. Please contact your administrator.");
+      }
+    }
+
+    if (user.role === "CENTER_MANAGER") {
+      const CenterModel = require("../center/center.model").default;
+      let center = await CenterModel.findOne({ centerManagerId: user._id });
+      if (!center) {
+        center = await CenterModel.findOne({ email: user.email });
+      }
+
+      if (!center) {
+        throw new ApiError(HTTP_STATUS.UNAUTHORIZED, "Your account is no longer active or has been permanently deleted.");
+      }
+      if (center.isDeleted || center.status !== "ACTIVE") {
+        throw new ApiError(HTTP_STATUS.UNAUTHORIZED, "Your center account has been deactivated or deleted. Please contact your administrator.");
+      }
     }
 
     if (user.role !== "MASTER_ADMIN") {
@@ -129,32 +203,10 @@ class AuthService extends BaseService<IUser> {
       }
     }
 
-    // Check account lockout
-    const settingsCache = require("../system-settings/settingsCache.service").default;
-    const maxAttempts = Number(settingsCache.get("MAX_FAILED_LOGIN_ATTEMPTS", 5));
-    const lockDuration = Number(settingsCache.get("ACCOUNT_LOCK_DURATION", 15)); // in minutes
-
     if (user.lockoutUntil && user.lockoutUntil > new Date()) {
         const remainingMinutes = Math.ceil((user.lockoutUntil.getTime() - new Date().getTime()) / 60000);
         // Temporarily bypassing lockout to allow testing
         // throw new ApiError(HTTP_STATUS.FORBIDDEN, `Account locked due to too many failed attempts. Try again in ${remainingMinutes} minutes.`);
-    }
-
-    const isPasswordCorrect = await comparePassword(password, user.password);
-    console.log(`[DEBUG LOGIN] Checking password for ${email}. isPasswordCorrect: ${isPasswordCorrect}. Provided password length: ${password.length}, Hash length: ${user.password?.length}`);
-
-    if (!isPasswordCorrect) {
-      user.loginAttempts = (user.loginAttempts || 0) + 1;
-      
-      if (user.loginAttempts >= maxAttempts && maxAttempts > 0) {
-          const lockoutTime = new Date();
-          lockoutTime.setMinutes(lockoutTime.getMinutes() + lockDuration);
-          user.lockoutUntil = lockoutTime;
-      }
-      
-      await user.save();
-      console.log(`[DEBUG LOGIN] Password mismatch for ${email}. Login failed.`);
-      throw new ApiError(HTTP_STATUS.UNAUTHORIZED, "Invalid email or password");
     }
 
     // Reset login attempts on success
@@ -200,7 +252,6 @@ class AuthService extends BaseService<IUser> {
       role: user.role as UserRole,
       email: user.email,
       companyId: user.companyId,
-      branchId: (user as any).branchId,
       centerId: activeCenterId,
       roleId: (user as any).roleId || user.role,
       planId,
@@ -222,40 +273,20 @@ class AuthService extends BaseService<IUser> {
 
     await authRepository.updateLastLogin(user.id as string);
 
-    let branchSetupStatus = null;
-    let branchSetupCurrentStep = null;
-    let resolvedBranchId = (user as any).branchId || null;
     let centerSetupStatus = null;
     let centerSetupCurrentStep = null;
     let resolvedCenterId = (user as any).centerId || null;
 
-    if (user.role === "BRANCH_MANAGER") {
-      try {
-        const BranchModel = require("../branch/branch.model").default;
-        const query: any[] = [];
-        if (resolvedBranchId) query.push({ _id: resolvedBranchId });
-        if (user._id || user.id) query.push({ branchManagerId: user._id || user.id });
-        if (user.email) query.push({ email: user.email.toLowerCase() });
-        const b = await BranchModel.findOne({ $or: query, isDeleted: false }).select("setupStatus setupCurrentStep _id").lean();
-        if (b) {
-          resolvedBranchId = b._id;
-          branchSetupStatus = b.setupStatus || "DRAFT";
-          branchSetupCurrentStep = b.setupCurrentStep || 1;
-        }
-      } catch (_e) {
-        // Ignore
-      }
-    } else if (user.role === "CENTER_MANAGER") {
+    if (user.role === "CENTER_MANAGER") {
       try {
         const CenterModel = require("../center/center.model").default;
         const query: any[] = [];
         if (resolvedCenterId) query.push({ _id: resolvedCenterId });
         if (user._id || user.id) query.push({ centerManagerId: user._id || user.id });
         if (user.email) query.push({ email: user.email.toLowerCase() });
-        const c = await CenterModel.findOne({ $or: query, isDeleted: false }).select("setupStatus setupCurrentStep _id branchId").lean();
+        const c = await CenterModel.findOne({ $or: query, isDeleted: false }).select("setupStatus setupCurrentStep _id").lean();
         if (c) {
           resolvedCenterId = c._id;
-          resolvedBranchId = resolvedBranchId || c.branchId;
           centerSetupStatus = c.setupStatus || "DRAFT";
           centerSetupCurrentStep = c.setupCurrentStep || 1;
         }
@@ -273,10 +304,8 @@ class AuthService extends BaseService<IUser> {
         phone: user.phone,
         role: user.role,
         companyId: user.companyId,
-        branchId: resolvedBranchId,
         centerId: resolvedCenterId,
-        branchSetupStatus,
-        branchSetupCurrentStep,
+
         centerSetupStatus,
         centerSetupCurrentStep,
         forcePasswordChange: false,
@@ -354,6 +383,9 @@ class AuthService extends BaseService<IUser> {
     let subscriptionStartDate: Date | null = null;
     let approvalStatus: string | null = null;
     let companyPaymentStatus = 'PENDING';
+    let resolvedCenterId: any = (user as any).centerId || null;
+    let centerSetupStatus: string = "DRAFT";
+    let centerSetupCurrentStep: number = 1;
 
     const userObjLocal = typeof user.toObject === 'function' ? user.toObject() : { ...user };
 
@@ -418,40 +450,16 @@ class AuthService extends BaseService<IUser> {
       idleTimeout = 0; // 0 means no timeout for MASTER_ADMIN
     }
 
-    let branchSetupStatus = null;
-    let branchSetupCurrentStep = null;
-    let resolvedBranchId = (userObjLocal as any).branchId || null;
-    let centerSetupStatus = null;
-    let centerSetupCurrentStep = null;
-    let resolvedCenterId = (userObjLocal as any).centerId || null;
-
-    if (user.role === "BRANCH_MANAGER") {
-      try {
-        const BranchModel = require("../branch/branch.model").default;
-        const query: any[] = [];
-        if (resolvedBranchId) query.push({ _id: resolvedBranchId });
-        if (user._id || user.id) query.push({ branchManagerId: user._id || user.id });
-        if (user.email) query.push({ email: user.email.toLowerCase() });
-        const b = await BranchModel.findOne({ $or: query, isDeleted: false }).select("setupStatus setupCurrentStep _id").lean();
-        if (b) {
-          resolvedBranchId = b._id;
-          branchSetupStatus = b.setupStatus || "DRAFT";
-          branchSetupCurrentStep = b.setupCurrentStep || 1;
-        }
-      } catch (_e) {
-        // Ignore
-      }
-    } else if (user.role === "CENTER_MANAGER") {
+    if (user.role === "CENTER_MANAGER") {
       try {
         const CenterModel = require("../center/center.model").default;
         const query: any[] = [];
         if (resolvedCenterId) query.push({ _id: resolvedCenterId });
         if (user._id || user.id) query.push({ centerManagerId: user._id || user.id });
         if (user.email) query.push({ email: user.email.toLowerCase() });
-        const c = await CenterModel.findOne({ $or: query, isDeleted: false }).select("setupStatus setupCurrentStep _id branchId").lean();
+        const c = await CenterModel.findOne({ $or: query, isDeleted: false }).select("setupStatus setupCurrentStep _id").lean();
         if (c) {
           resolvedCenterId = c._id;
-          resolvedBranchId = resolvedBranchId || c.branchId;
           centerSetupStatus = c.setupStatus || "DRAFT";
           centerSetupCurrentStep = c.setupCurrentStep || 1;
         }
@@ -462,10 +470,8 @@ class AuthService extends BaseService<IUser> {
 
     return {
       ...userObjLocal,
-      branchId: resolvedBranchId,
       centerId: resolvedCenterId,
-      branchSetupStatus,
-      branchSetupCurrentStep,
+
       centerSetupStatus,
       centerSetupCurrentStep,
       permissions,
@@ -615,6 +621,10 @@ class AuthService extends BaseService<IUser> {
     return {
       success: true,
     };
+  }
+
+  async hardDeleteUser(userId: string, session?: import("mongoose").ClientSession) {
+    return await authRepository.hardDelete(userId, session);
   }
 }
 

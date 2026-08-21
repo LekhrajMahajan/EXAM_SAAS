@@ -15,7 +15,7 @@ export function ConnectionBadge({ status, className, showIcon = true }: Connecti
 
   switch (status) {
     case 'Online':
-      badgeClasses = "bg-emerald-50 text-emerald-700 border-emerald-200";
+      badgeClasses = "bg-primary/10 text-primary border-primary/20";
       Icon = Wifi;
       break;
     case 'Poor Connection':

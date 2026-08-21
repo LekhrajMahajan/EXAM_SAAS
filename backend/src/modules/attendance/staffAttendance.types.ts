@@ -61,7 +61,6 @@ export enum RosterViewType {
 
 export interface IStaffAttendance {
   companyId: Types.ObjectId;
-  branchId?: Types.ObjectId | null;
   centerId?: Types.ObjectId | null;
   examId: Types.ObjectId;
   shiftId?: Types.ObjectId | null;
@@ -115,7 +114,6 @@ export type StaffAttendanceDocument = HydratedDocument<IStaffAttendance>;
 
 export interface ILeaveRequest {
   companyId: Types.ObjectId;
-  branchId?: Types.ObjectId | null;
   centerId?: Types.ObjectId | null;
   employeeId: Types.ObjectId;
   employeeName?: string;

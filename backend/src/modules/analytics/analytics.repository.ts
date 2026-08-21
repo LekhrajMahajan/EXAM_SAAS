@@ -5,7 +5,6 @@ import Result from "../result/result.model";
 import { AttendanceModel as Attendance } from "../attendance/attendance.model";
 import Question from "../question-bank/question.model";
 import Company from "../company/company.model";
-import Branch from "../branch/branch.model";
 import Center from "../center/center.model";
 import Employee from "../employee/employee.model";
 import Notification from "../notification/notification.model";
@@ -27,9 +26,7 @@ class AnalyticsRepository {
     if (filter.companyId && typeof filter.companyId === "string" && mongoose.Types.ObjectId.isValid(filter.companyId)) {
       match.companyId = new mongoose.Types.ObjectId(filter.companyId);
     }
-    if (filter.branchId && typeof filter.branchId === "string" && mongoose.Types.ObjectId.isValid(filter.branchId)) {
-      match.branchId = new mongoose.Types.ObjectId(filter.branchId);
-    }
+
     if (filter.centerId && typeof filter.centerId === "string" && mongoose.Types.ObjectId.isValid(filter.centerId)) {
       match.centerId = new mongoose.Types.ObjectId(filter.centerId);
     }
@@ -400,42 +397,6 @@ class AnalyticsRepository {
 
   /*
   |--------------------------------------------------------------------------
-  | Branch Analytics
-  |--------------------------------------------------------------------------
-  */
-  async getBranchAnalytics(filter: Record<string, unknown> = {}) {
-    const match = this.buildMatchQuery(filter);
-
-    const [summary, statusDist, topBranches] = await Promise.all([
-      Branch.aggregate([
-        { $match: match },
-        {
-          $group: {
-            _id: null,
-            totalBranches: { $sum: 1 },
-            active: { $sum: { $cond: [{ $eq: ["$status", true] }, 1, 0] } },
-            pendingVerification: { $sum: { $cond: [{ $eq: ["$status", false] }, 1, 0] } },
-          },
-        },
-      ]),
-      Branch.aggregate([
-        { $match: match },
-        { $group: { _id: { $ifNull: ["$status", true] }, count: { $sum: 1 } } },
-      ]),
-      Branch.aggregate([
-        { $match: match },
-        { $limit: 10 },
-        {
-          $project: {
-            _id: 1,
-            name: 1,
-            code: 1,
-            city: 1,
-            state: 1,
-            status: 1,
-            employeeCount: { $literal: 45 },
-            centerCount: { $literal: 12 },
-            examCount: { $literal: 28 },
             attendancePercentage: { $literal: 96.5 },
             branchPerformanceScore: { $literal: 94.2 },
             trustScore: { $literal: 98.1 },
@@ -924,24 +885,20 @@ class AnalyticsRepository {
   */
   async searchAnalytics(query: string, filter: Record<string, unknown> = {}) {
     const searchRegex = new RegExp(query, "i");
-    const [branches, centers, exams, employees, candidates] = await Promise.all([
-      Branch.find({ branchName: searchRegex, isDeleted: false }).select("branchName branchCode city state status").limit(5).lean(),
-      Center.find({ centerName: searchRegex, isDeleted: false }).select("centerName centerCode city address status").limit(5).lean(),
-      Exam.find({ examTitle: searchRegex, isDeleted: false }).select("examTitle examCode status").limit(5).lean(),
-      Employee.find({ $or: [{ firstName: searchRegex }, { lastName: searchRegex }, { employeeCode: searchRegex }], isDeleted: false })
-        .select("firstName lastName employeeCode department designation status").limit(5).lean(),
-      Candidate.find({ $or: [{ firstName: searchRegex }, { lastName: searchRegex }, { candidateCode: searchRegex }, { email: searchRegex }], isDeleted: false })
-        .select("firstName lastName email candidateCode status emailVerified").limit(5).lean(),
+    const [centers, exams, employees, candidates] = await Promise.all([
+      Center.find({ centerName: searchRegex, isDeleted: false }).limit(5).lean(),
+      Exam.find({ examTitle: searchRegex, isDeleted: false }).limit(5).lean(),
+      Employee.find({ $or: [{ firstName: searchRegex }, { lastName: searchRegex }], isDeleted: false }).limit(5).lean(),
+      Candidate.find({ $or: [{ firstName: searchRegex }, { lastName: searchRegex }], isDeleted: false }).limit(5).lean(),
     ]);
 
     return {
       query,
-      resultsCount: branches.length + centers.length + exams.length + employees.length + candidates.length,
-      branches: branches.map((b) => ({ type: "Branch", id: String(b._id), name: b.branchName, code: b.branchCode, subtitle: `${b.city}, ${b.state}` })),
-      centers: centers.map((c) => ({ type: "Center", id: String(c._id), name: c.centerName, code: c.centerCode, subtitle: c.city })),
-      exams: exams.map((e) => ({ type: "Exam", id: String(e._id), name: e.examTitle, code: e.examCode, subtitle: `Status: ${e.status}` })),
-      employees: employees.map((emp) => ({ type: "Employee", id: String(emp._id), name: `${emp.firstName} ${emp.lastName}`, code: emp.employeeCode, subtitle: emp.designation })),
-      candidates: candidates.map((cand) => ({ type: "Candidate", id: String(cand._id), name: `${cand.firstName} ${cand.lastName}`, code: cand.candidateCode || cand.email, subtitle: `Status: ${cand.status}` })),
+      resultsCount: centers.length + exams.length + employees.length + candidates.length,
+      centers: centers.map((c: any) => ({ type: "Center", id: String(c._id), name: c.centerName, code: c.centerCode, subtitle: c.city })),
+      exams: exams.map((e: any) => ({ type: "Exam", id: String(e._id), name: e.examTitle, code: e.examCode, subtitle: `Status: ${e.status}` })),
+      employees: employees.map((emp: any) => ({ type: "Employee", id: String(emp._id), name: `${emp.firstName} ${emp.lastName}`, code: emp.employeeCode, subtitle: emp.designation })),
+      candidates: candidates.map((cand: any) => ({ type: "Candidate", id: String(cand._id), name: `${cand.firstName} ${cand.lastName}`, code: cand.candidateCode || cand.email, subtitle: `Status: ${cand.status}` })),
     };
   }
 

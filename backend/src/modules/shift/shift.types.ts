@@ -19,9 +19,6 @@ export enum ShiftStatus {
 
 export interface IShift {
   companyId: Types.ObjectId;
-
-  branchId: Types.ObjectId;
-
   centerId: Types.ObjectId;
 
   shiftName: string;

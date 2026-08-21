@@ -26,8 +26,8 @@ export const AppLayout = () => {
         <Navbar />
 
         {/* Page Content and Footer Scrollable Area */}
-        <div className="flex-1 bg-muted/20 flex flex-col overflow-y-auto">
-          <main className="flex-1">
+        <div className="flex-1 bg-muted/20 flex flex-col overflow-hidden">
+          <main className="flex-1 overflow-y-auto relative">
             <Outlet />
           </main>
           

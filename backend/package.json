@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "kill-port": "powershell -Command \"$proc = (Get-NetTCPConnection -LocalPort 5000 -ErrorAction SilentlyContinue).OwningProcess; if($proc){ Stop-Process -Id $proc -Force -ErrorAction SilentlyContinue; Write-Host 'Killed stale process on port 5000' } else { Write-Host 'Port 5000 is free' }\"",
+    "predev": "npm run kill-port",
+    "dev": "nodemon --exec tsx src/server.ts",
     "build": "tsc",
     "start": "pm2-runtime start ecosystem.config.cjs",
     "start:prod": "pm2-runtime start ecosystem.config.cjs"
@@ -14,6 +16,7 @@
   "keywords": [],
   "dependencies": {
     "@types/compression": "^1.8.1",
+    "adm-zip": "^0.6.0",
     "bcryptjs": "^3.0.3",
     "bullmq": "^5.79.3",
     "bwip-js": "^4.11.2",
@@ -46,6 +49,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@types/adm-zip": "^0.5.8",
     "@types/bcryptjs": "^2.4.6",
     "@types/bwip-js": "^3.2.3",
     "@types/cookie-parser": "^1.4.10",
@@ -62,8 +66,10 @@
     "@types/streamifier": "^0.1.2",
     "@types/supertest": "^6.0.2",
     "@types/uuid": "^10.0.0",
+    "nodemon": "^3.1.14",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
+    "tsx": "^4.23.12",
     "typescript": "^6.0.3"
   }
 }

@@ -38,8 +38,6 @@ export const createResultSchema = z.object({
 
     companyId: objectId.optional(),
 
-    branchId: objectId.optional(),
-
     examCenterId: objectId.optional(),
 
     examRoomId: objectId.optional(),
@@ -234,8 +232,6 @@ export const resultQuerySchema = z.object({
     subjectId: objectId.optional(),
 
     companyId: objectId.optional(),
-
-    branchId: objectId.optional(),
 
     examCenterId: objectId.optional(),
 

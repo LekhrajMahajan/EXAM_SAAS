@@ -51,7 +51,7 @@ class StaffAttendanceService {
       if (assignment) {
         examObjId = assignment.examId;
         role = String(assignment.role || "INVIGILATOR");
-        branchId = assignment.branchId;
+
         centerId = assignment.centerId;
         shiftId = assignment.shiftId;
         roomId = assignment.roomId;
@@ -92,7 +92,7 @@ class StaffAttendanceService {
       employeeId: empObjId,
       assignmentId: assignment ? assignment._id : new Types.ObjectId(),
       examId: examObjId,
-      branchId,
+
       centerId,
       shiftId,
       roomId,

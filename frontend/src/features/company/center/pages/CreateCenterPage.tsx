@@ -10,7 +10,7 @@ export const CreateCenterPage = () => {
           Centers
         </h1>
         <Link to="/company/centers">
-          <Button className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-5 rounded-lg shadow-sm">
+          <Button variant="outline" className="font-medium px-5 rounded-lg shadow-sm">
             Cancel Adding
           </Button>
         </Link>

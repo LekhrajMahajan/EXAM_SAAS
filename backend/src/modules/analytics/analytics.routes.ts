@@ -13,7 +13,7 @@ import {
   getAttendanceAnalytics,
   getQuestionAnalytics,
   getCompanyAnalytics,
-  getBranchAnalytics,
+
   getCenterAnalytics,
   getEmployeeAnalytics,
   getNotificationAnalytics,
@@ -163,7 +163,7 @@ router.get(
   authenticate,
   authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN),
   validateRequest(branchAnalyticsSchema),
-  getBranchAnalytics,
+
 );
 
 /*

@@ -3,14 +3,14 @@ import type { Staff, StaffDetails } from "../types/staff.types";
 export const MOCK_STAFF: Staff[] = [
   {
     id: "s1",
-    employeeId: "EMP-1001",
+    employeeCode: "EMP-001",
     firstName: "Amit",
     lastName: "Kumar",
     email: "amit.k@company.com",
-    mobile: "+91 9876543210",
+    phone: "+91 9876543210",
     role: "Center Manager",
     department: "Operations",
-    branch: "Mumbai Central",
+
     center: "Tech Hub Mumbai",
     status: "Active",
     joiningDate: "2024-01-15T00:00:00Z",
@@ -19,14 +19,14 @@ export const MOCK_STAFF: Staff[] = [
   },
   {
     id: "s2",
-    employeeId: "EMP-1002",
+    employeeCode: "EMP-002",
     firstName: "Priya",
     lastName: "Singh",
     email: "priya.s@company.com",
-    mobile: "+91 8765432109",
+    phone: "+91 8765432109",
     role: "Invigilator",
     department: "Examination",
-    branch: "Pune Hub",
+
     center: "Pune Exam Center",
     status: "Active",
     joiningDate: "2025-06-01T00:00:00Z",
@@ -35,14 +35,14 @@ export const MOCK_STAFF: Staff[] = [
   },
   {
     id: "s3",
-    employeeId: "EMP-1003",
+    employeeCode: "EMP-003",
     firstName: "Rajesh",
     lastName: "Sharma",
     email: "rajesh.s@company.com",
-    mobile: "+91 7654321098",
+    phone: "+91 7654321098",
     role: "Technical Manager",
     department: "IT Support",
-    branch: "Bangalore Tech",
+
     center: "Bangalore Digital Center",
     status: "On Leave",
     joiningDate: "2023-11-20T00:00:00Z",

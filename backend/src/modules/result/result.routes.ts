@@ -28,6 +28,7 @@ import {
   passPercentage,
   softDeleteResult,
   restoreResult,
+  exportExamResults,
 } from "./result.controller";
 
 import {
@@ -98,6 +99,22 @@ router.get(
   validateRequest(examResultSchema),
 
   getExamResults,
+);
+
+router.get(
+  "/export/:examId",
+
+  authenticate,
+
+  authorize(
+    UserRole.EXAM_MANAGER,
+
+    UserRole.COMPANY_ADMIN,
+
+    UserRole.MASTER_ADMIN,
+  ),
+
+  exportExamResults,
 );
 
 /*

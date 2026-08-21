@@ -24,29 +24,12 @@ export const ProtectedRoute = () => {
   }
 
   const roleStr = String(user?.role || '');
-  const isBranchManager =
-    user?.roleId === 'BRANCH_MANAGER' ||
-    user?.roleId === 'Branch Manager' ||
-    roleStr === 'BRANCH_MANAGER' ||
-    roleStr === 'Branch Manager';
 
   const isCenterManager =
     user?.roleId === 'CENTER_MANAGER' ||
     user?.roleId === 'Center Manager' ||
     roleStr === 'CENTER_MANAGER' ||
     roleStr === 'Center Manager';
-
-  if (
-    isBranchManager &&
-    !user?.forcePasswordChange &&
-    user?.branchSetupStatus &&
-    user?.branchSetupStatus !== 'ACTIVE' &&
-    !location.pathname.startsWith('/branch/onboarding-wizard') &&
-    !location.pathname.startsWith('/auth')
-  ) {
-    return <Navigate to="/branch/onboarding-wizard" replace />;
-  }
-
   if (
     isCenterManager &&
     !user?.forcePasswordChange &&
@@ -56,6 +39,15 @@ export const ProtectedRoute = () => {
     !location.pathname.startsWith('/auth')
   ) {
     return <Navigate to="/center/onboarding-wizard" replace />;
+  }
+
+  // Prevent accessing onboarding wizard if already ACTIVE
+  if (
+    isCenterManager &&
+    user?.centerSetupStatus === 'ACTIVE' &&
+    location.pathname.startsWith('/center/onboarding-wizard')
+  ) {
+    return <Navigate to="/dashboard/center-manager" replace />;
   }
 
   return <Outlet />;

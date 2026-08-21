@@ -26,15 +26,13 @@ export const StaffViewDialog = ({ staff, isOpen, onClose }: StaffViewDialogProps
           const res = await staffApi.getById(staffId);
           if (res.success) {
             setDetails(res.data);
-            if (res.data.role === 'PAPER_SETTER') {
-              try {
-                const assignRes = await api.get('/assignments', { params: { employeeId: staffId } });
-                const assignments = assignRes.data?.data?.data || assignRes.data?.data || [];
-                const exams = assignments.filter((a: any) => a.examId).map((a: any) => a.examId);
-                setAssignedExams(exams);
-              } catch (e) {
-                console.error('Failed to fetch assigned exams:', e);
-              }
+            try {
+              const assignRes = await api.get('/assignments', { params: { employeeId: staffId } });
+              const assignments = assignRes.data?.data?.data || assignRes.data?.data || [];
+              const exams = assignments.filter((a: any) => a.examId).map((a: any) => a.examId);
+              setAssignedExams(exams);
+            } catch (e) {
+              console.error('Failed to fetch assigned exams:', e);
             }
           }
         } catch (error) {
@@ -50,7 +48,7 @@ export const StaffViewDialog = ({ staff, isOpen, onClose }: StaffViewDialogProps
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[600px] bg-slate-900 border-slate-800 text-slate-50">
+      <DialogContent className="sm:max-w-[600px] bg-card border-border text-card-foreground">
         <DialogHeader>
           <DialogTitle>
             {details?.role === 'PAPER_SETTER' ? 'Paper Setter View Details' : 'Employee Profile Details'}
@@ -63,96 +61,97 @@ export const StaffViewDialog = ({ staff, isOpen, onClose }: StaffViewDialogProps
           </div>
         ) : details ? (
           <div className="space-y-4 mt-4 max-h-[70vh] overflow-y-auto pr-2">
-            <div className="flex items-center gap-4 border-b border-slate-800 pb-4">
-              <div className="h-16 w-16 rounded-full bg-slate-800 flex items-center justify-center text-xl font-bold">
+            <div className="flex items-center gap-4 border-b border-border pb-4">
+              <div className="h-16 w-16 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-xl font-bold text-primary">
                 {details.firstName.charAt(0)}{details.lastName.charAt(0)}
               </div>
               <div>
                 <h3 className="text-lg font-bold">{details.firstName} {details.lastName}</h3>
                 <p className="text-sm text-muted-foreground">{details.employeeCode}</p>
-                <div className="mt-1 inline-flex px-2 py-0.5 rounded text-xs bg-slate-800 text-slate-300">
+                <div className="mt-1 inline-flex px-2 py-0.5 rounded text-xs bg-primary/10 text-primary border border-primary/20 font-medium">
                   {details.role}
                 </div>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              {details.email && (
-                <div>
-                  <p className="text-sm text-muted-foreground">Email</p>
-                  <p className="font-medium truncate" title={details.email}>{details.email}</p>
-                </div>
-              )}
-              {details.phone && details.phone !== '9999999999' && (
-                <div>
-                  <p className="text-sm text-muted-foreground">Phone</p>
-                  <p className="font-medium">{details.phone}</p>
-                </div>
-              )}
-              {details.department && (
-                <div>
-                  <p className="text-sm text-muted-foreground">Department</p>
-                  <p className="font-medium">{details.department}</p>
-                </div>
-              )}
-              {details.employmentType && (
-                <div>
-                  <p className="text-sm text-muted-foreground">Employment Type</p>
-                  <p className="font-medium">{details.employmentType}</p>
-                </div>
-              )}
-              {details.role === 'PAPER_SETTER' && (
-                <div className="col-span-2">
-                  <p className="text-sm text-muted-foreground mb-1">Assigned Exams</p>
-                  {assignedExams.length > 0 ? (
+              <div className="space-y-4">
+                {details.email && (
+                  <div>
+                    <p className="text-sm text-muted-foreground">Email</p>
+                    <p className="font-medium truncate" title={details.email}>{details.email}</p>
+                  </div>
+                )}
+                
+                {/* Assigned Exams showing in the red box area */}
+                {assignedExams.length > 0 && (
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Assigned Exams</p>
                     <ul className="list-disc list-inside text-sm font-medium">
                       {assignedExams.map((exam, idx) => (
                         <li key={idx}>{exam.examTitle || exam.examName || exam.name || 'Unknown Exam'}</li>
                       ))}
                     </ul>
-                  ) : (
-                    <p className="text-sm font-medium text-slate-400">No exams assigned yet.</p>
-                  )}
-                </div>
-              )}
-              {details.branch && (
-                <div>
-                  <p className="text-sm text-muted-foreground">Branch</p>
-                  <p className="font-medium">{details.branch}</p>
-                </div>
-              )}
-              {details.center && (
-                <div>
-                  <p className="text-sm text-muted-foreground">Center</p>
-                  <p className="font-medium">{details.center}</p>
-                </div>
-              )}
-              {details.status && (
-                <div>
-                  <p className="text-sm text-muted-foreground">Status</p>
-                  <p className="font-medium">{details.status}</p>
-                </div>
-              )}
-              {details.joiningDate && (
-                <div>
-                  <p className="text-sm text-muted-foreground">Joining Date</p>
-                  <p className="font-medium">{new Date(details.joiningDate).toLocaleDateString()}</p>
-                </div>
-              )}
-              {details.gender && (
-                <div>
-                  <p className="text-sm text-muted-foreground">Gender</p>
-                  <p className="font-medium">{details.gender}</p>
-                </div>
-              )}
-              {details.dateOfBirth && (
-                <div>
-                  <p className="text-sm text-muted-foreground">Date of Birth</p>
-                  <p className="font-medium">{new Date(details.dateOfBirth).toLocaleDateString()}</p>
-                </div>
-              )}
+                  </div>
+                )}
+                {details.phone && details.phone !== '9999999999' && (
+                  <div>
+                    <p className="text-sm text-muted-foreground">Phone</p>
+                    <p className="font-medium">{details.phone}</p>
+                  </div>
+                )}
+                {details.status && (
+                  <div>
+                    <p className="text-sm text-muted-foreground">Status</p>
+                    <p className="font-medium">{details.status}</p>
+                  </div>
+                )}
+                {details.employmentType && (
+                  <div>
+                    <p className="text-sm text-muted-foreground">Employment Type</p>
+                    <p className="font-medium">{details.employmentType}</p>
+                  </div>
+                )}
+                {details.gender && (
+                  <div>
+                    <p className="text-sm text-muted-foreground">Gender</p>
+                    <p className="font-medium">{details.gender}</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-4">
+                {details.department && (
+                  <div>
+                    <p className="text-sm text-muted-foreground">Department</p>
+                    <p className="font-medium">{details.department}</p>
+                  </div>
+                )}
+                {details.joiningDate && (
+                  <div>
+                    <p className="text-sm text-muted-foreground">Joining Date</p>
+                    <p className="font-medium">{new Date(details.joiningDate).toLocaleDateString()}</p>
+                  </div>
+                )}
+
+                {details.center && (
+                  <div>
+                    <p className="text-sm text-muted-foreground">Center</p>
+                    <p className="font-medium">{details.center}</p>
+                  </div>
+                )}
+                {details.dateOfBirth && (
+                  <div>
+                    <p className="text-sm text-muted-foreground">Date of Birth</p>
+                    <p className="font-medium">{new Date(details.dateOfBirth).toLocaleDateString()}</p>
+                  </div>
+                )}
+              </div>
+              
+              {/* Assigned exams moved to left column */}
+              
               {details.address && (
-                <div className="col-span-2">
+                <div className="col-span-2 mt-2">
                   <p className="text-sm text-muted-foreground">Address</p>
                   <p className="font-medium">{details.address}</p>
                 </div>

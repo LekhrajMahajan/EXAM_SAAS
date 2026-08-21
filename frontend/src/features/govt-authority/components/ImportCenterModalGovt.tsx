@@ -23,6 +23,7 @@ import api from '@/services/api';
 import * as XLSX from 'xlsx';
 import { examApi } from '@/features/exam-manager/api/exam.api';
 import type { Exam } from '@/features/exam-manager/api/exam.api';
+import { getDisplayStatus } from '@/shared/utils/exam-status';
 
 export function ImportCenterModalGovt({ onSuccess }: { onSuccess?: (importId: string, examName: string, count: number) => void } = {}) {
   const [open, setOpen] = useState(false);
@@ -41,7 +42,7 @@ export function ImportCenterModalGovt({ onSuccess }: { onSuccess?: (importId: st
         const res = await examApi.getAll({ limit: 100 });
         if (res.success) {
           const activeOnlineExams = res.data.exams.filter(
-            (exam) => exam.status === 'ACTIVE' && exam.examMode === 'ONLINE'
+            (exam: Exam) => getDisplayStatus(exam) === 'ACTIVE' && exam.examMode === 'ONLINE'
           );
           setExams(activeOnlineExams);
         }
@@ -119,7 +120,6 @@ export function ImportCenterModalGovt({ onSuccess }: { onSuccess?: (importId: st
             centerName: row['Center name'],
             centerType: row['Center type'],
             centerCode: String(row['Center code']),
-            examCenterCode: row['Exam center code'] ? String(row['Exam center code']) : undefined,
             examName: row['Exam name'],
             streetAddress: row['Street address & landmark'],
             city: row['City/town'],
@@ -178,7 +178,7 @@ export function ImportCenterModalGovt({ onSuccess }: { onSuccess?: (importId: st
       }}
     >
       <DialogTrigger asChild>
-        <Button size="sm" className="bg-[#242b3b] hover:bg-[#2a3245] text-slate-200 border border-[#3b4455]">
+        <Button size="sm" className="bg-background text-[#2D3E2C] dark:text-slate-200 border border-[#2D3E2C] hover:bg-[#2D3E2C] hover:text-white">
           <UploadCloud className="w-4 h-4 mr-2" />
           Import Center
         </Button>
@@ -234,10 +234,6 @@ export function ImportCenterModalGovt({ onSuccess }: { onSuccess?: (importId: st
               <li>Pincode / postal code</li>
               <li>Country</li>
             </ul>
-            <p className="font-medium mb-1">Optional Columns:</p>
-            <ul className="list-disc list-inside space-y-1 text-xs opacity-80">
-              <li>Exam center code</li>
-            </ul>
           </div>
 
           {error && (
@@ -261,7 +257,7 @@ export function ImportCenterModalGovt({ onSuccess }: { onSuccess?: (importId: st
           <Button variant="outline" onClick={() => setOpen(false)} disabled={isUploading}>
             Cancel
           </Button>
-          <Button onClick={handleUpload} disabled={!file || !selectedExamId || isUploading} className="bg-[#1b2319] hover:bg-[#253022] text-emerald-500 border border-[#2f4029]">
+          <Button onClick={handleUpload} disabled={!file || !selectedExamId || isUploading} className="bg-[#2D3E2C] hover:bg-[#3d5038] text-white border border-[#2D3E2C]">
             {isUploading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Import
           </Button>

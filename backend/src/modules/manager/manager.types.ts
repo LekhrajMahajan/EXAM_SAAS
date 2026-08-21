@@ -30,8 +30,6 @@ export interface IManager {
   alternateMobile?: string;
   
   password: string;
-
-  branchId?: Types.ObjectId;
   centerId?: Types.ObjectId;
   department: string;
   designation: string;

@@ -35,7 +35,7 @@ export function QuestionPalette({ questions, currentQuestionId, onQuestionSelect
                   isCurrent && "ring-2 ring-primary ring-offset-2"
                 )}
               >
-                {q.questionNumber}
+                {((q as any).displayNumber) || q.questionNumber}
               </button>
             );
           })}

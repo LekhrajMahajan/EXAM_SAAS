@@ -6,6 +6,9 @@ import { asyncHandler } from "../../utils/asyncHandler";
 import { sendResponse } from "../../utils/response";
 
 import { HTTP_STATUS } from "../../constants/httpStatus";
+import notificationService from "../notification/notification.service";
+import { NotificationType, NotificationChannel, NotificationPriority } from "../notification/notification.types";
+import Center from "../center/center.model";
 
 /*
 |--------------------------------------------------------------------------
@@ -56,11 +59,29 @@ export const generateSeatAllocations = asyncHandler(
               candidateId: new mongoose.Types.ObjectId(),
               allocationStatus: SeatAllocationStatus.RESERVED,
               isDeleted: false,
-              createdBy: req.user?.userId ? new mongoose.Types.ObjectId(req.user.userId) : new mongoose.Types.ObjectId()
             }
           },
           { upsert: true, new: true }
         );
+
+        // Generate notification
+        const center = await Center.findById(centerId);
+        if (center && center.centerManagerId) {
+          try {
+            await notificationService.create({
+              title: "Candidates Allocated",
+              message: "Candidates have been successfully allocated to your center rooms.",
+              type: NotificationType.SYSTEM,
+              channel: NotificationChannel.IN_APP,
+              priority: NotificationPriority.MEDIUM,
+              recipientId: center.centerManagerId as mongoose.Types.ObjectId,
+              companyId: center.companyId as mongoose.Types.ObjectId,
+            });
+          } catch (notifErr) {
+            console.error("Failed to create candidate allocation notification:", notifErr);
+          }
+        }
+
       } catch (err) {
         console.error("CREATE ERROR in generateSeatAllocations:", err);
       }

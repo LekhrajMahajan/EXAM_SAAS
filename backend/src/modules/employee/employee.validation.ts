@@ -56,8 +56,6 @@ const employeeBodySchema = z.object({
 
   roleId: z.string().length(24).optional(),
 
-  branchId: z.string().length(24).optional(),
-
   department: z.string().trim().min(2).max(100),
 
   designation: z.string().trim().min(2).max(100),
@@ -181,7 +179,6 @@ export const employeeSearchSchema = z.object({
     role: z.string().optional(),
     status: z.string().optional(),
     verificationStatus: z.string().optional(),
-    branchId: z.string().optional(),
     centerId: z.string().optional(),
   })
 });
@@ -202,7 +199,6 @@ export const inviteEmployeeSchema = z.object({
     role: z.string().min(2),
     department: z.string().min(2),
     designation: z.string().min(2),
-    branchId: z.string().length(24).optional().nullable(),
     centerId: z.string().length(24).optional().nullable(),
     joiningDate: z.string().optional(),
   })
@@ -273,7 +269,6 @@ export const rejectVerificationSchema = z.object({
 
 export const transferEmployeeSchema = z.object({
   body: z.object({
-    branchId: z.string().length(24).optional().nullable(),
     centerId: z.string().length(24).optional().nullable(),
     reason: z.string().optional(),
   })

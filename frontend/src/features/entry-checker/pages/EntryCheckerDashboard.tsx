@@ -4,11 +4,14 @@ import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { apiClient } from '@/core/api/http/axios-client';
 import { useAuth } from '@/features/auth/hooks';
+import { useAuthStore } from '@/stores/auth/auth.store';
+import { toast } from '@/hooks/use-toast';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/shared/components/ui/accordion';
 import { Search, UserCheck, CheckCircle2, ShieldCheck, User } from 'lucide-react';
 
 export const EntryCheckerDashboard: React.FC = () => {
   const { user } = useAuth();
+  const logout = useAuthStore((state) => state.logout);
   const [applicationNo, setApplicationNo] = useState('');
   const [candidateData, setCandidateData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -29,13 +32,59 @@ export const EntryCheckerDashboard: React.FC = () => {
         
       apiClient.get('/entry-checker/my-assignments')
         .then(res => {
-          if (res.data?.data?.examNames) {
-            setAssignedExams(res.data.data.examNames);
+          const data = res.data?.data;
+          if (data?.examNames) {
+            setAssignedExams(data.examNames);
+          }
+          
+          if (data?.exams?.length > 0) {
+            const checkExamsStarted = () => {
+              const now = new Date();
+              const today = new Date(now);
+              today.setHours(0, 0, 0, 0);
+              
+              let currentlyRunningExam = false;
+              
+              for (const exam of data.exams) {
+                if (!exam.examDate || !exam.startTime || !exam.endTime) continue;
+                
+                const examDate = new Date(exam.examDate);
+                examDate.setHours(0, 0, 0, 0);
+                
+                if (examDate.getTime() === today.getTime()) {
+                  const examStart = new Date(now);
+                  const [startH, startM] = exam.startTime.split(':').map(Number);
+                  examStart.setHours(startH, startM, 0, 0);
+                  
+                  const examEnd = new Date(now);
+                  const [endH, endM] = exam.endTime.split(':').map(Number);
+                  examEnd.setHours(endH, endM, 0, 0);
+                  
+                  if (now >= examStart && now <= examEnd) {
+                    currentlyRunningExam = true;
+                    break;
+                  }
+                }
+              }
+              
+              if (currentlyRunningExam) {
+                toast({ 
+                  title: 'Entry Closed', 
+                  description: 'The exam has started. You have been logged out automatically.',
+                  variant: 'destructive'
+                });
+                logout();
+              }
+            };
+            
+            checkExamsStarted();
+            const interval = setInterval(checkExamsStarted, 10000);
+            return () => clearInterval(interval);
           }
         })
         .catch(err => console.error("Failed to fetch assigned exams", err));
     }
-  }, [user?.centerId]);
+  }, [user?.centerId, logout]);
 
   const handleSearch = async () => {
     if (!applicationNo.trim()) {
@@ -132,7 +181,7 @@ export const EntryCheckerDashboard: React.FC = () => {
           )}
 
           {verifySuccess && (
-            <div className="p-4 bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 rounded-md flex items-center gap-2 font-medium">
+            <div className="p-4 bg-[#2D3E2C] text-[#E4FD97] border border-[#E4FD97]/20 rounded-md flex items-center gap-3 font-semibold shadow-sm">
               <CheckCircle2 className="h-5 w-5" />
               Candidate Verified Successfully!
             </div>
@@ -141,11 +190,11 @@ export const EntryCheckerDashboard: React.FC = () => {
           {candidateData && (
             <div className="border border-border rounded-lg p-6 space-y-6 bg-slate-50/50 dark:bg-slate-900/50">
               <div className="flex flex-col md:flex-row gap-6 items-start">
-                <div className="h-32 w-32 bg-slate-200 dark:bg-slate-800 rounded-lg flex items-center justify-center overflow-hidden shrink-0 border border-border">
+                <div className="h-40 w-40 bg-slate-200 dark:bg-slate-800 rounded-full flex items-center justify-center overflow-hidden shrink-0 border-4 border-border shadow-md">
                   {(candidateData.isImported ? candidateData.candidate.candidatePhoto : candidateData.candidate.photo) ? (
                     <img src={candidateData.isImported ? candidateData.candidate.candidatePhoto : candidateData.candidate.photo} alt="Candidate" className="h-full w-full object-cover" />
                   ) : (
-                    <User className="h-12 w-12 text-slate-400" />
+                    <User className="h-16 w-16 text-slate-400" />
                   )}
                 </div>
                 

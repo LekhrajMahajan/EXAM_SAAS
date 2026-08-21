@@ -1,15 +1,16 @@
 import React, { useEffect, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/features/auth/hooks';
 import { Card, CardContent } from '@/shared/components/ui/card';
 import { Button } from '@/shared/components/ui/button';
-import { Image as ImageIcon, Camera } from 'lucide-react';
+import { Image as ImageIcon, Camera, ArrowLeft } from 'lucide-react';
 import { useCenterPhotoStore, type PhotoField, type CenterPhotosData } from '../store/useCenterPhotoStore';
 import toast from 'react-hot-toast';
 import { apiClient } from '@/core/api/http/axios-client';
 
 export const CenterPhotosPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const isReadOnly = Boolean(id) && user?.role !== 'CENTER_MANAGER';
 
@@ -70,14 +71,24 @@ export const CenterPhotosPage: React.FC = () => {
 
   return (
     <div className="p-8 max-w-7xl mx-auto">
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="p-2 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-            <ImageIcon className="w-6 h-6 text-blue-400" />
+      <div className="flex items-stretch gap-3 mb-8">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => navigate(-1)}
+          className="h-auto px-4 bg-card hover:bg-muted border border-border shadow-xl rounded-xl shrink-0"
+        >
+          <ArrowLeft className="w-5 h-5 text-muted-foreground" />
+        </Button>
+        <div className="flex-1">
+          <div className="flex items-center gap-3 mb-2">
+          <div className="p-3 bg-[#E4FD97] rounded-xl text-[#2D3E2C] mt-1 shrink-0">
+            <ImageIcon className="w-8 h-8" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-200">Center Photos</h1>
-            <p className="text-slate-400">Upload and manage images of your physical infrastructure.</p>
+            <h1 className="text-2xl font-bold text-foreground">Center Photos</h1>
+            <p className="text-muted-foreground">Upload and manage images of your physical infrastructure.</p>
+          </div>
           </div>
         </div>
       </div>
@@ -96,7 +107,7 @@ export const CenterPhotosPage: React.FC = () => {
           const hasPhoto = photoData && photoData.url;
 
           return (
-            <Card key={category} className={`bg-slate-900/80 border-slate-800 backdrop-blur-md shadow-xl rounded-xl overflow-hidden text-white relative group ${hasPhoto ? 'min-h-[300px]' : ''}`}>
+            <Card key={category} className={`bg-card border-border backdrop-blur-md shadow-xl rounded-xl overflow-hidden text-foreground relative group ${hasPhoto ? 'min-h-[300px]' : ''}`}>
               {hasPhoto ? (
                 <>
                   <img 
@@ -112,28 +123,28 @@ export const CenterPhotosPage: React.FC = () => {
                     }}
                   />
                   <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/80 to-transparent flex items-center gap-2 z-10 pointer-events-none">
-                    <span className="text-slate-200">{icon}</span>
-                    <h3 className="font-semibold text-slate-200">{title}</h3>
+                    <span className="text-white">{icon}</span>
+                    <h3 className="font-semibold text-white">{title}</h3>
                   </div>
                 </>
               ) : (
                 <>
-                  <div className="p-4 border-b border-slate-800 bg-slate-950/50 flex items-center gap-2">
-                    <span className="text-slate-400">{icon}</span>
-                    <h3 className="font-semibold text-slate-200">{title}</h3>
+                  <div className="p-4 border-b border-border bg-muted/50 flex items-center gap-2">
+                    <span className="text-primary">{icon}</span>
+                    <h3 className="font-semibold text-foreground">{title}</h3>
                   </div>
                   
                   <CardContent className="p-6">
-                    <div className="border border-dashed border-slate-700 rounded-lg p-8 flex flex-col items-center justify-center min-h-[220px] bg-slate-800/30">
+                    <div className="border border-dashed border-border rounded-lg p-8 flex flex-col items-center justify-center min-h-[220px] bg-muted/30">
                       <div className="text-center w-full flex flex-col items-center">
-                        <div className="flex items-center justify-center w-12 h-12 bg-slate-800 border border-slate-700 rounded-full mb-3">
-                          <ImageIcon className="w-6 h-6 text-slate-400" />
+                        <div className="flex items-center justify-center w-12 h-12 bg-muted border border-border rounded-full mb-3">
+                          <ImageIcon className="w-6 h-6 text-muted-foreground" />
                         </div>
-                        <p className="text-sm text-slate-400 mb-6">Upload a clear photo</p>
+                        <p className="text-sm text-muted-foreground mb-6">Upload a clear photo</p>
                         {!isReadOnly && (
                           <Button 
                             variant="outline"
-                            className="w-32 border-slate-700 text-slate-300 bg-slate-800 hover:bg-slate-700"
+                            className="w-32 border-border text-foreground bg-background hover:bg-muted"
                             onClick={() => triggerFileInput(category)}
                             disabled={isLoading}
                           >

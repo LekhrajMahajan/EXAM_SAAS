@@ -35,6 +35,7 @@ import {
   getEnterpriseHistory,
   getEnterpriseReports,
   getEnterpriseAnalytics,
+  getExamLogins,
 } from "./attendance.controller";
 
 import { authenticate } from "../../middleware/authenticate";
@@ -303,6 +304,24 @@ router.get(
     UserRole.CENTER_MANAGER,
   ),
   getAttendanceByExam,
+);
+
+/*
+|--------------------------------------------------------------------------
+| Get Exam Logins
+|--------------------------------------------------------------------------
+*/
+
+router.get(
+  "/exam/:examId/logins",
+  authenticate,
+  authorize(
+    UserRole.MASTER_ADMIN,
+    UserRole.COMPANY_ADMIN,
+    UserRole.EXAM_MANAGER,
+    UserRole.CENTER_MANAGER,
+  ),
+  getExamLogins,
 );
 
 /*

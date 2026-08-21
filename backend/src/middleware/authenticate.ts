@@ -7,7 +7,6 @@ import { HTTP_STATUS } from "../constants/httpStatus";
 import { UserRole } from "../constants/roles";
 import { activityLogMiddleware } from "./activity-log";
 import { auditLogMiddleware } from "./audit-log";
-import { checkPasswordChange, checkBranchSetup } from "./branchManagerGuard.middleware";
 import { checkCenterPasswordChange, checkCenterSetup } from "./centerManagerGuard.middleware";
 
 export interface JwtPayload {
@@ -15,7 +14,6 @@ export interface JwtPayload {
   role: UserRole;
   email: string;
   companyId?: string;
-  branchId?: string;
   centerId?: string;
   roleId?: string;
   subscriptionId?: string;
@@ -55,13 +53,9 @@ export const authenticate = (
   // Attach middlewares to record activities and enforce enterprise manager onboarding security guards
   activityLogMiddleware(req, res, () => {
     auditLogMiddleware(req, res, () => {
-      checkPasswordChange(req, res, () => {
-        checkBranchSetup(req, res, () => {
-          checkCenterPasswordChange(req, res, () => {
-            checkCenterSetup(req, res, () => {
-              next();
-            });
-          });
+      checkCenterPasswordChange(req, res, () => {
+        checkCenterSetup(req, res, () => {
+          next();
         });
       });
     });

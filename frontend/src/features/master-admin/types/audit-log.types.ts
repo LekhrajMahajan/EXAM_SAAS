@@ -42,7 +42,6 @@ export interface AuditLog {
   performedByRole?: string;
   performedFor?: string;
   companyId?: string;
-  branchId?: string;
   examId?: string;
   candidateId?: string;
   employeeId?: string;

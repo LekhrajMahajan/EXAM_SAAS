@@ -25,7 +25,7 @@ export interface UserReportUser {
   employeeCode?: string;
   department?: string;
   company?: string;
-  branch?: string;
+
 }
 
 export interface LoginHistoryRecord {

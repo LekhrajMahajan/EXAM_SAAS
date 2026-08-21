@@ -3,6 +3,7 @@ import Admin from "../admin/admin.model";
 import Manager from "../manager/manager.model";
 import Candidate from "../candidate/candidate.model";
 import User from "./user.model";
+import CenterEntryChecker from "../center-entry-checker/centerEntryChecker.model";
 import { IUser } from "./user.types";
 import { BaseRepository } from "../../common/base.repository";
 import { UserRole } from "../../constants/roles";
@@ -29,6 +30,7 @@ class AuthRepository extends BaseRepository<IUser> {
     if (!deleted) deleted = await Manager.findByIdAndDelete(id, { session });
     if (!deleted) deleted = await Candidate.findByIdAndDelete(id, { session });
     if (!deleted) deleted = await User.findByIdAndDelete(id, { session });
+    if (!deleted) deleted = await CenterEntryChecker.findByIdAndDelete(id, { session });
     return deleted;
   }
 
@@ -53,6 +55,11 @@ class AuthRepository extends BaseRepository<IUser> {
       ModelToUpdate = User;
     }
 
+    if (!userDoc) {
+      userDoc = await CenterEntryChecker.findById(id).select("_id");
+      ModelToUpdate = CenterEntryChecker;
+    }
+
     if (!userDoc) return null;
 
     return await ModelToUpdate.findByIdAndUpdate(id, payload, options);
@@ -63,6 +70,7 @@ class AuthRepository extends BaseRepository<IUser> {
     if (!user) user = await Manager.findOne({ email });
     if (!user) user = await Candidate.findOne({ email });
     if (!user) user = await User.findOne({ email });
+    if (!user) user = await CenterEntryChecker.findOne({ email });
     return user;
   }
 
@@ -71,7 +79,18 @@ class AuthRepository extends BaseRepository<IUser> {
     if (!user) user = await Manager.findOne({ email }).select("+password +refreshToken");
     if (!user) user = await Candidate.findOne({ email }).select("+password +refreshToken");
     if (!user) user = await User.findOne({ email }).select("+password +refreshToken");
+    if (!user) user = await CenterEntryChecker.findOne({ email }).select("+password +refreshToken");
     return user;
+  }
+
+  async findManyByEmailWithPassword(email: string) {
+    let users: any[] = [];
+    users = users.concat(await Admin.find({ email }).select("+password +refreshToken"));
+    users = users.concat(await Manager.find({ email }).select("+password +refreshToken"));
+    users = users.concat(await Candidate.find({ email }).select("+password +refreshToken"));
+    users = users.concat(await User.find({ email }).select("+password +refreshToken"));
+    users = users.concat(await CenterEntryChecker.find({ email }).select("+password +refreshToken"));
+    return users;
   }
 
   async findById(id: string, populateFields?: string[]) {
@@ -79,6 +98,7 @@ class AuthRepository extends BaseRepository<IUser> {
     if (!user) user = await Manager.findOne({ _id: id, isDeleted: false });
     if (!user) user = await Candidate.findOne({ _id: id, isDeleted: false });
     if (!user) user = await User.findOne({ _id: id, isDeleted: false });
+    if (!user) user = await CenterEntryChecker.findOne({ _id: id, isDeleted: false });
     return user;
   }
 
@@ -87,6 +107,7 @@ class AuthRepository extends BaseRepository<IUser> {
     if (!user) user = await Manager.findById(id).select("+password +refreshToken");
     if (!user) user = await Candidate.findById(id).select("+password +refreshToken");
     if (!user) user = await User.findById(id).select("+password +refreshToken");
+    if (!user) user = await CenterEntryChecker.findById(id).select("+password +refreshToken");
     return user;
   }
 

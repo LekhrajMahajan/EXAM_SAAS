@@ -82,8 +82,6 @@ export const EditUserPage = () => {
     employeeCode: employee.employeeCode || "",
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     companyId: typeof employee.companyId === 'object' ? (employee.companyId as any)._id : employee.companyId || "",
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    branchId: typeof employee.branchId === 'object' ? (employee.branchId as any)._id : employee.branchId || "",
     department: employee.department || "",
     designation: employee.designation || "",
     joiningDate: employee.joiningDate ? new Date(employee.joiningDate).toISOString().split('T')[0] : "",

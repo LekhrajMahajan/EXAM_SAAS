@@ -31,6 +31,7 @@ export interface User {
   centerSetupStatus?: string;
   centerSetupCurrentStep?: number;
   referenceId?: string;
+  lastLoginAt?: string;
 }
 
 export interface AuthTokens {

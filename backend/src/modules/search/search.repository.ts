@@ -1,7 +1,6 @@
 import Candidate from "../candidate/candidate.model";
 import Employee from "../employee/employee.model";
 import Company from "../company/company.model";
-import Branch from "../branch/branch.model";
 import Center from "../center/center.model";
 import Subject from "../subject/subject.model";
 import Chapter from "../chapter/chapter.model";
@@ -61,19 +60,6 @@ class SearchRepository extends BaseRepository<any> {
     });
   }
 
-  /*
-    |--------------------------------------------------------------------------
-    | Branch Search
-    |--------------------------------------------------------------------------
-    */
-
-  async searchBranches(payload: ISearchRequest) {
-    return Branch.find({
-      $text: {
-        $search: payload.keyword,
-      },
-    });
-  }
 
   /*
     |--------------------------------------------------------------------------
@@ -215,8 +201,6 @@ class SearchRepository extends BaseRepository<any> {
 
       companies,
 
-      branches,
-
       centers,
 
       subjects,
@@ -240,8 +224,6 @@ class SearchRepository extends BaseRepository<any> {
       this.searchEmployees(payload),
 
       this.searchCompanies(payload),
-
-      this.searchBranches(payload),
 
       this.searchCenters(payload),
 
@@ -268,8 +250,6 @@ class SearchRepository extends BaseRepository<any> {
       employees,
 
       companies,
-
-      branches,
 
       centers,
 

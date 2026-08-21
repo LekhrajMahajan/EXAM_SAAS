@@ -26,7 +26,6 @@ export const ROUTES = {
   // Company
   COMPANY: {
     ROOT: '/company',
-    BRANCHES: '/company/branches',
     CENTERS: '/company/centers',
     CANDIDATES: '/company/candidates',
     PAYMENTS: '/company/payments',

@@ -19,6 +19,7 @@ export const activityLogMiddleware = (req: Request, res: Response, next: NextFun
           module: req.baseUrl || req.path,
           performedBy: new mongoose.Types.ObjectId(req.user.userId),
           performedByRole: req.user.role,
+          companyId: req.user.companyId ? new mongoose.Types.ObjectId(req.user.companyId) : undefined,
           priority: ActivityPriority.MEDIUM,
           visibility: ActivityVisibility.PRIVATE,
           isDeleted: false,

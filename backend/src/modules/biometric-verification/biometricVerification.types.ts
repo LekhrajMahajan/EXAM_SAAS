@@ -115,9 +115,6 @@ export interface IBiometricVerification {
 
   // Migrated from legacy biometric module
   companyId?: Types.ObjectId;
-
-  branchId?: Types.ObjectId;
-
   shiftId?: Types.ObjectId;
 
   trustScoreId?: Types.ObjectId;

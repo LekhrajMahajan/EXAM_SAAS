@@ -499,7 +499,7 @@ export class SecurityService {
     const [rules, total] = await Promise.all([
       IpRule.find(filter)
         .populate("companyId", "name")
-        .populate("branchId", "name")
+        .populate("centerId", "name")
         .populate("examCenterId", "name")
         .sort({ createdAt: -1 })
         .skip(skip)
@@ -519,7 +519,7 @@ export class SecurityService {
   public async getIpRuleById(id: string) {
     const rule = await IpRule.findById(id)
       .populate("companyId", "name")
-      .populate("branchId", "name")
+      .populate("centerId", "name")
       .populate("examCenterId", "name");
     
     if (!rule) {
@@ -666,7 +666,7 @@ export class SecurityService {
   }
 
   public async exportIpRules() {
-    const rules = await IpRule.find().populate("companyId branchId examCenterId");
+    const rules = await IpRule.find().populate("companyId examCenterId");
     
     let csv = "IP Address/CIDR,Category,Rule Type,Status,Created At\n";
     for (const rule of rules) {

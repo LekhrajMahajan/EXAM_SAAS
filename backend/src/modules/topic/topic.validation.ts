@@ -21,6 +21,8 @@ const objectId = z
 const baseTopicSchema = z.object({
   companyId: objectId,
 
+  examId: objectId.optional(),
+
   subjectId: objectId.optional(),
   subjectName: z.string().trim().optional(),
 

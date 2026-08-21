@@ -92,13 +92,6 @@ const certificateSchema = new Schema<ICertificate>(
       default: null,
     },
 
-    branchId: {
-      type: Schema.Types.ObjectId,
-      ref: "Branch",
-      index: true,
-      default: null,
-    },
-
     examCenterId: {
       type: Schema.Types.ObjectId,
       ref: "ExamCenter",
@@ -254,10 +247,7 @@ certificateSchema.index({
   candidateId: 1,
 });
 
-certificateSchema.index({
-  companyId: 1,
-  branchId: 1,
-});
+
 
 certificateSchema.index({
   examCenterId: 1,

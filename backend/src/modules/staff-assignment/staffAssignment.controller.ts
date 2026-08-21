@@ -45,7 +45,6 @@ export const bulkAssign = asyncHandler(async (req: Request, res: Response) => {
 export const getDashboard = asyncHandler(async (req: Request, res: Response) => {
   const companyId = (req as any).user?.companyId || (req.query.companyId as string);
   const result = await staffAssignmentService.getDashboard(companyId, {
-    branchId: req.query.branchId as string,
     centerId: req.query.centerId as string,
     employeeId: req.query.employeeId as string,
   });
@@ -130,6 +129,17 @@ export const getAssignmentById = asyncHandler(async (req: Request, res: Response
 
 export const updateAssignment = asyncHandler(async (req: Request, res: Response) => {
   const id = req.params.id || req.body.id || req.body._id;
+  
+  if (req.body.status) {
+    const userId = (req as any).user?._id;
+    const result = await staffAssignmentService.updateAssignmentStatus(id, req.body.status, userId);
+    return sendResponse(res, HTTP_STATUS.OK, {
+      success: true,
+      message: "Staff assignment status updated successfully.",
+      data: result,
+    });
+  }
+
   const result = await staffAssignmentService.update(id, req.body);
   return sendResponse(res, HTTP_STATUS.OK, {
     success: true,

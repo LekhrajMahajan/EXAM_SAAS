@@ -212,16 +212,16 @@ export const CenterTable = ({ centers }: CenterTableProps) => {
   return (
     <div className="rounded-xl border border-border dark:border-slate-800/80 bg-card dark:bg-[#111726]/80 shadow-xs overflow-hidden">
       <Table>
-        <TableHeader className="bg-muted/50 dark:bg-slate-900/60 border-b border-border dark:border-slate-800">
-          <TableRow className="hover:bg-transparent border-slate-800">
-            <TableHead className="text-slate-400 font-semibold text-xs uppercase tracking-wider py-3">Center Code</TableHead>
-            <TableHead className="text-slate-400 font-semibold text-xs uppercase tracking-wider py-3">Center Name</TableHead>
-            <TableHead className="text-slate-400 font-semibold text-xs uppercase tracking-wider py-3">Branch</TableHead>
-            <TableHead className="text-slate-400 font-semibold text-xs uppercase tracking-wider py-3">Location</TableHead>
-            <TableHead className="text-slate-400 font-semibold text-xs uppercase tracking-wider py-3">Capacity</TableHead>
-            <TableHead className="text-slate-400 font-semibold text-xs uppercase tracking-wider py-3">Status</TableHead>
-            <TableHead className="text-slate-400 font-semibold text-xs uppercase tracking-wider py-3">Approval</TableHead>
-            <TableHead className="text-right text-slate-400 font-semibold text-xs uppercase tracking-wider py-3">Actions</TableHead>
+        <TableHeader className="bg-muted/50 border-b border-border">
+          <TableRow className="hover:bg-transparent border-border">
+            <TableHead className="text-muted-foreground font-semibold text-xs uppercase tracking-wider py-3">Center Code</TableHead>
+            <TableHead className="text-muted-foreground font-semibold text-xs uppercase tracking-wider py-3">Center Name</TableHead>
+            <TableHead className="text-muted-foreground font-semibold text-xs uppercase tracking-wider py-3">Branch</TableHead>
+            <TableHead className="text-muted-foreground font-semibold text-xs uppercase tracking-wider py-3">Location</TableHead>
+            <TableHead className="text-muted-foreground font-semibold text-xs uppercase tracking-wider py-3">Capacity</TableHead>
+            <TableHead className="text-muted-foreground font-semibold text-xs uppercase tracking-wider py-3">Status</TableHead>
+            <TableHead className="text-muted-foreground font-semibold text-xs uppercase tracking-wider py-3">Approval</TableHead>
+            <TableHead className="text-right text-muted-foreground font-semibold text-xs uppercase tracking-wider py-3">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -244,23 +244,23 @@ export const CenterTable = ({ centers }: CenterTableProps) => {
                                           (Array.isArray(centerObj.verificationDocuments) && centerObj.verificationDocuments.length > 0);
 
             return (
-              <TableRow key={centerId} className="hover:bg-slate-800/40 border-b border-slate-800/60 transition-colors">
-                <TableCell className="font-semibold text-slate-200 py-3.5">{center.centerCode || 'N/A'}</TableCell>
-                <TableCell className="text-slate-100 font-medium py-3.5">{center.centerName || 'Unnamed Center'}</TableCell>
-                <TableCell className="text-slate-300 py-3.5">{String(branchLabel)}</TableCell>
+              <TableRow key={centerId} className="hover:bg-muted/50 border-b transition-colors">
+                <TableCell className="font-semibold text-foreground py-3.5">{center.centerCode || 'N/A'}</TableCell>
+                <TableCell className="text-foreground font-medium py-3.5">{center.centerName || 'Unnamed Center'}</TableCell>
+                <TableCell className="text-muted-foreground py-3.5">{String(branchLabel)}</TableCell>
                 <TableCell className="py-3.5">
-                  <div className="text-sm font-medium text-slate-200">
+                  <div className="text-sm font-medium text-foreground">
                     {center.city || 'N/A'}
-                    <span className="text-slate-400 block text-xs mt-0.5 font-normal">
+                    <span className="text-muted-foreground block text-xs mt-0.5 font-normal">
                       {center.state || 'India'}
                     </span>
                   </div>
                 </TableCell>
                 <TableCell className="py-3.5">
-                  <div className="text-sm text-slate-200">
-                    Labs: <span className="font-semibold text-indigo-400">{String(rooms)}</span>
-                    <span className="text-slate-400 block text-xs mt-0.5">
-                      Systems: <span className="font-semibold text-emerald-400">{String(systems)}</span>
+                  <div className="text-sm text-foreground">
+                    Labs: <span className="font-medium text-foreground">{String(rooms)}</span>
+                    <span className="text-muted-foreground block text-xs mt-0.5">
+                      Systems: <span className="font-medium text-foreground">{String(systems)}</span>
                     </span>
                   </div>
                 </TableCell>
@@ -270,8 +270,8 @@ export const CenterTable = ({ centers }: CenterTableProps) => {
                 <TableCell className="py-3.5">
                   <div className="flex items-center">
                     {isApproved ? (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500/15 border border-emerald-500/30 text-emerald-400">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#E4FD97] border-0 text-[#2D3E2C]">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-[#2D3E2C]" />
                         Approved & Unlocked
                       </span>
                     ) : (
@@ -290,75 +290,75 @@ export const CenterTable = ({ centers }: CenterTableProps) => {
                 <TableCell className="text-right py-3.5">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0 text-slate-400 hover:text-slate-200 hover:bg-slate-800">
+                      <Button variant="ghost" className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-muted">
                         <span className="sr-only">Open menu</span>
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="bg-[#111726] border-slate-800 text-slate-200 shadow-xl">
+                    <DropdownMenuContent align="end" className="bg-popover border-border text-popover-foreground shadow-xl">
                       <Link to={`/company/centers/${centerId}`}>
-                        <DropdownMenuItem className="cursor-pointer hover:bg-slate-800">
-                          <Eye className="mr-2 h-4 w-4 text-indigo-400" />
+                        <DropdownMenuItem className="cursor-pointer hover:bg-muted">
+                          <Eye className="mr-2 h-4 w-4 text-slate-500" />
                           View Details
                         </DropdownMenuItem>
                       </Link>
                       <Link to={`/company/centers/${centerId}/edit`}>
-                        <DropdownMenuItem className="cursor-pointer hover:bg-slate-800">
-                          <Edit className="mr-2 h-4 w-4 text-amber-400" />
+                        <DropdownMenuItem className="cursor-pointer hover:bg-muted">
+                          <Edit className="mr-2 h-4 w-4 text-slate-500" />
                           Edit Info
                         </DropdownMenuItem>
                       </Link>
                       <Link to={`/company/centers/${centerId}/staff`}>
-                        <DropdownMenuItem className="cursor-pointer hover:bg-slate-800">
-                          <Users className="mr-2 h-4 w-4 text-emerald-400" />
+                        <DropdownMenuItem className="cursor-pointer hover:bg-muted">
+                          <Users className="mr-2 h-4 w-4 text-slate-500" />
                           Center Staff Add
                         </DropdownMenuItem>
                       </Link>
                       <Link to={`/company/centers/${centerId}/labs`}>
-                        <DropdownMenuItem className="cursor-pointer hover:bg-slate-800">
-                          <Monitor className="mr-2 h-4 w-4 text-cyan-400" />
+                        <DropdownMenuItem className="cursor-pointer hover:bg-muted">
+                          <Monitor className="mr-2 h-4 w-4 text-slate-500" />
                           Center Lab Add
                         </DropdownMenuItem>
                       </Link>
                       <Link to={`/company/centers/${centerId}/assigned-exams`}>
-                        <DropdownMenuItem className="cursor-pointer hover:bg-slate-800">
-                          <ClipboardList className="mr-2 h-4 w-4 text-purple-400" />
+                        <DropdownMenuItem className="cursor-pointer hover:bg-muted">
+                          <ClipboardList className="mr-2 h-4 w-4 text-slate-500" />
                           Assigned Exams
                         </DropdownMenuItem>
                       </Link>
                       <Link to={`/company/centers/${centerId}/infrastructure`}>
-                        <DropdownMenuItem className="cursor-pointer hover:bg-slate-800">
-                          <Upload className="mr-2 h-4 w-4 text-blue-400" />
+                        <DropdownMenuItem className="cursor-pointer hover:bg-muted">
+                          <Upload className="mr-2 h-4 w-4 text-slate-500" />
                           Center Infrastructure
                         </DropdownMenuItem>
                       </Link>
                       <Link to={`/company/centers/${centerId}/photos`}>
-                        <DropdownMenuItem className="cursor-pointer hover:bg-slate-800">
-                          <ImageIcon className="mr-2 h-4 w-4 text-pink-400" />
+                        <DropdownMenuItem className="cursor-pointer hover:bg-muted">
+                          <ImageIcon className="mr-2 h-4 w-4 text-slate-500" />
                           Center Photos
                         </DropdownMenuItem>
                       </Link>
                       <Link to={`/company/centers/${centerId}/location`}>
-                        <DropdownMenuItem className="cursor-pointer hover:bg-slate-800">
-                          <MapPin className="mr-2 h-4 w-4 text-amber-400" />
+                        <DropdownMenuItem className="cursor-pointer hover:bg-muted">
+                          <MapPin className="mr-2 h-4 w-4 text-slate-500" />
                           Center Location
                         </DropdownMenuItem>
                       </Link>
                       <Link to={`/company/centers/${centerId}/system-network`}>
-                        <DropdownMenuItem className="cursor-pointer hover:bg-slate-800">
-                          <Network className="mr-2 h-4 w-4 text-indigo-400" />
+                        <DropdownMenuItem className="cursor-pointer hover:bg-muted">
+                          <Network className="mr-2 h-4 w-4 text-slate-500" />
                           System Network
                         </DropdownMenuItem>
                       </Link>
                       <Link to={`/company/centers/${centerId}/assign-exam-staff`}>
-                        <DropdownMenuItem className="cursor-pointer hover:bg-slate-800">
-                          <UserPlus className="mr-2 h-4 w-4 text-rose-400" />
+                        <DropdownMenuItem className="cursor-pointer hover:bg-muted">
+                          <UserPlus className="mr-2 h-4 w-4 text-slate-500" />
                           Assign Exam Staff
                         </DropdownMenuItem>
                       </Link>
                       <Link to={`/company/centers/${centerId}/assigned-candidate-attendance`}>
-                        <DropdownMenuItem className="cursor-pointer hover:bg-slate-800">
-                          <Users className="mr-2 h-4 w-4 text-emerald-400" />
+                        <DropdownMenuItem className="cursor-pointer hover:bg-muted">
+                          <Users className="mr-2 h-4 w-4 text-slate-500" />
                           Assigned Candidate Attendance
                         </DropdownMenuItem>
                       </Link>

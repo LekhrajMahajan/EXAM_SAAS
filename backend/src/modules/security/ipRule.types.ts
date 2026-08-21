@@ -34,7 +34,6 @@ export interface IIpRule extends Document {
   ruleType: IpRuleType;
   category: IpRuleCategory;
   companyId?: Types.ObjectId;
-  branchId?: Types.ObjectId;
   examCenterId?: Types.ObjectId;
   status: IpRuleStatus;
   riskLevel: IpRiskLevel;

@@ -7,7 +7,7 @@ export const DUMMY_SHIFTS: Shift[] = [
       name: 'Morning Shift - Physics',
       code: 'SHF-PHY-M',
       examId: 'Physics Final 2024',
-      branchId: 'Main Campus',
+
       centerId: 'Center A',
       stateId: 'California',
       cityId: 'Los Angeles',
@@ -35,7 +35,7 @@ export const DUMMY_SHIFTS: Shift[] = [
       name: 'Afternoon Shift - Math',
       code: 'SHF-MTH-A',
       examId: 'Mathematics Final 2024',
-      branchId: 'North Campus',
+
       centerId: 'Center B',
       stateId: 'California',
       cityId: 'San Francisco',
@@ -64,7 +64,7 @@ export const DUMMY_SHIFTS: Shift[] = [
       name: 'Evening Shift - Chemistry',
       code: 'SHF-CHM-E',
       examId: 'Chemistry Basics',
-      branchId: 'East Campus',
+
       centerId: 'Center C',
       stateId: 'New York',
       cityId: 'New York City',

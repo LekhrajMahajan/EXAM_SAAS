@@ -98,9 +98,6 @@ export interface IReportFilter {
   endDate?: Date;
 
   companyId?: string;
-
-  branchId?: string;
-
   centerId?: string;
 
   examId?: string;

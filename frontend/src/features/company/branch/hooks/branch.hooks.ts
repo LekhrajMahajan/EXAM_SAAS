@@ -1,133 +1,70 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { branchApi } from '../api/branch.api';
-import type { BranchQueryParams } from '../types/branch.types';
-import type { BranchFormData } from '../schemas/branch.schema';
-import { toast } from '@/hooks/use-toast';
-import { AxiosError } from 'axios';
+import api from '@/services/api';
+import type { ApiResponse, PaginatedResponse } from '@/types';
+import { useToast } from '@/hooks/use-toast';
+import type { AxiosError } from 'axios';
+import type { ApiError } from '@/types';
 
-export const branchKeys = {
+const BASE_PATH = '/branches';
+
+export interface BranchSearchParams {
+  page?: number;
+  limit?: number;
+  companyId?: string;
+  search?: string;
+  status?: string;
+}
+
+export interface Branch {
+  _id: string;
+  branchName: string;
+  branchCode?: string;
+  companyId: string;
+  status?: string;
+  city?: string;
+  state?: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+}
+
+const branchApi = {
+  getBranches: async (params?: BranchSearchParams): Promise<PaginatedResponse<Branch>> => {
+    const { data } = await api.get<any>(BASE_PATH, { params });
+    if (data.data && data.data.data) {
+      return {
+        success: data.success,
+        data: data.data.data,
+        pagination: {
+          page: data.data.page,
+          limit: data.data.limit,
+          total: data.data.total,
+          totalPages: data.data.totalPages,
+          hasNextPage: data.data.page < data.data.totalPages,
+          hasPrevPage: data.data.page > 1,
+        },
+      };
+    }
+    return data as PaginatedResponse<Branch>;
+  },
+};
+
+const QUERY_KEYS = {
   all: ['branches'] as const,
-  lists: () => [...branchKeys.all, 'list'] as const,
-  list: (filters: string) => [...branchKeys.lists(), { filters }] as const,
-  details: () => [...branchKeys.all, 'detail'] as const,
-  detail: (id: string) => [...branchKeys.details(), id] as const,
-  pendingVerifications: () => [...branchKeys.all, 'pending-verifications'] as const,
+  lists: () => [...QUERY_KEYS.all, 'list'] as const,
+  list: (params: BranchSearchParams) => [...QUERY_KEYS.lists(), params] as const,
 };
 
-export const useBranches = (params?: BranchQueryParams) => {
+const handleError = (error: unknown, fallbackMessage: string, toast: ReturnType<typeof useToast>['toast']) => {
+  const axiosError = error as AxiosError<ApiError>;
+  const message = axiosError.response?.data?.message || fallbackMessage;
+  toast({ title: 'Error', description: message, variant: 'destructive' });
+};
+
+export const useBranches = (params: BranchSearchParams) => {
   return useQuery({
-    queryKey: branchKeys.list(JSON.stringify(params)),
-    queryFn: () => branchApi.getAll(params),
+    queryKey: QUERY_KEYS.list(params),
+    queryFn: () => branchApi.getBranches(params),
+    placeholderData: (previousData) => previousData,
   });
 };
-
-export const useBranch = (id: string) => {
-  return useQuery({
-    queryKey: branchKeys.detail(id),
-    queryFn: () => branchApi.getById(id),
-    enabled: !!id,
-  });
-};
-
-export const usePendingVerifications = () => {
-  return useQuery({
-    queryKey: branchKeys.pendingVerifications(),
-    queryFn: () => branchApi.getPendingVerifications(),
-  });
-};
-
-export const useVerifyBranchSetup = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: { status: "ACTIVE" | "REJECTED"; remarks?: string } }) =>
-      branchApi.verifyBranchSetup(id, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: branchKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: branchKeys.pendingVerifications() });
-      toast({ title: 'Success', description: 'Branch verification decision recorded successfully', variant: 'success' });
-    },
-    onError: (error: unknown) => {
-      const msg = error instanceof AxiosError ? error.response?.data?.message : 'Failed to process branch verification';
-      toast({ title: 'Error', description: String(msg), variant: 'destructive' });
-    },
-  });
-};
-
-export const useSaveOnboardingStep = (id: string) => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ step, data }: { step: number; data: unknown }) =>
-      branchApi.saveOnboardingStep(id, step, data),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: branchKeys.detail(id) });
-      toast({ title: 'Step Saved', description: `Step ${variables.step} data recorded successfully`, variant: 'success' });
-    },
-    onError: (error: unknown) => {
-      const msg = error instanceof AxiosError ? error.response?.data?.message : 'Failed to save onboarding step';
-      toast({ title: 'Error', description: String(msg), variant: 'destructive' });
-    },
-  });
-};
-
-export const useCreateBranch = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (data: BranchFormData) => branchApi.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: branchKeys.lists() });
-      toast({ title: 'Success', description: 'Branch created successfully', variant: 'success' });
-    },
-    onError: (error: unknown) => {
-      const msg = error instanceof AxiosError ? error.response?.data?.message : 'Failed to create branch';
-      toast({ title: 'Error', description: msg, variant: 'destructive' });
-    },
-  });
-};
-
-export const useUpdateBranch = (id: string) => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (data: Partial<BranchFormData>) => branchApi.update(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: branchKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: branchKeys.detail(id) });
-      toast({ title: 'Success', description: 'Branch updated successfully', variant: 'success' });
-    },
-    onError: (error: unknown) => {
-      const msg = error instanceof AxiosError ? error.response?.data?.message : 'Failed to update branch';
-      toast({ title: 'Error', description: msg, variant: 'destructive' });
-    },
-  });
-};
-
-export const useUpdateBranchStatus = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, status }: { id: string; status: "ACTIVE" | "INACTIVE" }) => 
-      branchApi.updateStatus(id, status),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: branchKeys.lists() });
-      toast({ title: 'Success', description: 'Branch status updated', variant: 'success' });
-    },
-    onError: (error: unknown) => {
-      const msg = error instanceof AxiosError ? error.response?.data?.message : 'Failed to update branch status';
-      toast({ title: 'Error', description: msg, variant: 'destructive' });
-    },
-  });
-};
-
-export const useDeleteBranch = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (id: string) => branchApi.delete(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: branchKeys.lists() });
-      toast({ title: 'Success', description: 'Branch deleted successfully', variant: 'success' });
-    },
-    onError: (error: unknown) => {
-      const msg = error instanceof AxiosError ? error.response?.data?.message : 'Failed to delete branch';
-      toast({ title: 'Error', description: msg, variant: 'destructive' });
-    },
-  });
-};
-

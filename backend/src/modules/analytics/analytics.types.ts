@@ -71,7 +71,6 @@ export interface IAnalyticsFilter {
   startDate?: Date | string;
   endDate?: Date | string;
   companyId?: string;
-  branchId?: string;
   centerId?: string;
   examId?: string;
   subjectId?: string;

@@ -19,7 +19,6 @@ export const getRoleStats = asyncHandler(async (req: Request, res: Response) => 
     user.userId,
     user.role as string,
     user.companyId,
-    user.branchId,
     user.centerId
   );
 

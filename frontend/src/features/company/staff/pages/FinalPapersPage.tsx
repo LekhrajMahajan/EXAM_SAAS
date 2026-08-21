@@ -8,6 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, FileSignature, ChevronDown, ChevronUp, Search, Filter } from "lucide-react";
 import api from "@/services/api";
 import { useNavigate } from "react-router-dom";
+import { Badge } from "@/shared/components/ui/badge";
+import { ExamStatusBadge } from "@/shared/components/badges/ExamStatusBadge";
+import { toast } from "@/hooks/use-toast";
 
 export function FinalPapersPage() {
   const [papers, setPapers] = useState<any[]>([]);
@@ -18,6 +21,7 @@ export function FinalPapersPage() {
   // New states for Search, Filter, and Collapsible
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL"); // ALL, SELECTED, UNSELECTED
+  const [examNameFilter, setExamNameFilter] = useState("ALL"); 
   const [expandedExams, setExpandedExams] = useState<Record<string, boolean>>({});
 
   const navigate = useNavigate();
@@ -47,11 +51,11 @@ export function FinalPapersPage() {
     fetchPapers();
   }, []);
 
-  const groupedPapers = papers.reduce((acc: any, paper: any) => {
+  const groupedPapers = papers.reduce((acc: Record<string, any>, paper: any) => {
     const examId = paper.examId?._id || paper.examId || 'unassigned';
     const examName = paper.examId?.examTitle || paper.examId?.examName || paper.examId?.name || paper.examName || 'Unassigned Exam';
     if (!acc[examId]) {
-      acc[examId] = { examName, papers: [], finalPaperId: paper.examId?.finalPaperId };
+      acc[examId] = { examId, examName, papers: [], finalPaperId: paper.examId?.finalPaperId, examObj: paper.examId };
     }
     acc[examId].papers.push(paper);
     return acc;
@@ -62,10 +66,18 @@ export function FinalPapersPage() {
     try {
       setSelectingExamId(examId);
       await api.post(`/exams/${examId}/papers/auto-select`);
-      alert("Final paper randomly selected successfully!");
+      toast({
+        title: "Success",
+        description: "Final paper randomly selected successfully!",
+        variant: "success",
+      });
       setSelectedExams(prev => ({ ...prev, [examId]: true }));
     } catch (err: any) {
-      alert(err.response?.data?.message || "Failed to auto-select paper.");
+      toast({
+        title: "Error",
+        description: err.response?.data?.message || "Failed to auto-select paper.",
+        variant: "destructive",
+      });
     } finally {
       setSelectingExamId(null);
     }
@@ -88,6 +100,8 @@ export function FinalPapersPage() {
     const isSelected = selectedExams[examId] || !!group.finalPaperId;
     if (statusFilter === "SELECTED" && !isSelected) return false;
     if (statusFilter === "UNSELECTED" && isSelected) return false;
+    
+    if (examNameFilter !== "ALL" && examId !== examNameFilter) return false;
     
     return true;
   });
@@ -112,6 +126,20 @@ export function FinalPapersPage() {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
+            
+            <Select value={examNameFilter} onValueChange={setExamNameFilter}>
+              <SelectTrigger className="w-[200px] bg-card border-border/50">
+                <SelectValue placeholder="All Exams" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">All Exams</SelectItem>
+                {Object.values(groupedPapers).map((group: any) => (
+                  <SelectItem key={group.examId} value={group.examId}>
+                    {group.examName || 'Unnamed Exam'}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-[180px] bg-card border-border/50">
@@ -153,7 +181,12 @@ export function FinalPapersPage() {
                       onClick={() => toggleExpand(examId)}
                     >
                       <CardTitle className="text-lg flex items-center justify-between w-full">
-                        <span className="truncate pr-4">{group.examName}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="truncate">{group.examName}</span>
+                          {group.examObj && (
+                            <ExamStatusBadge exam={group.examObj} className="text-[10px] py-0 h-5" />
+                          )}
+                        </div>
                         <div className="flex items-center gap-3 shrink-0">
                           {examId !== 'unassigned' && (
                             <Button 

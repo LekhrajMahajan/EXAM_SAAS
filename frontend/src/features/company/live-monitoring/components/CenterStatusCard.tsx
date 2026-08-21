@@ -12,32 +12,32 @@ interface CenterStatusCardProps {
 
 export function CenterStatusCard({ center }: CenterStatusCardProps) {
   return (
-    <Card className="border-slate-200 shadow-sm">
+    <Card className="border-border shadow-sm bg-card">
       <CardHeader className="pb-3 flex flex-row items-start justify-between">
         <div>
-          <CardTitle className="text-lg text-slate-900">{center.name}</CardTitle>
-          <p className="text-xs text-slate-500 mt-1">Center ID: {center.id}</p>
+          <CardTitle className="text-lg text-foreground">{center.name}</CardTitle>
+          <p className="text-xs text-muted-foreground mt-1">Center ID: {center.id}</p>
         </div>
         <ConnectionBadge status={center.status} />
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-2 gap-4 mb-6">
-          <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 flex items-center gap-3">
-            <div className="p-2 bg-indigo-100 text-indigo-600 rounded">
+          <div className="bg-muted/50 p-3 rounded-lg border border-border flex items-center gap-3">
+            <div className="p-2 bg-primary/10 text-primary rounded">
                <Users className="w-4 h-4" />
             </div>
             <div>
-              <p className="text-xs text-slate-500">Active Candidates</p>
-              <p className="font-bold text-slate-900">{center.activeCandidates}</p>
+              <p className="text-xs text-muted-foreground">Active Candidates</p>
+              <p className="font-bold text-foreground">{center.activeCandidates}</p>
             </div>
           </div>
-          <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 flex items-center gap-3">
-            <div className="p-2 bg-emerald-100 text-emerald-600 rounded">
+          <div className="bg-muted/50 p-3 rounded-lg border border-border flex items-center gap-3">
+            <div className="p-2 bg-primary/10 text-primary rounded">
                <ShieldAlert className="w-4 h-4" />
             </div>
             <div>
-              <p className="text-xs text-slate-500">Completed</p>
-              <p className="font-bold text-slate-900">{center.completedCandidates}</p>
+              <p className="text-xs text-muted-foreground">Completed</p>
+              <p className="font-bold text-foreground">{center.completedCandidates}</p>
             </div>
           </div>
         </div>
@@ -45,10 +45,10 @@ export function CenterStatusCard({ center }: CenterStatusCardProps) {
         <div className="space-y-4">
           <div>
             <div className="flex justify-between text-xs mb-1">
-              <span className="font-medium text-slate-600 flex items-center gap-1">
+              <span className="font-medium text-muted-foreground flex items-center gap-1">
                  <Server className="w-3 h-3" /> Network Health
               </span>
-              <span className={center.networkHealth < 80 ? "text-red-600 font-bold" : "text-emerald-600 font-bold"}>
+              <span className={center.networkHealth < 80 ? "text-destructive font-bold" : "text-primary font-bold"}>
                 {center.networkHealth}%
               </span>
             </div>
@@ -57,10 +57,10 @@ export function CenterStatusCard({ center }: CenterStatusCardProps) {
           
           <div>
             <div className="flex justify-between text-xs mb-1">
-              <span className="font-medium text-slate-600 flex items-center gap-1">
+              <span className="font-medium text-muted-foreground flex items-center gap-1">
                  <HardDrive className="w-3 h-3" /> Device Health
               </span>
-              <span className={center.deviceHealth < 80 ? "text-red-600 font-bold" : "text-emerald-600 font-bold"}>
+              <span className={center.deviceHealth < 80 ? "text-destructive font-bold" : "text-primary font-bold"}>
                 {center.deviceHealth}%
               </span>
             </div>
@@ -68,8 +68,8 @@ export function CenterStatusCard({ center }: CenterStatusCardProps) {
           </div>
         </div>
         
-        <div className="mt-6 pt-4 border-t border-slate-100">
-           <Button variant="outline" className="w-full h-8 text-xs">View Center Details</Button>
+        <div className="mt-6 pt-4 border-t border-border">
+           <Button variant="outline" className="w-full h-8 text-xs bg-card">View Center Details</Button>
         </div>
       </CardContent>
     </Card>

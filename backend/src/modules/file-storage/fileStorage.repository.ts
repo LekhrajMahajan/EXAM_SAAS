@@ -33,7 +33,7 @@ class FileStorageRepository extends BaseRepository<IFileStorage> {
     super(FileStorage, [
       "uploadedBy",
       "companyId",
-      "branchId",
+
       "candidateId",
       "employeeId",
       "examId",
@@ -125,7 +125,7 @@ class FileStorageRepository extends BaseRepository<IFileStorage> {
     const data = await FileStorage.find(filter)
       .populate("uploadedBy")
       .populate("companyId")
-      .populate("branchId")
+
       .populate("candidateId")
       .populate("employeeId")
       .populate("examId")

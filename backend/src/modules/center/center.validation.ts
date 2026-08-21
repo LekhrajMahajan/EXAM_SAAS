@@ -22,8 +22,6 @@ const centerBaseObjectSchema = z
   .object({
     companyId: objectId.optional(),
 
-    branchId: objectId.optional(),
-
     centerCode: z
       .string()
       .trim()
@@ -107,7 +105,7 @@ const centerPreprocess = (val: any) => {
        data.availableCapacity = data.capacity;
     }
 
-    if (!data.branchId && data.branch) data.branchId = data.branch;
+
     if (!data.postalCode && data.pincode) data.postalCode = data.pincode;
     if (!data.email && data.headEmail) data.email = data.headEmail;
     if (!data.phone && data.headMobile) data.phone = data.headMobile;
@@ -182,7 +180,6 @@ export const centerQuerySchema = z.object({
     limit: z.coerce.number().min(1).max(100).default(10),
     search: z.string().trim().optional(),
     companyId: objectId.optional(),
-    branchId: objectId.optional(),
     city: z.string().trim().optional(),
     state: z.string().trim().optional(),
     centerType: z.nativeEnum(CenterType).optional(),

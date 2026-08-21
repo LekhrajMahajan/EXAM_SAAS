@@ -35,7 +35,7 @@ export interface ISubscription {
   
   autoRenewal: boolean;
   
-  maxBranches?: number;
+
   maxCenters?: number;
   maxEmployees?: number;
   maxCandidates?: number;
@@ -69,7 +69,7 @@ export interface AssignSubscriptionPayload {
   startDate: string;
   endDate: string;
   autoRenewal?: boolean;
-  maxBranches?: number;
+
   maxCenters?: number;
   maxEmployees?: number;
   maxCandidates?: number;

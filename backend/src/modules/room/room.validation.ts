@@ -22,8 +22,6 @@ const roomBaseObjectSchema = z
   .object({
     companyId: objectId,
 
-    branchId: objectId,
-
     centerId: objectId,
 
     roomCode: z
@@ -153,8 +151,6 @@ export const roomQuerySchema = z.object({
     search: z.string().trim().optional(),
 
     companyId: objectId.optional(),
-
-    branchId: objectId.optional(),
 
     centerId: objectId.optional(),
 

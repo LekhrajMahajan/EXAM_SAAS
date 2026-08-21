@@ -13,7 +13,9 @@ export const PendingApprovalsWidget = () => {
     <Card className="h-full">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <ClipboardList className="h-5 w-5 text-primary" />
+          <div className="p-1.5 bg-[#E4FD97] text-[#2D3E2C] border border-[#2D3E2C]/20 rounded-md shrink-0">
+            <ClipboardList className="h-4 w-4" />
+          </div>
           Pending Approvals
         </CardTitle>
       </CardHeader>

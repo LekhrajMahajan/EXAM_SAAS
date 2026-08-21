@@ -84,7 +84,9 @@ const activityLogSchema = new Schema<IActivityLog>(
     performedBy: {
       type: Schema.Types.ObjectId,
 
-      ref: "Employee",
+      ref: "User",
+
+      required: false,
 
       index: true,
     },
@@ -92,7 +94,7 @@ const activityLogSchema = new Schema<IActivityLog>(
     performedByRole: {
       type: String,
 
-      trim: true,
+      required: false,
 
       index: true,
     },
@@ -107,14 +109,6 @@ const activityLogSchema = new Schema<IActivityLog>(
       type: Schema.Types.ObjectId,
 
       ref: "Company",
-
-      index: true,
-    },
-
-    branchId: {
-      type: Schema.Types.ObjectId,
-
-      ref: "Branch",
 
       index: true,
     },
@@ -273,11 +267,7 @@ activityLogSchema.index({
   createdAt: -1,
 });
 
-activityLogSchema.index({
-  companyId: 1,
 
-  branchId: 1,
-});
 
 activityLogSchema.index({
   examId: 1,

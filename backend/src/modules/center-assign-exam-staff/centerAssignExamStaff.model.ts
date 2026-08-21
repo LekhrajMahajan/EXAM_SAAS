@@ -42,6 +42,13 @@ const CenterAssignExamStaffSchema = new Schema(
         staffEmail: {
           type: String,
         },
+        labId: {
+          type: Schema.Types.ObjectId,
+          ref: "CenterLab",
+        },
+        labName: {
+          type: String,
+        },
       },
     ],
     createdBy: {

@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { RefreshCw, ChevronDown, ChevronUp, Search, SlidersHorizontal, Loader2, Send } from 'lucide-react';
-import { useToast } from "@/hooks/use-toast";
+import { RefreshCw, ChevronDown, ChevronUp, Search, Loader2, Send } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
+import { Badge } from '@/shared/components/ui/badge';
+import { ExamStatusBadge } from '@/shared/components/badges/ExamStatusBadge';
 import {
   Select,
   SelectContent,
@@ -20,6 +22,7 @@ interface UploadedBatch {
   centers: any[];
   examStatus: string;
   isSentToCenters: boolean;
+  examObj: any;
 }
 
 export const PaperListPage = () => {
@@ -28,7 +31,11 @@ export const PaperListPage = () => {
   const [uploadedBatches, setUploadedBatches] = useState<UploadedBatch[]>([]);
   const [expandedRow, setExpandedRow] = useState<string | null>(importIdParam);
   const [isLoading, setIsLoading] = useState(true);
-  const { toast } = useToast();
+  
+  const [search, setSearch] = useState("");
+  const [examFilter, setExamFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [sendingId, setSendingId] = useState<string | null>(null);
 
   const fetchImports = async () => {
     try {
@@ -41,7 +48,8 @@ export const PaperListPage = () => {
           count: item.centers?.length || 0,
           centers: item.centers || [],
           examStatus: item.examId?.status || 'UNKNOWN',
-          isSentToCenters: item.isSentToCenters || false
+          isSentToCenters: item.isSentToCenters || false,
+          examObj: item.examId
         }));
         setUploadedBatches(batches);
       }
@@ -59,6 +67,31 @@ export const PaperListPage = () => {
     initFetch();
   }, []);
 
+  const uniqueExams = useMemo(() => {
+    const exams = new Set(uploadedBatches.map(b => b.examName).filter(Boolean));
+    return Array.from(exams) as string[];
+  }, [uploadedBatches]);
+
+  const filteredBatches = useMemo(() => {
+    return uploadedBatches.filter(b => {
+      if (search && !b.examName.toLowerCase().includes(search.toLowerCase())) return false;
+      if (examFilter !== "all" && b.examName !== examFilter) return false;
+      if (statusFilter !== "all" && b.examStatus.toUpperCase() !== statusFilter.toUpperCase()) return false;
+      return true;
+    });
+  }, [uploadedBatches, search, examFilter, statusFilter]);
+
+  const examStatuses = [
+    { value: "ACTIVE", label: "Active" },
+    { value: "DRAFT", label: "Draft" },
+    { value: "EXAM_STARTED", label: "Exam Started" },
+    { value: "EXAM_ENDED", label: "Exam Ended" },
+    { value: "COMPLETED", label: "Completed" },
+    { value: "RESULT_GENERATED", label: "Result Generated" },
+    { value: "CANCELLED", label: "Cancelled" },
+    { value: "INACTIVE", label: "Inactive" }
+  ];
+
   const toggleRow = (importId: string) => {
     setExpandedRow(expandedRow === importId ? null : importId);
   };
@@ -66,34 +99,36 @@ export const PaperListPage = () => {
   const handleSendToCenters = async (importId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     try {
+      setSendingId(importId);
       const res = await api.post(`/import-center-assign-exam/${importId}/send-to-centers`);
+      
+      // Artificial delay for UX
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
       if (res.data?.success) {
-        toast({
-          title: "Success",
-          description: "Exams have been assigned to the matched centers successfully.",
-        });
-        await fetchImports(); // Refresh the list
+        toast.success("Exams have been assigned to the matched centers successfully.");
+        setUploadedBatches(prev => prev.map(batch => 
+          batch.importId === importId ? { ...batch, isSentToCenters: true } : batch
+        ));
       }
     } catch (err: any) {
       console.error('Failed to send to centers:', err);
-      toast({
-        title: "Error",
-        description: err.response?.data?.message || "Failed to send exams to centers.",
-        variant: "destructive",
-      });
+      toast.error(err.response?.data?.message || "Failed to send exams to centers.");
+    } finally {
+      setSendingId(null);
     }
   };
 
   return (
-    <div className="space-y-6 p-6 max-w-7xl mx-auto text-slate-200">
+    <div className="space-y-6 p-6 max-w-7xl mx-auto text-foreground">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">Send center assign exam</h1>
-          <p className="text-slate-400 mt-1">View centers assigned and sent by the Government Authority.</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Send center assign exam</h1>
+          <p className="text-muted-foreground mt-1">View centers assigned and sent by the Government Authority.</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="hidden md:flex border-[#2b303b] hover:bg-[#252a36]" onClick={fetchImports} disabled={isLoading}>
+          <Button variant="outline" size="sm" className="hidden md:flex" onClick={fetchImports} disabled={isLoading}>
             <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
@@ -101,79 +136,105 @@ export const PaperListPage = () => {
       </div>
 
       {/* Filters Placeholder */}
-      <div className="flex flex-col sm:flex-row gap-4 items-end sm:items-center justify-between bg-[#1e222d] p-4 rounded-md border border-[#2b303b]">
+      <div className="flex flex-col sm:flex-row gap-4 items-end sm:items-center justify-between bg-card p-4 rounded-md border border-border">
         <div className="flex flex-1 items-center gap-4 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
           <div className="relative flex-1 min-w-[200px] max-w-xs">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search exams..."
-              className="pl-8 bg-[#13161c] border-[#2b303b] text-slate-200"
-              disabled
+              className="pl-8 focus-visible:ring-0 focus-visible:ring-offset-0"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
             />
           </div>
           
-          <Select disabled>
-            <SelectTrigger className="w-[150px] bg-[#13161c] border-[#2b303b] text-slate-400">
+          <Select value={examFilter} onValueChange={setExamFilter}>
+            <SelectTrigger className="w-[200px] focus:ring-0 focus:ring-offset-0">
               <SelectValue placeholder="Exam" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Exams</SelectItem>
+              {uniqueExams.map(exam => (
+                <SelectItem key={exam} value={exam}>{exam}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
 
-          <Select disabled>
-            <SelectTrigger className="w-[130px] hidden lg:flex bg-[#13161c] border-[#2b303b] text-slate-400">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[150px] hidden lg:flex focus:ring-0 focus:ring-offset-0">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Status</SelectItem>
+              {examStatuses.map(st => (
+                <SelectItem key={st.value} value={st.value}>{st.label}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
-        </div>
-
-        <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
-          <Button variant="outline" disabled className="border-[#2b303b] text-slate-400">
-            <SlidersHorizontal className="h-4 w-4 mr-2" />
-            Advanced
-          </Button>
         </div>
       </div>
 
       {/* Uploaded Batches Table */}
       <div className="space-y-4">
         {isLoading ? (
-          <div className="flex justify-center items-center h-48 border border-[#2b303b] rounded-md bg-[#1e222d]">
-            <Loader2 className="h-8 w-8 animate-spin text-slate-500" />
+          <div className="flex justify-center items-center h-48 border border-border rounded-md bg-card">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
-        ) : uploadedBatches.length === 0 ? (
-          <div className="flex justify-center items-center h-48 border border-[#2b303b] rounded-md bg-[#1e222d]">
-            <p className="text-slate-400 text-sm">No centers have been assigned yet.</p>
+        ) : filteredBatches.length === 0 ? (
+          <div className="flex justify-center items-center h-48 border border-border rounded-md bg-card">
+            <p className="text-muted-foreground text-sm">No centers have been assigned yet.</p>
           </div>
         ) : (
           <div className="space-y-4">
-            {uploadedBatches.map((batch) => (
-              <div key={batch.importId} className="flex flex-col bg-[#1e222d] border border-[#2b303b] rounded-md overflow-hidden transition-all duration-300">
+            {filteredBatches.map((batch) => (
+              <div key={batch.importId} className="flex flex-col bg-card border border-border rounded-md overflow-hidden transition-all duration-300 shadow-sm">
                 {/* Header Row */}
                 <div 
-                  className="flex flex-col sm:flex-row items-center justify-between p-4 gap-4 cursor-pointer hover:bg-[#252a36]"
+                  className="flex flex-col sm:flex-row items-center justify-between p-4 gap-4 cursor-pointer hover:bg-muted/50 transition-colors"
                   onClick={() => toggleRow(batch.importId)}
                 >
                   <div className="flex items-center gap-4 w-full sm:w-auto">
-                    <span className={`px-2 py-1 text-xs font-medium rounded ${batch.examStatus === 'ACTIVE' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>
-                      {batch.examStatus === 'ACTIVE' ? 'Active' : 'Inactive'}
-                    </span>
-                    <span className="font-medium text-white">{batch.examName}</span>
-                    <span className="text-sm text-slate-400">{batch.count} Centers Assigned</span>
+                    {batch.examObj && (
+                      <ExamStatusBadge exam={batch.examObj} className="h-6" />
+                    )}
+                    <span className="font-semibold text-foreground">{batch.examName}</span>
+                    <span className="text-sm font-medium bg-primary/10 text-primary px-2.5 py-0.5 rounded-full">{batch.count} Centers Assigned</span>
                   </div>
                   <div className="flex items-center gap-4 w-full sm:w-auto justify-end">
                     <Button 
                       size="sm" 
-                      className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-900/20 disabled:opacity-50"
-                      disabled={batch.isSentToCenters}
-                      onClick={(e) => handleSendToCenters(batch.importId, e)}
+                      className={`text-white shadow-sm disabled:opacity-50 ${
+                        batch.isSentToCenters ? 'bg-[#7A8E60] hover:bg-[#7A8E60]/90' : 'bg-[#4A5D23] hover:bg-[#4A5D23]/90'
+                      }`}
+                      disabled={batch.isSentToCenters || sendingId === batch.importId}
+                      onClick={(e) => {
+                        if (!batch.isSentToCenters && sendingId !== batch.importId) {
+                          handleSendToCenters(batch.importId, e);
+                        } else {
+                          e.stopPropagation();
+                        }
+                      }}
                     >
-                      {batch.isSentToCenters ? (
-                        'Sent to Centers'
+                      {sendingId === batch.importId ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Sending...
+                        </>
+                      ) : batch.isSentToCenters ? (
+                        <>
+                          <svg
+                            className='w-4 h-4 mr-2'
+                            viewBox='0 0 24 24'
+                            fill='none'
+                            stroke='currentColor'
+                            strokeWidth='2'
+                            strokeLinecap='round'
+                            strokeLinejoin='round'
+                          >
+                            <polyline points='20 6 9 17 4 12'></polyline>
+                          </svg>
+                          Sent to Centers
+                        </>
                       ) : (
                         <>
                           <Send className="w-4 h-4 mr-2" />
@@ -181,7 +242,7 @@ export const PaperListPage = () => {
                         </>
                       )}
                     </Button>
-                    <div className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[#13161c] transition-colors text-slate-500">
+                    <div className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-muted transition-colors text-muted-foreground">
                       {expandedRow === batch.importId ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
                     </div>
                   </div>
@@ -189,11 +250,11 @@ export const PaperListPage = () => {
                 
                 {/* Accordion Content */}
                 {expandedRow === batch.importId && (
-                  <div className="border-t border-[#2b303b] bg-[#13161c] p-4 animate-in slide-in-from-top-2 duration-300">
+                  <div className="border-t border-border bg-background p-4 animate-in slide-in-from-top-2 duration-300">
                     {batch.centers && batch.centers.length > 0 ? (
-                      <div className="overflow-x-auto rounded-md border border-[#2b303b]">
+                      <div className="overflow-x-auto rounded-md border border-border">
                         <table className="w-full text-sm text-left">
-                          <thead className="text-xs text-slate-300 uppercase bg-[#1e222d] border-b border-[#2b303b]">
+                          <thead className="text-xs text-muted-foreground uppercase bg-muted/30 border-b border-border">
                             <tr>
                               <th className="px-4 py-3 font-medium">Center Name</th>
                               <th className="px-4 py-3 font-medium">Center Code</th>
@@ -201,20 +262,20 @@ export const PaperListPage = () => {
                               <th className="px-4 py-3 font-medium">State</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-[#2b303b] bg-[#13161c]">
+                          <tbody className="divide-y divide-border bg-background">
                             {batch.centers.map((row, i) => (
-                              <tr key={i} className="hover:bg-[#1e222d] transition-colors">
-                                <td className="px-4 py-3 text-slate-200">{row.centerName}</td>
-                                <td className="px-4 py-3 text-slate-400">{row.centerCode}</td>
-                                <td className="px-4 py-3 text-slate-400">{row.city}</td>
-                                <td className="px-4 py-3 text-slate-400">{row.state}</td>
+                              <tr key={i} className="hover:bg-muted/30 transition-colors">
+                                <td className="px-4 py-3 font-medium text-foreground">{row.centerName}</td>
+                                <td className="px-4 py-3 text-muted-foreground">{row.centerCode}</td>
+                                <td className="px-4 py-3 text-muted-foreground">{row.city}</td>
+                                <td className="px-4 py-3 text-muted-foreground">{row.state}</td>
                               </tr>
                             ))}
                           </tbody>
                         </table>
                       </div>
                     ) : (
-                      <p className="text-slate-500 text-sm text-center py-4">No center details found for this batch.</p>
+                      <p className="text-muted-foreground text-sm text-center py-4">No center details found for this batch.</p>
                     )}
                   </div>
                 )}

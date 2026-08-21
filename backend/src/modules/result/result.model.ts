@@ -71,13 +71,6 @@ const resultSchema = new Schema<IResult>(
       default: null,
     },
 
-    branchId: {
-      type: Schema.Types.ObjectId,
-      ref: "Branch",
-      index: true,
-      default: null,
-    },
-
     examCenterId: {
       type: Schema.Types.ObjectId,
       ref: "ExamCenter",
@@ -298,10 +291,7 @@ resultSchema.index({
   percentage: -1,
 });
 
-resultSchema.index({
-  companyId: 1,
-  branchId: 1,
-});
+
 
 resultSchema.index({
   examCenterId: 1,

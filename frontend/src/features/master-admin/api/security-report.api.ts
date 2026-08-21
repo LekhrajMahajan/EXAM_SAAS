@@ -30,7 +30,7 @@ export interface SecurityListParams {
   limit?: number;
   search?: string;
   companyId?: string;
-  branchId?: string;
+
   severity?: string;
   category?: string;
   status?: string;
@@ -46,7 +46,7 @@ export interface SecurityListItem {
   severity: string;
   userId: { _id: string; firstName: string; lastName: string; email: string } | null;
   companyId: { _id: string; name: string } | null;
-  branchId: { _id: string; name: string } | null;
+
   ipAddress: string;
   device: string;
   browser: string;

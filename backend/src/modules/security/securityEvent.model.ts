@@ -16,7 +16,6 @@ const securityEventSchema = new Schema<ISecurityEvent>(
     userId: { type: Schema.Types.ObjectId, ref: "User", index: true },
     employeeId: { type: String, index: true },
     companyId: { type: Schema.Types.ObjectId, ref: "Company", index: true },
-    branchId: { type: Schema.Types.ObjectId, ref: "Branch", index: true },
 
     ipAddress: { type: String, index: true },
     device: { type: String },

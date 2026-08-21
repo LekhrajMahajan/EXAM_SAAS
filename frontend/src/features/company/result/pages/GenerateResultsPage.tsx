@@ -11,6 +11,7 @@ import { examApi, type Exam } from '@/features/exam-manager/api/exam.api';
 import { apiClient } from '@/core/api/http/axios-client';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
+import { getDisplayStatus } from '@/shared/utils/exam-status';
 
 export function GenerateResultsPage() {
   const [exams, setExams] = useState<Exam[]>([]);
@@ -27,7 +28,13 @@ export function GenerateResultsPage() {
       setIsLoadingExams(true);
       try {
         const response = await examApi.getAll({ limit: 100 });
-        setExams(response.data?.exams || []);
+        // Filter out active/started exams
+        const allExams = response.data?.exams || [];
+        const endedExams = allExams.filter(ex => {
+          const status = getDisplayStatus(ex);
+          return ['PENDING_RESULT_GENERATE', 'PENDING_PUBLISH_RESULT', 'RESULT_PUBLISHED', 'COMPLETED', 'EXAM_ENDED'].includes(status);
+        });
+        setExams(endedExams);
       } catch (error) {
         console.error('Failed to fetch exams:', error);
         toast.error('Failed to load exams.');
@@ -93,7 +100,7 @@ export function GenerateResultsPage() {
             </div>
 
             <div className="pt-4 border-t border-border flex justify-end">
-              <Button type="submit" disabled={isGenerating}>
+              <Button type="submit" disabled={isGenerating} className="bg-[#2D3E2C] text-[#E4FD97] hover:bg-[#2D3E2C]/90">
                 {isGenerating && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                 Generate result
               </Button>

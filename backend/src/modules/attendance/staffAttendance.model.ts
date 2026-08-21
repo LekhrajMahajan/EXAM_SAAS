@@ -19,7 +19,6 @@ import {
 const staffAttendanceSchema = new Schema<IStaffAttendance>(
   {
     companyId: { type: Schema.Types.ObjectId, ref: "Company", required: true, index: true },
-    branchId: { type: Schema.Types.ObjectId, ref: "Branch", default: null, index: true },
     centerId: { type: Schema.Types.ObjectId, ref: "Center", default: null, index: true },
     examId: { type: Schema.Types.ObjectId, ref: "Exam", required: true, index: true },
     shiftId: { type: Schema.Types.ObjectId, ref: "Shift", default: null, index: true },
@@ -87,7 +86,6 @@ export const StaffAttendanceModel = model<IStaffAttendance>("StaffAttendance", s
 const leaveRequestSchema = new Schema<ILeaveRequest>(
   {
     companyId: { type: Schema.Types.ObjectId, ref: "Company", required: true, index: true },
-    branchId: { type: Schema.Types.ObjectId, ref: "Branch", default: null, index: true },
     centerId: { type: Schema.Types.ObjectId, ref: "Center", default: null, index: true },
     employeeId: { type: Schema.Types.ObjectId, ref: "Employee", required: true, index: true },
     employeeName: { type: String, trim: true, default: "" },

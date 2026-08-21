@@ -10,7 +10,6 @@ import {
 } from "@/shared/components/ui/select";
 import { Search } from "lucide-react";
 import { useCompanies } from "../hooks/company.hooks";
-import { useBranches } from "../hooks/branch.hooks";
 import { useRoles } from "../hooks/role.hooks";
 
 const EMPLOYEE_STATUSES = ['ACTIVE', 'INACTIVE', 'SUSPENDED', 'LOCKED', 'TERMINATED'];
@@ -24,7 +23,6 @@ export const SystemUsersFilters: React.FC<SystemUsersFiltersProps> = ({ filters,
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | undefined>((filters.companyId as string) || undefined);
 
   const { data: companiesResponse } = useCompanies({ page: 1, limit: 100 });
-  const { data: branchesResponse } = useBranches(selectedCompanyId ? { page: 1, limit: 100, companyId: selectedCompanyId } : { page: 1, limit: 100 });
   const { data: rolesResponse } = useRoles({ page: 1, limit: 100, isSystem: false });
 
   const [searchValue, setSearchValue] = useState<string>((filters.search as string) || "");
@@ -66,12 +64,7 @@ export const SystemUsersFilters: React.FC<SystemUsersFiltersProps> = ({ filters,
   const handleCompanyChange = (value: string) => {
     const val = value === "all" ? undefined : value;
     setSelectedCompanyId(val);
-    // Also reset branch when company changes
-    onFilterChange({ ...filters, companyId: val, branchId: undefined });
-  };
-
-  const handleBranchChange = (value: string) => {
-    onFilterChange({ ...filters, branchId: value === "all" ? undefined : value });
+    onFilterChange({ ...filters, companyId: val });
   };
 
   const handleStatusChange = (value: string) => {
@@ -120,25 +113,7 @@ export const SystemUsersFilters: React.FC<SystemUsersFiltersProps> = ({ filters,
             </SelectContent>
           </Select>
         </div>
-        <div className="w-full sm:w-[200px]">
-          <Select 
-            value={(filters.branchId as string) || "all"} 
-            onValueChange={handleBranchChange}
-            disabled={!selectedCompanyId}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Branch" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Branches</SelectItem>
-              {(Array.isArray(branchesResponse?.data) ? branchesResponse.data : ((branchesResponse?.data as any)?.data || [])).map((branch: any) => (
-                <SelectItem key={branch._id} value={branch._id}>
-                  {branch.branchName || branch.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+
       </div>
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">

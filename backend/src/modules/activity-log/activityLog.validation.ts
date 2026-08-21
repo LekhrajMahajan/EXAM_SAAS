@@ -83,6 +83,7 @@ export const moduleActivitySchema = z.object({
 export const recentActivitySchema = z.object({
   query: z.object({
     limit: z.coerce.number().min(1).max(100).default(10),
+    role: z.string().optional(),
   }),
 });
 
@@ -99,8 +100,6 @@ export const activityLogQuerySchema = z.object({
     limit: z.coerce.number().min(1).max(100).default(20),
 
     companyId: objectId.optional(),
-
-    branchId: objectId.optional(),
 
     examId: objectId.optional(),
 
@@ -121,6 +120,10 @@ export const activityLogQuerySchema = z.object({
     startDate: z.coerce.date().optional(),
 
     endDate: z.coerce.date().optional(),
+
+    search: z.string().optional(),
+
+    role: z.string().optional(),
   }),
 });
 
@@ -134,9 +137,9 @@ export const dashboardSchema = z.object({
   query: z.object({
     companyId: objectId.optional(),
 
-    branchId: objectId.optional(),
-
     examId: objectId.optional(),
+
+    role: z.string().optional(),
   }),
 });
 
@@ -150,12 +153,12 @@ export const statisticsSchema = z.object({
   query: z.object({
     companyId: objectId.optional(),
 
-    branchId: objectId.optional(),
-
     examId: objectId.optional(),
 
     startDate: z.coerce.date().optional(),
 
     endDate: z.coerce.date().optional(),
+
+    role: z.string().optional(),
   }),
 });

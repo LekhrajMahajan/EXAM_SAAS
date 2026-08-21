@@ -43,14 +43,12 @@ const userSchema = new Schema(
     email: {
       type: String,
       required: true,
-      unique: true,
       lowercase: true,
       trim: true,
     },
 
     username: {
       type: String,
-      unique: true,
       sparse: true,
       lowercase: true,
       trim: true,
@@ -59,7 +57,6 @@ const userSchema = new Schema(
     mobileNumber: {
       type: String,
       required: true,
-      unique: true,
     },
 
     alternateMobile: {

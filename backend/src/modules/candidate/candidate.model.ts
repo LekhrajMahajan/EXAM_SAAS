@@ -19,13 +19,6 @@ const CandidateSchema = new Schema<ICandidate>(
       index: true,
     },
 
-    branchId: {
-      type: Schema.Types.ObjectId,
-      ref: "Branch",
-      required: true,
-      index: true,
-    },
-
     centerId: {
       type: Schema.Types.ObjectId,
       ref: "Center",

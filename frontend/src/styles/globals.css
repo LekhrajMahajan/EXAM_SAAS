@@ -4,13 +4,14 @@
 
 @theme {
   /* Colors - Enterprise Theme */
+  --color-white: #F8FAFC;
   --color-background: #F8FAFC;
   --color-foreground: #0F172A;
 
-  --color-card: #FFFFFF;
+  --color-card: #F8FAFC;
   --color-card-foreground: #0F172A;
 
-  --color-popover: #FFFFFF;
+  --color-popover: #F8FAFC;
   --color-popover-foreground: #0F172A;
 
   --color-primary: #2D3E2C;
@@ -97,32 +98,66 @@
     color-scheme: light;
   }
 
+  /* ─── Focus Styles ────────────────────────────────────────────────────── */
+  :focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
+  ::selection {
+    background-color: rgba(45, 62, 44, 0.2); /* Primary with opacity */
+    color: var(--color-foreground);
+  }
+
   .dark {
-    --color-background: #0B0F14;
+    /* ── Main Canvas ── */
+    --color-background: #0B0D10;
     --color-foreground: #CBD5E1;
-    --color-card: #161E2E;
+
+    /* ── Cards & Panels ── */
+    --color-card: #16191F;
     --color-card-foreground: #CBD5E1;
-    --color-popover: #1B2433;
+    --color-popover: #16191F;
     --color-popover-foreground: #CBD5E1;
+
+    /* ── Sidebar / Header surface (used via custom vars below) ── */
+    --color-sidebar: #111418;
+    --color-header: #111418;
+
+    /* ── Welcome Banner (olive green) ── */
+    --color-banner: #2E4024;
+
+    /* ── Lime / Neon Green Accent ── */
+    --color-lime-accent: #CCF335;
+
+    /* ── Brand ── */
     --color-primary: #2D3E2C;
     --color-primary-foreground: #FFFFFF;
-    --color-secondary: #E4FD97;
-    --color-secondary-foreground: #0B0F14;
-    --color-muted: #111827;
+    --color-secondary: #CCF335;
+    --color-secondary-foreground: #0B0D10;
+
+    /* ── Muted / Subtle ── */
+    --color-muted: #111418;
     --color-muted-foreground: #94A3B8;
-    --color-accent: #222C3D;
-    --color-accent-foreground: #F8FAFC;
+    --color-accent: #16191F;
+    --color-accent-foreground: #E2E8F0;
+
+    /* ── Status ── */
     --color-destructive: #DC2626;
     --color-destructive-foreground: #FFFFFF;
     --color-success: #22C55E;
     --color-success-foreground: #FFFFFF;
     --color-warning: #FACC15;
-    --color-warning-foreground: #0B0F14;
+    --color-warning-foreground: #0B0D10;
     --color-info: #38BDF8;
     --color-info-foreground: #FFFFFF;
-    --color-border: #263244;
-    --color-input: #334155;
-    --color-ring: rgba(228, 253, 151, 0.35);
+
+    /* ── Borders & Inputs ── */
+    --color-border: #23272F;
+    --color-input: #23272F;
+    --color-ring: rgba(204, 243, 53, 0.35);
+
     color-scheme: dark;
   }
 
@@ -150,17 +185,7 @@
   background-color: #94A3B8;
 }
 
-/* ─── Focus Styles ────────────────────────────────────────────────────── */
-:focus-visible {
-  outline: 2px solid var(--color-ring);
-  outline-offset: 2px;
-  border-radius: var(--radius-sm);
-}
 
-::selection {
-  background-color: rgba(45, 62, 44, 0.2); /* Primary with opacity */
-  color: var(--color-foreground);
-}
 
 /* ─── Utility Classes ─────────────────────────────────────────────────── */
 @layer utilities {

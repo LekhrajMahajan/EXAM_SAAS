@@ -28,10 +28,10 @@ export function useActivityLog(id: string) {
   });
 }
 
-export function useRecentActivityLogs(limit: number = 5, refetchInterval?: number) {
+export function useRecentActivityLogs(limit: number = 5, filters: Record<string, unknown> = {}, refetchInterval?: number) {
   return useQuery<ActivityLogsResponse, Error>({
-    queryKey: [...activityLogKeys.lists(), { limit, type: 'recent' }],
-    queryFn: () => activityLogApi.getRecent({ limit }),
+    queryKey: [...activityLogKeys.lists(), { limit, type: 'recent', ...filters }],
+    queryFn: () => activityLogApi.getRecent({ limit, ...filters }),
     refetchInterval,
   });
 }

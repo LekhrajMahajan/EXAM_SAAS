@@ -13,13 +13,6 @@ const CenterSchema = new Schema<ICenter>(
       index: true,
     },
 
-    branchId: {
-      type: Schema.Types.ObjectId,
-      ref: "Branch",
-      required: true,
-      index: true,
-    },
-
     centerManagerId: {
       type: Schema.Types.ObjectId,
       ref: "Manager",
@@ -357,7 +350,6 @@ CenterSchema.virtual("fullAddress").get(function () {
 CenterSchema.index(
   {
     companyId: 1,
-    branchId: 1,
     centerCode: 1,
   },
   {
@@ -369,7 +361,6 @@ CenterSchema.index(
 CenterSchema.index(
   {
     companyId: 1,
-    branchId: 1,
     centerName: 1,
   },
   {
@@ -377,10 +368,7 @@ CenterSchema.index(
   },
 );
 
-CenterSchema.index({
-  companyId: 1,
-  branchId: 1,
-});
+
 
 CenterSchema.index({
   companyId: 1,

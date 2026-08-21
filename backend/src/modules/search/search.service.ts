@@ -17,7 +17,7 @@ class SearchService {
       case SearchEntity.COMPANY:
         return searchRepository.searchCompanies(payload);
       case SearchEntity.BRANCH:
-        return searchRepository.searchBranches(payload);
+        return searchRepository.searchCenters(payload);
       case SearchEntity.CENTER:
         return searchRepository.searchCenters(payload);
       case SearchEntity.SUBJECT:

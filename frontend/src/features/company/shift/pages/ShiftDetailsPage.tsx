@@ -59,10 +59,7 @@ export function ShiftDetailsPage() {
             </CardHeader>
             <CardContent className="p-6">
               <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-6">
-                <div>
-                  <dt className="text-sm font-medium text-slate-500">Branch</dt>
-                  <dd className="mt-1 text-sm text-slate-900 font-medium">{shift.general.branchId}</dd>
-                </div>
+
                 <div>
                   <dt className="text-sm font-medium text-slate-500">Center</dt>
                   <dd className="mt-1 text-sm text-slate-900 font-medium">{shift.general.centerId}</dd>

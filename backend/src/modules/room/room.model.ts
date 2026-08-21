@@ -13,13 +13,6 @@ const RoomSchema = new Schema<IRoom>(
       index: true,
     },
 
-    branchId: {
-      type: Schema.Types.ObjectId,
-      ref: "Branch",
-      required: true,
-      index: true,
-    },
-
     centerId: {
       type: Schema.Types.ObjectId,
       ref: "Center",
@@ -130,7 +123,6 @@ RoomSchema.virtual("totalSeats").get(function () {
 RoomSchema.index(
   {
     companyId: 1,
-    branchId: 1,
     centerId: 1,
     roomCode: 1,
   },
@@ -143,7 +135,6 @@ RoomSchema.index(
 RoomSchema.index(
   {
     companyId: 1,
-    branchId: 1,
     centerId: 1,
     roomName: 1,
   },
@@ -155,7 +146,6 @@ RoomSchema.index(
 // Search indexes
 RoomSchema.index({
   companyId: 1,
-  branchId: 1,
   centerId: 1,
 });
 

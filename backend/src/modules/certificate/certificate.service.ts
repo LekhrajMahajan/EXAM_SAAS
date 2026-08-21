@@ -166,7 +166,6 @@ class CertificateService extends BaseService<ICertificate> {
             paperId: payload.paperId || result.paperId,
             subjectId: payload.subjectId || result.subjectId,
             companyId: payload.companyId || result.companyId,
-            branchId: payload.branchId || result.branchId,
             examCenterId: payload.examCenterId || result.examCenterId,
             certificateNumber,
             verificationCode,

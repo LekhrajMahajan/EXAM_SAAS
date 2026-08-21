@@ -68,16 +68,6 @@ const meritListSchema = new Schema<IMeritList>(
       index: true,
     },
 
-    branchId: {
-      type: Schema.Types.ObjectId,
-
-      ref: "Branch",
-
-      required: true,
-
-      index: true,
-    },
-
     examCenterId: {
       type: Schema.Types.ObjectId,
 
@@ -326,11 +316,7 @@ meritListSchema.index({
   rank: 1,
 });
 
-meritListSchema.index({
-  companyId: 1,
 
-  branchId: 1,
-});
 
 meritListSchema.index({
   examCenterId: 1,
