@@ -19,13 +19,6 @@ const ShiftSchema = new Schema<IShift>(
       index: true,
     },
 
-    branchId: {
-      type: Schema.Types.ObjectId,
-      ref: "Branch",
-      required: true,
-      index: true,
-    },
-
     centerId: {
       type: Schema.Types.ObjectId,
       ref: "Center",

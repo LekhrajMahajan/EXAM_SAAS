@@ -32,9 +32,16 @@ const timeString = z
 
 const securitySettingsSchema = z.object({
   faceVerification: z.boolean().default(false),
+  faceDetectionEnabled: z.boolean().default(false),
+  faceDetectionLimit: z.number().int().min(0).default(15),
+  multipleFacesEnabled: z.boolean().default(false),
+  multipleFacesLimit: z.number().int().min(0).default(15),
+  proctoringWarningEnabled: z.boolean().default(false),
+  proctoringWarningLimit: z.number().int().min(0).default(3),
   webcamMonitoring: z.boolean().default(false),
   screenRecording: z.boolean().default(false),
   screenSharingDetection: z.boolean().default(false),
+  tabSwitchingEnabled: z.boolean().default(false),
   tabSwitchLimit: z.number().int().min(0).default(0),
   browserLock: z.boolean().default(false),
   fullScreenMode: z.boolean().default(false),
@@ -56,9 +63,9 @@ const securitySettingsSchema = z.object({
 
 const examBaseSchema = z.object({
   companyId: objectId,
-  branchId: objectId.optional(),
   centerId: objectId.optional(),
   shiftId: objectId.optional(),
+  shift: z.string().trim().optional(),
   subjectId: objectId.optional(),
   paperId: objectId.optional(),
 
@@ -103,6 +110,10 @@ const examBaseSchema = z.object({
     name: z.string().min(1),
     questions: z.number().int().min(1),
   })).optional(),
+
+  shuffleSubjects: z.boolean().default(false).optional(),
+
+  shuffleQuestions: z.boolean().default(false).optional(),
 
   candidateIds: z.array(objectId).default([]),
 
@@ -197,8 +208,6 @@ export const examQuerySchema = z.object({
     search: z.string().trim().optional(),
 
     companyId: objectId.optional(),
-
-    branchId: objectId.optional(),
 
     centerId: objectId.optional(),
 

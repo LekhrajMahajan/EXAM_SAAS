@@ -4,6 +4,9 @@ import examService from "./exam.service";
 
 import { asyncHandler } from "../../utils/asyncHandler";
 import { sendResponse } from "../../utils/response";
+import Employee from "../employee/employee.model";
+import StaffAssignmentModel from "../staff-assignment/staffAssignment.model";
+import mongoose from "mongoose";
 
 import { HTTP_STATUS } from "../../constants/httpStatus";
 
@@ -30,7 +33,7 @@ export const createExam = asyncHandler(async (req: Request, res: Response) => {
 */
 
 export const getExams = asyncHandler(async (req: Request, res: Response) => {
-  const result = await examService.getAll({
+  const filters: any = {
     page: Number(req.query.page) || 1,
     limit: Number(req.query.limit) || 10,
 
@@ -39,15 +42,39 @@ export const getExams = asyncHandler(async (req: Request, res: Response) => {
     companyId: req.query.companyId as string,
     subjectId: req.query.subjectId as string,
     paperId: req.query.paperId as string,
-
-    branchId: req.query.branchId as string,
     centerId: req.query.centerId as string,
     shiftId: req.query.shiftId as string,
 
     approvalStatus: req.query.approvalStatus as any,
 
     status: req.query.status as any,
-  });
+  };
+
+  if ((req as any).user && (req as any).user.role === 'PRIVATE_AUTHORITY') {
+    const employee = await Employee.findOne({ userId: (req as any).user.userId });
+    if (employee) {
+      const assignments = await StaffAssignmentModel.find({ employeeId: employee._id, isDeleted: false });
+      const assignedExamIds = assignments.map((a: any) => a.examId).filter((id: any) => id);
+      
+      if (assignedExamIds.length > 0) {
+        filters._id = { $in: assignedExamIds };
+      } else {
+        filters._id = new mongoose.Types.ObjectId();
+      }
+    } else {
+      filters._id = new mongoose.Types.ObjectId();
+    }
+  }
+
+  if ((req as any).user && (req as any).user.role === 'GOVT_AUTHORITY') {
+    const privateAssignments = await StaffAssignmentModel.find({ role: 'PRIVATE_AUTHORITY' }).select('examId');
+    const privateExamIds = privateAssignments.map((a: any) => a.examId).filter((id: any) => id);
+    if (privateExamIds.length > 0) {
+      filters._id = { $nin: privateExamIds };
+    }
+  }
+
+  const result = await examService.getAll(filters);
 
   return sendResponse(res, HTTP_STATUS.OK, {
     success: true,

@@ -81,11 +81,11 @@ export const StaffDetailsPage = () => {
             <div className="border p-4 rounded-md bg-white">
               <h3 className="font-semibold mb-4 text-lg border-b pb-2">Employment Information</h3>
               <dl className="space-y-3 text-sm">
-                <div className="flex justify-between"><dt className="text-muted-foreground">Employee ID</dt><dd className="font-medium">{staff.employeeId || 'N/A'}</dd></div>
+                <div className="flex justify-between"><dt className="text-muted-foreground">Employee Code</dt><dd className="font-medium">{staff.employeeCode || 'N/A'}</dd></div>
                 <div className="flex justify-between"><dt className="text-muted-foreground">Joining Date</dt><dd className="font-medium">{staff.joiningDate || 'N/A'}</dd></div>
                 <div className="flex justify-between"><dt className="text-muted-foreground">Employment Type</dt><dd className="font-medium">{staff.employmentType || 'Full-time'}</dd></div>
                 <div className="flex justify-between"><dt className="text-muted-foreground">Department</dt><dd className="font-medium">{staff.department || 'General'}</dd></div>
-                <div className="flex justify-between"><dt className="text-muted-foreground">Branch</dt><dd className="font-medium">{staff.branch || 'Main Branch'}</dd></div>
+
                 <div className="flex justify-between"><dt className="text-muted-foreground">Center</dt><dd className="font-medium">{staff.center || 'N/A'}</dd></div>
               </dl>
             </div>

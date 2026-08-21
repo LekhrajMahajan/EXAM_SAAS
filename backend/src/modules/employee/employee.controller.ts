@@ -18,6 +18,10 @@ import { HTTP_STATUS } from "../../constants/httpStatus";
 
 export const createEmployee = asyncHandler(
   async (req: Request, res: Response) => {
+    try { await mongoose.connection.collection('users').dropIndex('email_1'); } catch(e) {}
+    try { await mongoose.connection.collection('users').dropIndex('username_1'); } catch(e) {}
+    try { await mongoose.connection.collection('users').dropIndex('mobileNumber_1'); } catch(e) {}
+
     if (!req.body.companyId && (req as any).user?.companyId) {
       req.body.companyId = (req as any).user.companyId;
     }

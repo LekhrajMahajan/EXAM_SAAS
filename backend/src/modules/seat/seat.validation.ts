@@ -21,8 +21,6 @@ const objectId = z
 const seatBodySchema = z.object({
   companyId: objectId,
 
-  branchId: objectId,
-
   centerId: objectId,
 
   roomId: objectId,
@@ -156,8 +154,6 @@ export const seatQuerySchema = z.object({
     search: z.string().trim().optional(),
 
     companyId: objectId.optional(),
-
-    branchId: objectId.optional(),
 
     centerId: objectId.optional(),
 

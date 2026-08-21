@@ -25,6 +25,20 @@ export const connectDatabase = async () => {
         console.log(
             `MongoDB Connected : ${connection.connection.host}`
         );
+
+        // Auto-drop email index for managers to support multiple paper setters with same email
+        try {
+            const db = mongoose.connection.db;
+            if (db) {
+                const collection = db.collection('managers');
+                await collection.dropIndex('email_1');
+                console.log("Dropped email_1 index on managers collection successfully.");
+            }
+        } catch (e: any) {
+            if (e.codeName !== 'IndexNotFound') {
+                console.log("Note: email_1 index not dropped (might not exist).");
+            }
+        }
     } catch (error) {
         console.error(error);
 

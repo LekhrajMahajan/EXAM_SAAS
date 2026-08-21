@@ -11,7 +11,6 @@ export interface DashboardFilter {
   startDate?: string;
   endDate?: string;
   companyId?: string;
-  branchId?: string;
   centerId?: string;
 }
 

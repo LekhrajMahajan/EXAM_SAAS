@@ -1,7 +1,7 @@
 import { Router } from "express";
 import multer from "multer";
 import { authenticate } from "../../middleware/authenticate";
-import { uploadCandidateExcel, getImportedCandidates, updateImportedCandidate, deleteImportedCandidate, getUnassignedCandidates, assignCandidatesToLab, getLabAllocations, sendToCenter } from "./importcandidate.controller";
+import { uploadCandidateExcel, getImportedCandidates, updateImportedCandidate, deleteImportedCandidate, getUnassignedCandidates, assignCandidatesToLab, getLabAllocations, sendToCenter, sendToCompanyAdmin } from "./importcandidate.controller";
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -9,7 +9,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 router.post(
   "/upload",
   authenticate,
-  upload.single("file"),
+  upload.single('file'),
   uploadCandidateExcel
 );
 
@@ -23,6 +23,12 @@ router.post(
   "/send-to-center",
   authenticate,
   sendToCenter
+);
+
+router.post(
+  "/send-to-admin",
+  authenticate,
+  sendToCompanyAdmin
 );
 
 router.get(

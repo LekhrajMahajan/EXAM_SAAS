@@ -148,7 +148,9 @@ export const DashboardChartsWidget = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-primary" />
+            <div className="p-1.5 bg-[#E4FD97] text-[#2D3E2C] border border-[#2D3E2C]/20 rounded-md shrink-0">
+              <TrendingUp className="h-4 w-4" />
+            </div>
             Company Growth
           </CardTitle>
         </CardHeader>
@@ -160,7 +162,9 @@ export const DashboardChartsWidget = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <LineChart className="h-5 w-5 text-primary" />
+            <div className="p-1.5 bg-[#E4FD97] text-[#2D3E2C] border border-[#2D3E2C]/20 rounded-md shrink-0">
+              <LineChart className="h-4 w-4" />
+            </div>
             Subscription Trend
           </CardTitle>
         </CardHeader>
@@ -172,7 +176,9 @@ export const DashboardChartsWidget = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <BarChart className="h-5 w-5 text-primary" />
+            <div className="p-1.5 bg-[#E4FD97] text-[#2D3E2C] border border-[#2D3E2C]/20 rounded-md shrink-0">
+              <BarChart className="h-4 w-4" />
+            </div>
             Revenue Trend
           </CardTitle>
         </CardHeader>
@@ -184,7 +190,9 @@ export const DashboardChartsWidget = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <PieChart className="h-5 w-5 text-primary" />
+            <div className="p-1.5 bg-[#E4FD97] text-[#2D3E2C] border border-[#2D3E2C]/20 rounded-md shrink-0">
+              <PieChart className="h-4 w-4" />
+            </div>
             Company Status Distribution
           </CardTitle>
         </CardHeader>

@@ -100,7 +100,6 @@ export function BroadcastDialog({ trigger }: { trigger: React.ReactNode }) {
                  <select {...register('targetAudience')} className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2">
                     <option value="All">All Users</option>
                     <option value="Specific Roles">Specific Roles</option>
-                    <option value="Specific Branches">Specific Branches</option>
                     <option value="Specific Centers">Specific Centers</option>
                  </select>
               </div>
@@ -110,11 +109,7 @@ export function BroadcastDialog({ trigger }: { trigger: React.ReactNode }) {
                     <AlertCircle className="w-4 h-4 text-amber-500" /> Role selection dropdown placeholder
                  </div>
               )}
-              {targetAudience === 'Specific Branches' && (
-                 <div className="p-3 bg-slate-50 border border-slate-200 rounded-md text-sm text-slate-500 flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4 text-amber-500" /> Branch selection dropdown placeholder
-                 </div>
-              )}
+
            </div>
 
            {/* Scheduling */}

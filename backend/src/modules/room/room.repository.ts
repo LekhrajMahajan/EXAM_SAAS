@@ -4,7 +4,7 @@ import { BaseRepository } from "../../common/base.repository";
 
 class RoomRepository extends BaseRepository<IRoom> {
   constructor() {
-    super(Room, ["companyId", "branchId", "centerId"]);
+    super(Room, ["companyId", "centerId"]);
   }
 
   /*
@@ -14,13 +14,11 @@ class RoomRepository extends BaseRepository<IRoom> {
   */
   async findByRoomCode(
     companyId: string,
-    branchId: string,
     centerId: string,
     roomCode: string,
   ) {
     return await Room.findOne({
       companyId,
-      branchId,
       centerId,
       roomCode,
       isDeleted: false,
@@ -34,13 +32,11 @@ class RoomRepository extends BaseRepository<IRoom> {
   */
   async findByRoomName(
     companyId: string,
-    branchId: string,
     centerId: string,
     roomName: string,
   ) {
     return await Room.findOne({
       companyId,
-      branchId,
       centerId,
       roomName,
       isDeleted: false,

@@ -70,6 +70,13 @@ export const LoginPage = () => {
       };
     },
     onSuccess: ({ loginRes, profileRes }) => {
+      // Prevent Master Admin from logging in via standard login
+      if (profileRes.role === 'MASTER_ADMIN' || profileRes.role === 'Master Admin') {
+        setErrorMsg('Please use the Master Admin Login page to access your account.');
+        authService.logout();
+        return;
+      }
+
       // Check for pending/rejected company approval
       if (profileRes.role === 'COMPANY_ADMIN' || profileRes.role === 'Company Admin') {
         if (profileRes.approvalStatus === 'PENDING' || profileRes.approvalStatus === 'UNDER_REVIEW') {
@@ -123,16 +130,14 @@ export const LoginPage = () => {
       featureSetUser(profileRes as any, profileRes.permissions || []);
       
       // Determine redirection
-      if (profileRes.role === 'MASTER_ADMIN') {
-        navigate('/master-admin/dashboard', { replace: true });
-      } else if (profileRes.role === 'Company Admin' || profileRes.role === 'COMPANY_ADMIN') {
+      if (profileRes.role === 'Company Admin' || profileRes.role === 'COMPANY_ADMIN') {
         if (!profileRes.subscriptionPlan) {
           navigate('/company/subscription', { replace: true }); // Redirect to subscription selection if no active plan
         } else {
           const defaultPath = '/company/dashboard';
           navigate(from === '/' || from === '/auth/login' ? defaultPath : from, { replace: true });
         }
-      } else if (profileRes.role === 'Branch Manager' || profileRes.role === 'BRANCH_MANAGER') {
+      } else if (profileRes.role === 'Branch Manager') {
         navigate('/dashboard/branch-manager', { replace: true });
       } else if (profileRes.role === 'Center Manager' || profileRes.role === 'CENTER_MANAGER') {
         if (profileRes.centerSetupStatus !== 'ACTIVE') {

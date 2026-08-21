@@ -19,7 +19,6 @@ export const baseUserSchema = z.object({
 
   employeeCode: z.string().min(3, "Employee ID must be at least 3 characters").max(20),
   companyId: z.string().min(1, "Company is required"),
-  branchId: z.string().min(1, "Branch is required"),
   department: z.string().min(2, "Department is required"),
   designation: z.string().min(2, "Designation is required"),
   joiningDate: z.string().min(1, "Joining date is required"),

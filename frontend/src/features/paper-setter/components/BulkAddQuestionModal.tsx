@@ -155,10 +155,10 @@ export function BulkAddQuestionModal({ isOpen, onClose, paperId, subjectName, re
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-6 pt-4 w-full min-w-0 overflow-hidden">
           
-          <div className="p-4 border rounded-lg bg-secondary/20 text-sm w-full overflow-hidden">
-            <h4 className="font-semibold mb-2">Format Required:</h4>
-            <p>Header row must exist. Columns should be:</p>
-              <div className="bg-slate-900 text-slate-300 p-3 rounded mt-2 font-mono text-sm break-words whitespace-normal">
+          <div className="p-4 border rounded-lg bg-muted/50 text-sm w-full overflow-hidden">
+            <h4 className="font-semibold mb-2 text-foreground">Format Required:</h4>
+            <p className="text-muted-foreground">Header row must exist. Columns should be:</p>
+              <div className="bg-background border text-foreground p-3 rounded mt-2 font-mono text-sm break-words whitespace-normal shadow-sm">
                 QuestionText, OptionA, OptionB, OptionC, OptionD, OptionE, CorrectOption
               </div>
               <ul className="list-disc pl-5 mt-2 space-y-1">

@@ -38,8 +38,6 @@ export const createCertificateSchema = z.object({
 
     companyId: objectId.optional(),
 
-    branchId: objectId.optional(),
-
     examCenterId: objectId.optional(),
 
     certificateType: z.nativeEnum(CertificateType).optional(),
@@ -170,8 +168,6 @@ export const certificateQuerySchema = z.object({
     candidateId: objectId.optional(),
 
     companyId: objectId.optional(),
-
-    branchId: objectId.optional(),
 
     examCenterId: objectId.optional(),
 

@@ -162,26 +162,6 @@ export const getCompanyAnalytics = asyncHandler(
 
 /*
 |--------------------------------------------------------------------------
-| Branch Analytics
-|--------------------------------------------------------------------------
-*/
-
-export const getBranchAnalytics = asyncHandler(
-  async (req: Request, res: Response) => {
-    const analytics = await analyticsService.getBranchAnalytics(
-      req.query as IAnalyticsFilter,
-    );
-
-    sendResponse(res, httpStatus.OK, {
-      success: true,
-
-      message: "Branch analytics fetched successfully.",
-
-      data: analytics,
-    });
-  },
-);
-
 /*
 |--------------------------------------------------------------------------
 | Center Analytics

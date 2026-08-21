@@ -13,6 +13,13 @@ const TopicSchema = new Schema<ITopic>(
       index: true,
     },
 
+    examId: {
+      type: Schema.Types.ObjectId,
+      ref: "Exam",
+      index: true,
+      required: false,
+    },
+
     subjectId: {
       type: Schema.Types.ObjectId,
       ref: "Subject",
@@ -113,10 +120,11 @@ TopicSchema.virtual("displayName").get(function () {
 |--------------------------------------------------------------------------
 */
 
-// Company + Subject + Chapter + Topic Code
+// Company + Exam + Subject + Chapter + Topic Code
 TopicSchema.index(
   {
     companyId: 1,
+    examId: 1,
     subjectId: 1,
     chapterId: 1,
     topicCode: 1,
@@ -126,10 +134,11 @@ TopicSchema.index(
   },
 );
 
-// Company + Subject + Chapter + Topic Name
+// Company + Exam + Subject + Chapter + Topic Name
 TopicSchema.index(
   {
     companyId: 1,
+    examId: 1,
     subjectId: 1,
     chapterId: 1,
     topicName: 1,
@@ -139,10 +148,11 @@ TopicSchema.index(
   },
 );
 
-// Company + Subject + Chapter + Topic Number
+// Company + Exam + Subject + Chapter + Topic Number
 TopicSchema.index(
   {
     companyId: 1,
+    examId: 1,
     subjectId: 1,
     chapterId: 1,
     topicNumber: 1,
@@ -191,5 +201,8 @@ TopicSchema.index({
 */
 
 const Topic = model<ITopic>("Topic", TopicSchema);
+
+// Sync indexes to automatically drop old unique indexes that lacked examId
+Topic.syncIndexes().catch(console.error);
 
 export default Topic;

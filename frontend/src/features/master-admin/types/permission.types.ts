@@ -5,7 +5,6 @@ export type PermissionStatus = 'ACTIVE' | 'INACTIVE';
 export type PermissionGroup =
   | 'Dashboard'
   | 'Company'
-  | 'Branch'
   | 'Center'
   | 'Managers'
   | 'Candidates'
@@ -48,7 +47,6 @@ export type PermissionModule =
   | 'EMPLOYEE'
   | 'ROLE'
   | 'PERMISSION'
-  | 'BRANCH'
   | 'CENTER'
   | 'SUBJECT'
   | 'QUESTION'
@@ -139,7 +137,6 @@ export interface PermissionStatistics {
 export const GROUPS_LIST: PermissionGroup[] = [
   "Dashboard",
   "Company",
-  "Branch",
   "Center",
   "Managers",
   "Candidates",
@@ -170,7 +167,6 @@ export const GROUPS_LIST: PermissionGroup[] = [
 export const MODULES_LIST: PermissionModule[] = [
   "DASHBOARD",
   "COMPANY",
-  "BRANCH",
   "CENTER",
   "ROLE",
   "CANDIDATE",

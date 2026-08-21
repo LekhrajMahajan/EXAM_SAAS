@@ -88,6 +88,11 @@ class StaffAssignmentService extends BaseService<IStaffAssignment> {
         if (duty.role === StaffAssignmentRole.PAPER_SETTER && payload.role !== StaffAssignmentRole.PAPER_SETTER) {
           warnings.push(`Confidentiality Warning: Employee served as a Paper Setter for this examination. Verify organizational security policy before deploying to active field duty.`);
         }
+
+        // Rule 6: Prevent duplicate Paper Setter assignment for the same exam
+        if (payload.role === StaffAssignmentRole.PAPER_SETTER && duty.role === StaffAssignmentRole.PAPER_SETTER) {
+          errors.push(`Conflict: Employee is already assigned as a Paper Setter for this exam.`);
+        }
       }
     }
 
@@ -103,7 +108,7 @@ class StaffAssignmentService extends BaseService<IStaffAssignment> {
   | Smart Eligibility Validation
   |--------------------------------------------------------------------------
   */
-  private async validateEmployeeEligibility(employeeId: string, branchId?: string, centerId?: string, role?: string) {
+  private async validateEmployeeEligibility(employeeId: string, centerId?: string, role?: string) {
     const employee = await employeeRepository.findById(employeeId);
     if (!employee) {
       throw new ApiError(HTTP_STATUS.NOT_FOUND, `Employee not found (${employeeId}).`);
@@ -112,11 +117,6 @@ class StaffAssignmentService extends BaseService<IStaffAssignment> {
     // Validate Employee Active
     if ((employee as any).status && (employee as any).status !== "ACTIVE" && (employee as any).status !== "VERIFIED") {
       throw new ApiError(HTTP_STATUS.BAD_REQUEST, `Eligibility Verification Failed: Employee is neither ACTIVE nor VERIFIED (Current Status: ${(employee as any).status}). Cannot assign suspended or inactive staff.`);
-    }
-
-    // Branch Match Validation if strictly enforced
-    if (branchId && employee.branchId && branchId.toString() !== employee.branchId.toString()) {
-      // Allow cross-branch only with notification/audit note
     }
 
     return employee;
@@ -129,7 +129,7 @@ class StaffAssignmentService extends BaseService<IStaffAssignment> {
   */
   async createAssignment(payload: Record<string, any>, userId?: string) {
     // 1. Validate eligibility
-    const employee = await this.validateEmployeeEligibility(payload.employeeId, payload.branchId, payload.centerId, payload.role);
+    const employee = await this.validateEmployeeEligibility(payload.employeeId, payload.centerId, payload.role);
 
     // 1.5. Validate max paper setters per exam
     if (payload.role === StaffAssignmentRole.PAPER_SETTER && payload.examId) {
@@ -201,6 +201,27 @@ class StaffAssignmentService extends BaseService<IStaffAssignment> {
         }
       } catch (err) {
         console.error("Failed to auto-create Paper for Paper Setter:", err);
+      }
+
+      // Send Email Notification for Paper Setter Assignment
+      try {
+        const emailService = require("../email/email.service").default;
+        const Exam = require("../exam/exam.model").default;
+        const exam = await Exam.findById(payload.examId);
+        if (exam) {
+          const title = exam.examTitle || exam.examCode;
+          const examHtml = `<p><b>Assigned Exam:</b> ${title}</p>`;
+          const examText = ` You have been assigned to the exam: ${title}.`;
+          
+          await emailService.sendCustom({
+            to: employee.email,
+            subject: "New Exam Assignment - ExamGuard Pro Enterprise",
+            html: `<p>Hello ${employee.firstName} ${employee.lastName},</p><p>You have been assigned as a Paper Setter for a new examination in ExamGuard Pro.</p>${examHtml}<p>Please log in using your existing credentials to access and configure the paper setter module for this exam.</p><p>Regards,<br/>ExamGuard Pro Administration</p>`,
+            text: `Hello ${employee.firstName}, you have been assigned as a Paper Setter for a new examination.${examText} Please log in using your existing credentials to access it.`,
+          });
+        }
+      } catch (err) {
+        console.error("Failed to send email notification to Paper Setter:", err);
       }
     }
 
@@ -274,21 +295,21 @@ class StaffAssignmentService extends BaseService<IStaffAssignment> {
     requiredCount: number;
     shiftId?: string;
     centerId?: string;
-    branchId?: string;
+
     roomId?: string;
     scheduledDate?: Date;
     startTime?: string;
     endTime?: string;
     createdBy?: string;
   }) {
-    const { companyId, examId, role, requiredCount = 1, shiftId, centerId, branchId, roomId, scheduledDate, startTime, endTime, createdBy } = payload;
+    const { companyId, examId, role, requiredCount = 1, shiftId, centerId, roomId, scheduledDate, startTime, endTime, createdBy } = payload;
 
-    // Load available active employees in company / branch / center
+    // Load available active employees in company / center
     const query: Record<string, any> = {
       companyId: new Types.ObjectId(companyId),
       limit: 1000,
     };
-    if (branchId) query.branchId = new Types.ObjectId(branchId);
+
     if (centerId) query.centerId = new Types.ObjectId(centerId);
 
     const empResult = await employeeRepository.findAll(query);
@@ -340,7 +361,6 @@ class StaffAssignmentService extends BaseService<IStaffAssignment> {
       const newAssign = await super.create({
         companyId: new Types.ObjectId(companyId),
         examId: new Types.ObjectId(examId),
-        branchId: branchId ? new Types.ObjectId(branchId) : null,
         centerId: centerId ? new Types.ObjectId(centerId) : null,
         roomId: roomId ? new Types.ObjectId(roomId) : null,
         shiftId: shiftId ? new Types.ObjectId(shiftId) : null,
@@ -419,11 +439,81 @@ class StaffAssignmentService extends BaseService<IStaffAssignment> {
 
     const updated = await super.update(id, updatePayload);
 
+    console.log(`[updateAssignmentStatus] id: ${id}, newStatus: ${newStatus}, updatedBy: ${updatedBy}`);
+    console.log(`[updateAssignmentStatus] assign.employeeId:`, (assign as any).employeeId);
+
     this.logAudit("UPDATE_ASSIGNMENT_STATUS", id, (assign as any).companyId?.toString() || "", updatedBy, `Status changed from ${(assign as any).status} to ${newStatus}`);
     if ((assign as any).employeeId) {
-      const emp = await employeeRepository.findById((assign as any).employeeId.toString());
-      if (emp && (emp as any).userId) {
-        this.sendNotification((assign as any).companyId?.toString() || "", (emp as any).userId.toString(), `Duty Status Updated: ${newStatus}`, `Your staff assignment status has been updated to ${newStatus}.`, "STATUS_UPDATE");
+      const empIdStr = typeof (assign as any).employeeId === "string" ? (assign as any).employeeId : (assign as any).employeeId._id?.toString() || (assign as any).employeeId.toString();
+      console.log(`[updateAssignmentStatus] empIdStr: ${empIdStr}`);
+      const emp = await employeeRepository.findById(empIdStr);
+      
+      const rawUserId = emp ? ((emp as any).userId || (assign as any).employeeId.userId) : null;
+      console.log(`[updateAssignmentStatus] emp found:`, !!emp, `rawUserId:`, rawUserId);
+
+      if (emp) {
+        if (rawUserId) {
+          this.sendNotification((assign as any).companyId?.toString() || "", rawUserId.toString(), `Duty Status Updated: ${newStatus}`, `Your staff assignment status has been updated to ${newStatus}.`, "STATUS_UPDATE");
+        }
+
+        // Exam-Based Isolation logic for Paper Setters
+        if ((assign as any).role === "PAPER_SETTER") {
+          console.log(`[updateAssignmentStatus] Handling PAPER_SETTER logic for newStatus=${newStatus}`);
+          const authRepo = require("../auth/auth.repository").default;
+          const emailService = require("../email/email.service").default;
+          const Exam = require("../exam/exam.model").default;
+          
+          let examName = "your exam";
+          if ((assign as any).examId) {
+            const exam = await Exam.findById((assign as any).examId);
+            if (exam) examName = exam.examTitle || exam.examCode;
+          }
+
+          const authUserId = typeof rawUserId === "object" && rawUserId !== null && "_id" in rawUserId 
+            ? rawUserId._id.toString() 
+            : rawUserId?.toString();
+
+          if (newStatus === "INACTIVE") {
+            console.log(`[updateAssignmentStatus] Deactivating employee and auth`);
+            await employeeRepository.update(emp._id.toString(), { status: "INACTIVE" } as any);
+            if (authUserId) await authRepo.update(authUserId, { status: "INACTIVE" } as any);
+
+            try {
+              console.log(`[updateAssignmentStatus] Sending DEACTIVATION email to ${(emp as any).email}`);
+              await emailService.sendCustom({
+                to: (emp as any).email,
+                subject: `Access Revoked - ${examName}`,
+                html: `<p>Hello ${(emp as any).firstName},</p><p>Your paper setter access for <b>${examName}</b> has been deactivated.</p><p>Regards,<br/>ExamGuard Pro Administration</p>`,
+                text: `Hello ${(emp as any).firstName}, your paper setter access for ${examName} has been deactivated.`,
+              });
+            } catch (e) {
+              console.error("Failed to send deactivation email", e);
+            }
+          } else if (newStatus === "APPROVED" || newStatus === "PUBLISHED" || newStatus === "ACTIVE") {
+            console.log(`[updateAssignmentStatus] Activating employee and auth`);
+            await employeeRepository.update(emp._id.toString(), { status: "ACTIVE" } as any);
+            if (authUserId) await authRepo.update(authUserId, { status: "ACTIVE" } as any);
+
+            try {
+              const crypto = require("crypto");
+              const targetPassword = `Emp@${crypto.randomBytes(4).toString("hex")}1!`;
+              const authService = require("../auth/auth.service").default;
+              
+              if (authUserId) {
+                await authService.adminResetPassword(authUserId, targetPassword);
+              }
+
+              await emailService.sendCustom({
+                to: (emp as any).email,
+                subject: `Access Activated - ${examName}`,
+                html: `<p>Hello ${(emp as any).firstName},</p><p>Your paper setter access for <b>${examName}</b> has been activated.</p><p><b>Your login credentials are:</b><br/>Email: ${(emp as any).email}<br/>Password: ${targetPassword}</p><p>Please log in with these credentials to access your assignment.</p><p>Regards,<br/>ExamGuard Pro Administration</p>`,
+                text: `Hello ${(emp as any).firstName}, your paper setter access for ${examName} has been activated. Email: ${(emp as any).email}, Password: ${targetPassword}`,
+              });
+            } catch (e) {
+              console.error("Failed to send activation email", e);
+            }
+          }
+        }
       }
     }
 
@@ -444,7 +534,6 @@ class StaffAssignmentService extends BaseService<IStaffAssignment> {
       {
         companyId: oldAssign.companyId,
         examId: oldAssign.examId,
-        branchId: oldAssign.branchId,
         centerId: oldAssign.centerId,
         building: oldAssign.building,
         floor: oldAssign.floor,
@@ -479,8 +568,8 @@ class StaffAssignmentService extends BaseService<IStaffAssignment> {
   | Dashboards & Reporting
   |--------------------------------------------------------------------------
   */
-  async getDashboard(companyId: string, query: { branchId?: string; centerId?: string; employeeId?: string }) {
-    return await staffAssignmentRepository.getDashboardStats(companyId, query.branchId, query.centerId, query.employeeId);
+  async getDashboard(companyId: string, query: { centerId?: string; employeeId?: string }) {
+    return await staffAssignmentRepository.getDashboardStats(companyId, query.centerId, query.employeeId);
   }
 
   async getCalendar(companyId: string, filter: Record<string, any>) {
@@ -536,21 +625,22 @@ class StaffAssignmentService extends BaseService<IStaffAssignment> {
       console.error("Audit logging error in staff assignment:", e);
     }
   }
-
   private sendNotification(companyId: string, userId: string, title: string, message: string, type: string) {
     try {
       if (!userId || !Types.ObjectId.isValid(userId)) return;
+      
+      const safeType = ["STATUS_UPDATE", "AUTO_ASSIGNMENT"].includes(type) ? "SYSTEM" : type;
+      
       notificationService.create({
-        companyId: new Types.ObjectId(companyId),
-        userId: new Types.ObjectId(userId),
-        recipient: new Types.ObjectId(userId) as any,
+        companyId: companyId ? new Types.ObjectId(companyId) : undefined,
+        recipientId: new Types.ObjectId(userId),
         title,
         message,
-        notificationType: type as any,
-        type: type as any,
-        priority: NotificationPriority.MEDIUM,
-        status: NotificationStatus.SENT,
-      } as any);
+        type: safeType as any,
+        channel: "IN_APP" as any,
+        priority: "MEDIUM" as any,
+        status: "PENDING" as any,
+      } as any).catch(e => console.error("Notification creation failed async:", e));
     } catch (e) {
       console.error("Notification trigger error in staff assignment:", e);
     }

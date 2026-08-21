@@ -62,6 +62,7 @@ class ActivityLogService extends BaseService<IActivityLog> {
         title: string,
         description: string,
         performedBy: string,
+        performedByRole?: string,
         metadata?: Record<string, unknown>
     ) {
         return this.log({
@@ -72,6 +73,7 @@ class ActivityLogService extends BaseService<IActivityLog> {
             performedBy: new mongoose.Types.ObjectId(
                 performedBy
             ),
+            performedByRole,
             metadata,
         });
     }
@@ -110,10 +112,12 @@ class ActivityLogService extends BaseService<IActivityLog> {
     |--------------------------------------------------------------------------
     */
     async getRecent(
-        limit = 10
+        limit = 10,
+        filters: Record<string, unknown> = {}
     ) {
         return activityLogRepository.findRecent(
-            limit
+            limit,
+            filters
         );
     }
 
@@ -125,29 +129,24 @@ class ActivityLogService extends BaseService<IActivityLog> {
     |--------------------------------------------------------------------------
     */
     async dashboard(
-        companyId?: string
+        filters: Record<string, unknown> = {}
     ) {
+        const { companyId, ...rest } = filters;
+        const baseFilter: Record<string, unknown> = { ...rest };
+        if (companyId) {
+            baseFilter.companyId = new mongoose.Types.ObjectId(String(companyId));
+        }
+
         const [
             total,
             createActivities,
             updateActivities,
             highPriorityActivities,
         ] = await Promise.all([
-            activityLogRepository.count(
-                companyId
-            ),
-            activityLogRepository.countByType(
-                ActivityType.CREATE,
-                companyId
-            ),
-            activityLogRepository.countByType(
-                ActivityType.UPDATE,
-                companyId
-            ),
-            activityLogRepository.countByPriority(
-                ActivityPriority.HIGH,
-                companyId
-            ),
+            activityLogRepository.count(baseFilter),
+            activityLogRepository.count({ ...baseFilter, activityType: ActivityType.CREATE }),
+            activityLogRepository.count({ ...baseFilter, activityType: ActivityType.UPDATE }),
+            activityLogRepository.count({ ...baseFilter, priority: ActivityPriority.HIGH }),
         ]);
 
         return {
@@ -164,12 +163,9 @@ class ActivityLogService extends BaseService<IActivityLog> {
     |--------------------------------------------------------------------------
     */
     async statistics(
-        companyId?: string
+        filters: Record<string, unknown> = {}
     ) {
-        const dashboard =
-            await this.dashboard(
-                companyId
-            );
+        const dashboard = await this.dashboard(filters);
 
         const createPercentage =
             dashboard.total === 0

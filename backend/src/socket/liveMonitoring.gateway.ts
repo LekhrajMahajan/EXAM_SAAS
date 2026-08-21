@@ -15,7 +15,7 @@ export interface SocketUser {
     email: string;
     role: UserRole;
     companyId?: string;
-    branchId?: string;
+
     centerId?: string;
 }
 
@@ -85,7 +85,7 @@ class LiveMonitoringGateway {
                     email: decoded.email,
                     role: decoded.role,
                     companyId: decoded.companyId,
-                    branchId: decoded.branchId,
+
                     centerId: decoded.centerId,
                 };
 

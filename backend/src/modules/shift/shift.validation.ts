@@ -24,8 +24,6 @@ const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
 const baseShiftSchema = z.object({
   companyId: objectId,
 
-  branchId: objectId,
-
   centerId: objectId,
 
   shiftName: z.string().trim().min(3).max(100),
@@ -135,8 +133,6 @@ export const shiftQuerySchema = z.object({
     search: z.string().trim().optional(),
 
     centerId: objectId.optional(),
-
-    branchId: objectId.optional(),
 
     companyId: objectId.optional(),
 

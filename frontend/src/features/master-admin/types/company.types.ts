@@ -14,6 +14,8 @@ export interface Company {
   mouDocument?: string;
   panCardDocument?: string;
   gstDocument?: string;
+  aadharCardDocument?: string;
+  msmeCertificateDocument?: string;
   paymentStatus?: "PENDING" | "SUCCESS" | "FAILED";
   address?: string;
   city?: string;
@@ -26,7 +28,6 @@ export interface Company {
   subscriptionPlan?: "STARTER" | "PROFESSIONAL" | "ENTERPRISE";
   subscriptionStartDate?: string;
   subscriptionEndDate?: string;
-  maxBranches?: number;
   maxCenters?: number;
   maxEmployees?: number;
   maxCandidates?: number;

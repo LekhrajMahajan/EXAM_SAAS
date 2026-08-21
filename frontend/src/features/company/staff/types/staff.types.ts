@@ -1,7 +1,7 @@
 export type StaffRole = 
   | 'Employee'
-  | 'Branch Manager'
   | 'Center Manager'
+  | 'Proctor'
   | 'Technical Manager'
   | 'Paper Reviewer'
   | 'Entry Checker'
@@ -25,7 +25,7 @@ export interface Staff {
   role: StaffRole;
   roles?: StaffRole[];
   department: string;
-  branch: string;
+
   center?: string;
   status: StaffStatus;
   joiningDate: string;

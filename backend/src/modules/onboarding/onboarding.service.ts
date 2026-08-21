@@ -262,7 +262,7 @@ export class OnboardingService {
     // 3. Role Hierarchy Generation (15 Tiers)
     const roleHierarchyDef = [
       { code: "COMPANY_ADMIN", name: "COMPANY_ADMIN", displayName: "Company Admin", level: 0, desc: "Root tenant administrator with full permissions" },
-      { code: "BRANCH_MANAGER", name: "BRANCH_MANAGER", displayName: "Branch Manager", level: 1, desc: "Manages specific operations within an allocated branch" },
+
       { code: "CENTER_MANAGER", name: "CENTER_MANAGER", displayName: "Center Manager", level: 2, desc: "Oversees center readiness, seating, and exam shifts" },
       { code: "EXAM_MANAGER", name: "EXAM_MANAGER", displayName: "Exam Manager", level: 3, desc: "Schedules examinations, shifts, and monitors execution" },
       { code: "PAPER_SETTER", name: "PAPER_SETTER", displayName: "Paper Setter", level: 4, desc: "Creates and approves examination paper sections" },

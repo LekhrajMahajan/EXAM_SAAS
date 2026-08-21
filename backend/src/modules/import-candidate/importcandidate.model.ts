@@ -10,7 +10,7 @@ export interface IImportCandidate extends Document {
   labId?: mongoose.Types.ObjectId;
   examName: string;
   candidateFullName: string;
-  fatherName?: string;
+  fatherName: string;
   motherName: string;
   dateOfBirth: string;
   gender: string;
@@ -47,10 +47,12 @@ export interface IImportCandidate extends Document {
   importantInstructions?: string;
   candidateDeclaration?: string;
   biometricInfo?: string;
-  aadharNumber?: string;
+  aadharNumber: string;
   importedAt: Date;
   isSentToCenter: boolean;
   isLoginEnabled: boolean;
+  isSentToCompanyAdmin: boolean;
+  dynamicFields: Record<string, any>;
 }
 
 const ImportCandidateSchema = new Schema<IImportCandidate>(
@@ -64,7 +66,7 @@ const ImportCandidateSchema = new Schema<IImportCandidate>(
     labId: { type: Schema.Types.ObjectId, ref: 'CenterLab' },
     examName: { type: String, required: true },
     candidateFullName: { type: String, required: true },
-    fatherName: { type: String },
+    fatherName: { type: String, required: true },
     motherName: { type: String, required: true },
     dateOfBirth: { type: String, required: true },
     gender: { type: String, required: true },
@@ -101,10 +103,12 @@ const ImportCandidateSchema = new Schema<IImportCandidate>(
     importantInstructions: { type: String },
     candidateDeclaration: { type: String },
     biometricInfo: { type: String },
-    aadharNumber: { type: String },
+    aadharNumber: { type: String, required: true },
     importedAt: { type: Date, default: Date.now },
     isSentToCenter: { type: Boolean, default: false },
     isLoginEnabled: { type: Boolean, default: false },
+    isSentToCompanyAdmin: { type: Boolean, default: false },
+    dynamicFields: { type: Schema.Types.Mixed, default: {} },
   },
   {
     timestamps: true,

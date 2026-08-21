@@ -43,7 +43,7 @@ interface ExamReportRow {
   shift: string
   examCenter: string
   company: string
-  branch: string
+
   candidatesAssigned: number
   candidatesAppeared: number
   candidatesAbsent: number

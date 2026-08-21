@@ -71,14 +71,6 @@ const reportSchema = new Schema(
       index: true,
     },
 
-    branchId: {
-      type: Schema.Types.ObjectId,
-
-      ref: "Branch",
-
-      index: true,
-    },
-
     centerId: {
       type: Schema.Types.ObjectId,
 

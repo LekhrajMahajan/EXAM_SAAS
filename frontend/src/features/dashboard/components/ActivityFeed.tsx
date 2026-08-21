@@ -5,13 +5,13 @@ import * as Icons from 'lucide-react';
 
 export function ActivityFeed({ activities }: { activities: ActivityItem[] }) {
   return (
-    <WidgetCard title="Recent Activities" action={<button className="text-xs text-indigo-600 font-medium">View All</button>}>
+    <WidgetCard title="Recent Activities" action={<button className="text-xs text-[#2D3E2C] font-medium hover:underline">View All</button>}>
       <div className="space-y-4">
         {activities.map((activity, idx) => {
           const Icon = activity.iconName ? (Icons as any)[activity.iconName] || Icons.Activity : Icons.Activity;
           
           const typeColors = {
-            info: 'bg-sky-50 text-sky-600 border-sky-100',
+            info: 'bg-[#E4FD97] text-[#2D3E2C] border-[#E4FD97]',
             success: 'bg-emerald-50 text-emerald-600 border-emerald-100',
             warning: 'bg-amber-50 text-amber-600 border-amber-100',
             error: 'bg-rose-50 text-rose-600 border-rose-100',

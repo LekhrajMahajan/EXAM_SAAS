@@ -23,12 +23,6 @@ const ExamSchema = new Schema<IExam>(
       index: true,
     },
 
-    branchId: {
-      type: Schema.Types.ObjectId,
-      ref: "Branch",
-      index: true,
-    },
-
     centerId: {
       type: Schema.Types.ObjectId,
       ref: "Center",
@@ -104,6 +98,11 @@ const ExamSchema = new Schema<IExam>(
       match: /^([01]\d|2[0-3]):([0-5]\d)$/,
     },
 
+    shift: {
+      type: String,
+      trim: true,
+    },
+
     duration: {
       type: Number,
       required: true,
@@ -161,6 +160,16 @@ const ExamSchema = new Schema<IExam>(
       trim: true,
     },
 
+    shuffleSubjects: {
+      type: Boolean,
+      default: false,
+    },
+
+    shuffleQuestions: {
+      type: Boolean,
+      default: false,
+    },
+
     subjects: [
       {
         name: { type: String, required: true },
@@ -177,9 +186,16 @@ const ExamSchema = new Schema<IExam>(
 
     securitySettings: {
       faceVerification: { type: Boolean, default: false },
+      faceDetectionEnabled: { type: Boolean, default: false },
+      faceDetectionLimit: { type: Number, default: 15 },
+      multipleFacesEnabled: { type: Boolean, default: false },
+      multipleFacesLimit: { type: Number, default: 15 },
+      proctoringWarningEnabled: { type: Boolean, default: false },
+      proctoringWarningLimit: { type: Number, default: 3 },
       webcamMonitoring: { type: Boolean, default: false },
       screenRecording: { type: Boolean, default: false },
       screenSharingDetection: { type: Boolean, default: false },
+      tabSwitchingEnabled: { type: Boolean, default: false },
       tabSwitchLimit: { type: Number, default: 0 },
       browserLock: { type: Boolean, default: false },
       fullScreenMode: { type: Boolean, default: false },
@@ -231,6 +247,20 @@ const ExamSchema = new Schema<IExam>(
 
     endRemarks: {
       type: String,
+    },
+
+    isResultGenerated: {
+      type: Boolean,
+      default: false,
+    },
+
+    resultGeneratedAt: {
+      type: Date,
+    },
+
+    resultGeneratedBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
     },
 
     isResultPublished: {

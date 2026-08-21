@@ -44,23 +44,48 @@ export const CompanyApprovalDetailsPage = () => {
   const { mutateAsync: assignReviewer, isPending: isAssigning } = useAssignReviewer()
 
   const [isRejectionDialogOpen, setIsRejectionDialogOpen] = useState(false)
-  const [docVerification, setDocVerification] = useState<{ [key: string]: boolean | null }>({
-    registration: null,
-    pan: null,
-    gst: null,
-    mou: null,
+  const [docVerification, setDocVerification] = useState<{ [key: string]: boolean | null }>(() => {
+    const saved = localStorage.getItem(`company_doc_verification_${id}`);
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) { /* ignore */ }
+    }
+    return {
+      registration: null,
+      pan: null,
+      gst: null,
+      mou: null,
+      aadhar: null,
+      msme: null,
+    };
   })
 
-  const [docViewed, setDocViewed] = useState<{ [key: string]: boolean }>({
-    registration: false,
-    pan: false,
-    gst: false,
-    mou: false,
+  const [docViewed, setDocViewed] = useState<{ [key: string]: boolean }>(() => {
+    const saved = localStorage.getItem(`company_doc_viewed_${id}`);
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) { /* ignore */ }
+    }
+    return {
+      registration: false,
+      pan: false,
+      gst: false,
+      mou: false,
+      aadhar: false,
+      msme: false,
+    };
   })
+
+  const cleanupStorage = () => {
+    localStorage.removeItem(`company_doc_verification_${id}`);
+    localStorage.removeItem(`company_doc_viewed_${id}`);
+  }
 
   const handlePreview = (docType: string, url: string | undefined) => {
     if (!url) return;
-    setDocViewed(prev => ({ ...prev, [docType]: true }));
+    setDocViewed(prev => {
+      const next = { ...prev, [docType]: true };
+      localStorage.setItem(`company_doc_viewed_${id}`, JSON.stringify(next));
+      return next;
+    });
     window.open(url.split('#')[0], '_blank');
   }
 
@@ -75,14 +100,16 @@ export const CompanyApprovalDetailsPage = () => {
       )
     ) {
       await approveCompany(company._id)
-      navigate('/master-admin/company-approvals')
+      cleanupStorage();
+      navigate('/master-admin/company-approvals', { state: { defaultTab: 'APPROVED' } })
     }
   }
 
   const handleRejectSubmit = async (reason: string, remarks: string) => {
     await rejectCompany({ id: company._id, reason, remarks })
+    cleanupStorage();
     setIsRejectionDialogOpen(false)
-    navigate('/master-admin/company-approvals')
+    navigate('/master-admin/company-approvals', { state: { defaultTab: 'REJECTED' } })
   }
 
   const handleAssignToMe = async () => {
@@ -91,14 +118,20 @@ export const CompanyApprovalDetailsPage = () => {
   }
 
   const handleDocVerification = (doc: string, status: boolean) => {
-    setDocVerification(prev => ({ ...prev, [doc]: status }))
+    setDocVerification(prev => {
+      const next = { ...prev, [doc]: status };
+      localStorage.setItem(`company_doc_verification_${id}`, JSON.stringify(next));
+      return next;
+    });
   }
 
   const allDocumentsAccepted = 
     (company.registrationDocument ? docVerification.registration === true : false) &&
     (company.panCardDocument ? docVerification.pan === true : false) &&
     (company.gstDocument ? docVerification.gst === true : false) &&
-    (company.mouDocument ? docVerification.mou === true : false);
+    (company.mouDocument ? docVerification.mou === true : false) &&
+    (company.aadharCardDocument ? docVerification.aadhar === true : true) &&
+    (company.msmeCertificateDocument ? docVerification.msme === true : true);
 
   return (
     <div className='max-w-5xl mx-auto w-full p-4 sm:p-6 lg:p-8 space-y-6'>
@@ -294,6 +327,54 @@ export const CompanyApprovalDetailsPage = () => {
                   )}
                 </div>
               </div>
+
+              {/* Aadhar Card */}
+              <div className={`flex items-center justify-between p-4 border dark:border-slate-800 rounded-md transition-colors ${docVerification.aadhar === true ? 'bg-[#E4FD97]/10 border-[#2D3E2C] dark:border-[#E4FD97]' : docVerification.aadhar === false ? 'bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-900' : ''}`}>
+                <div className='flex items-center gap-3'>
+                  <FileText className='w-8 h-8 text-slate-400' />
+                  <div>
+                    <p className='font-medium'>Aadhar Card</p>
+                    <p className='text-xs text-slate-500'>
+                      {company.aadharCardDocument ? 'Uploaded' : 'Not Provided'}
+                    </p>
+                  </div>
+                </div>
+                <div className='flex items-center gap-2'>
+                  <Button variant='outline' size='sm' className='transition-colors border-[#2D3E2C] text-[#2D3E2C] hover:bg-[#2D3E2C] hover:text-[#E4FD97] dark:border-[#E4FD97] dark:text-[#E4FD97] dark:hover:bg-[#E4FD97] dark:hover:text-[#2D3E2C]' disabled={!company.aadharCardDocument} onClick={() => handlePreview('aadhar', company.aadharCardDocument)}>
+                    Preview
+                  </Button>
+                  {company.aadharCardDocument && (
+                    <>
+                      <Button variant='outline' size='sm' className={`transition-colors border-[#2D3E2C] hover:bg-[#2D3E2C] hover:text-[#E4FD97] dark:border-[#E4FD97] dark:hover:bg-[#E4FD97] dark:hover:text-[#2D3E2C] ${docVerification.aadhar === true ? 'bg-[#2D3E2C] text-[#E4FD97] dark:bg-[#E4FD97] dark:text-[#2D3E2C]' : 'text-[#2D3E2C] dark:text-[#E4FD97]'}`} disabled={!docViewed.aadhar} onClick={() => handleDocVerification('aadhar', true)}>Accept</Button>
+                      <Button variant={docVerification.aadhar === false ? 'destructive' : 'outline'} size='sm' className={docVerification.aadhar === false ? '' : 'transition-colors border-[#2D3E2C] text-[#2D3E2C] hover:bg-red-600 hover:text-white dark:border-[#E4FD97] dark:text-[#E4FD97] dark:hover:bg-red-600 dark:hover:text-white hover:border-red-600 dark:hover:border-red-600'} disabled={!docViewed.aadhar} onClick={() => handleDocVerification('aadhar', false)}>Reject</Button>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* MSME Certificate */}
+              <div className={`flex items-center justify-between p-4 border dark:border-slate-800 rounded-md transition-colors ${docVerification.msme === true ? 'bg-[#E4FD97]/10 border-[#2D3E2C] dark:border-[#E4FD97]' : docVerification.msme === false ? 'bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-900' : ''}`}>
+                <div className='flex items-center gap-3'>
+                  <FileText className='w-8 h-8 text-slate-400' />
+                  <div>
+                    <p className='font-medium'>MSME Certificate</p>
+                    <p className='text-xs text-slate-500'>
+                      {company.msmeCertificateDocument ? 'Uploaded' : 'Not Provided'}
+                    </p>
+                  </div>
+                </div>
+                <div className='flex items-center gap-2'>
+                  <Button variant='outline' size='sm' className='transition-colors border-[#2D3E2C] text-[#2D3E2C] hover:bg-[#2D3E2C] hover:text-[#E4FD97] dark:border-[#E4FD97] dark:text-[#E4FD97] dark:hover:bg-[#E4FD97] dark:hover:text-[#2D3E2C]' disabled={!company.msmeCertificateDocument} onClick={() => handlePreview('msme', company.msmeCertificateDocument)}>
+                    Preview
+                  </Button>
+                  {company.msmeCertificateDocument && (
+                    <>
+                      <Button variant='outline' size='sm' className={`transition-colors border-[#2D3E2C] hover:bg-[#2D3E2C] hover:text-[#E4FD97] dark:border-[#E4FD97] dark:hover:bg-[#E4FD97] dark:hover:text-[#2D3E2C] ${docVerification.msme === true ? 'bg-[#2D3E2C] text-[#E4FD97] dark:bg-[#E4FD97] dark:text-[#2D3E2C]' : 'text-[#2D3E2C] dark:text-[#E4FD97]'}`} disabled={!docViewed.msme} onClick={() => handleDocVerification('msme', true)}>Accept</Button>
+                      <Button variant={docVerification.msme === false ? 'destructive' : 'outline'} size='sm' className={docVerification.msme === false ? '' : 'transition-colors border-[#2D3E2C] text-[#2D3E2C] hover:bg-red-600 hover:text-white dark:border-[#E4FD97] dark:text-[#E4FD97] dark:hover:bg-red-600 dark:hover:text-white hover:border-red-600 dark:hover:border-red-600'} disabled={!docViewed.msme} onClick={() => handleDocVerification('msme', false)}>Reject</Button>
+                    </>
+                  )}
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -359,7 +440,7 @@ export const CompanyApprovalDetailsPage = () => {
                     {company.subscriptionPlan}
                   </Badge>
                   <p className='text-sm text-slate-500'>Max Centers: {company.maxCenters}</p>
-                  <p className='text-sm text-slate-500'>Max Branches: {company.maxBranches}</p>
+
                 </div>
               ) : (
                 <div className='p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-900/50 rounded-md text-orange-800 dark:text-orange-400 text-sm text-center font-medium'>

@@ -72,7 +72,7 @@ const companyBodySchema = z.object({
 
   subscriptionEndDate: z.string().datetime().optional(),
 
-  maxBranches: z.number().int().positive().optional(),
+
 
   maxCenters: z.number().int().positive().optional(),
 

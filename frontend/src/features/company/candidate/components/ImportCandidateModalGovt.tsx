@@ -10,7 +10,7 @@ import {
 import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
 import { Label } from '@/shared/components/ui/label'
-import { UploadCloud, Loader2, AlertCircle, FileSpreadsheet } from 'lucide-react'
+import { UploadCloud, Loader2, AlertCircle, CheckCircle2, XCircle } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/shared/components/ui/alert'
 import {
   Select,
@@ -23,21 +23,27 @@ import { examApi } from '@/features/exam-manager/api/exam.api'
 import type { Exam } from '@/features/exam-manager/api/exam.api'
 import api from '@/services/api'
 
+interface ImportReport {
+  successCount: number
+  errorCount: number
+  errors: string[]
+}
+
 export function ImportCandidateModalGovt ({ onSuccess }: { onSuccess?: () => void } = {}) {
   const [open, setOpen] = useState(false)
-  const [file, setFile] = useState<File | null>(null)
+  const [zipFile, setZipFile] = useState<File | null>(null)
   const [exams, setExams] = useState<Exam[]>([])
   const [selectedExamId, setSelectedExamId] = useState<string>('')
   const [isUploading, setIsUploading] = useState(false)
   const [isLoadingExams, setIsLoadingExams] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [successMsg, setSuccessMsg] = useState<string | null>(null)
+  const [report, setReport] = useState<ImportReport | null>(null)
 
   useEffect(() => {
     const fetchExams = async () => {
       try {
         setIsLoadingExams(true)
-        const res = await examApi.getAll({ limit: 100 }) // fetch up to 100 exams
+        const res = await examApi.getAll({ limit: 100 })
         if (res.success) {
           setExams(res.data.exams)
         }
@@ -53,11 +59,11 @@ export function ImportCandidateModalGovt ({ onSuccess }: { onSuccess?: () => voi
     }
   }, [open])
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleZipChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      setFile(e.target.files[0])
+      setZipFile(e.target.files[0])
       setError(null)
-      setSuccessMsg(null)
+      setReport(null)
     }
   }
 
@@ -66,45 +72,56 @@ export function ImportCandidateModalGovt ({ onSuccess }: { onSuccess?: () => voi
       setError('Please select an Exam.')
       return
     }
-
-    if (!file) {
-      setError('Please select an Excel file to upload.')
+    if (!zipFile) {
+      setError('Please select a ZIP file to upload.')
       return
     }
 
     const formData = new FormData()
-    formData.append('file', file)
+    formData.append('file', zipFile)
     formData.append('examId', selectedExamId)
 
     setIsUploading(true)
     setError(null)
-    setSuccessMsg(null)
+    setReport(null)
 
     try {
       const response = await api.post('/import-candidate/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+        headers: { 'Content-Type': 'multipart/form-data' },
       })
 
       if (response.data.success) {
-        setSuccessMsg(response.data.message)
-        setTimeout(() => {
-          setOpen(false)
-          setFile(null)
-          setSelectedExamId('')
-          setSuccessMsg(null)
+        const data = response.data.data as ImportReport
+        setReport(data)
+        if (data.errorCount === 0) {
+          setTimeout(() => {
+            setOpen(false)
+            setZipFile(null)
+            setSelectedExamId('')
+            setReport(null)
+            onSuccess?.()
+          }, 3000)
+        } else {
           onSuccess?.()
-        }, 2000)
+        }
       } else {
         setError(response.data.message)
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err)
-      setError(err.response?.data?.message || 'An unexpected error occurred during import.')
+      const msg = err instanceof Error ? err.message : 'An unexpected error occurred during import.'
+      const axiosErr = err as { response?: { data?: { message?: string } } }
+      setError(axiosErr?.response?.data?.message || msg)
     } finally {
       setIsUploading(false)
     }
+  }
+
+  const resetState = () => {
+    setZipFile(null)
+    setSelectedExamId('')
+    setError(null)
+    setReport(null)
   }
 
   return (
@@ -112,26 +129,25 @@ export function ImportCandidateModalGovt ({ onSuccess }: { onSuccess?: () => voi
       open={open}
       onOpenChange={(val) => {
         setOpen(val)
-        if (!val) {
-          setFile(null)
-          setSelectedExamId('')
-          setError(null)
-          setSuccessMsg(null)
-        }
+        if (!val) resetState()
       }}
     >
       <DialogTrigger asChild>
-        <Button size='sm'>
+        <Button
+          size='sm'
+          className='bg-background text-[#2D3E2C] dark:text-slate-200 border border-[#2D3E2C] hover:bg-[#2D3E2C] hover:text-white'
+        >
           <UploadCloud className='w-4 h-4 mr-2' />
           Import Candidate
         </Button>
       </DialogTrigger>
-      <DialogContent className='sm:max-w-md'>
+      <DialogContent className='sm:max-w-lg'>
         <DialogHeader>
-          <DialogTitle>Import Candidates via Excel</DialogTitle>
+          <DialogTitle>Import Candidates via ZIP</DialogTitle>
         </DialogHeader>
 
         <div className='grid gap-4 py-4 overflow-hidden'>
+          {/* Exam Select */}
           <div className='space-y-2 min-w-0'>
             <Label htmlFor='exam-select'>Select Exam</Label>
             <Select onValueChange={(val) => setSelectedExamId(val)} value={selectedExamId}>
@@ -144,7 +160,11 @@ export function ImportCandidateModalGovt ({ onSuccess }: { onSuccess?: () => voi
               </SelectTrigger>
               <SelectContent className='max-w-[90vw] sm:max-w-md'>
                 {exams.map((exam) => (
-                  <SelectItem key={exam._id} value={exam._id} className='break-words whitespace-normal'>
+                  <SelectItem
+                    key={exam._id}
+                    value={exam._id}
+                    className='break-words whitespace-normal'
+                  >
                     {exam.examTitle} ({exam.examCode})
                   </SelectItem>
                 ))}
@@ -152,31 +172,51 @@ export function ImportCandidateModalGovt ({ onSuccess }: { onSuccess?: () => voi
             </Select>
           </div>
 
-          <div className='grid w-full max-w-sm items-center gap-1.5 mt-2'>
-            <Label htmlFor='excel-file'>Upload Excel File (.xlsx, .csv)</Label>
+          {/* Single ZIP Upload */}
+          <div className='grid w-full items-center gap-1.5'>
+            <Label htmlFor='zip-file'>
+              Upload ZIP File (.zip)
+            </Label>
             <Input
-              id='excel-file'
+              id='zip-file'
               type='file'
-              accept='.xlsx, .xls, .csv'
-              onChange={handleFileChange}
+              accept='.zip'
+              onChange={handleZipChange}
               disabled={isUploading}
             />
           </div>
 
-          <div className='text-sm text-muted-foreground bg-muted/50 p-3 rounded-md max-h-[250px] overflow-y-auto mt-2'>
-            <p className='font-medium mb-1'>Required Columns:</p>
-            <ul className='list-disc list-inside space-y-1 mb-4'>
+          {/* Instructions */}
+          <div className='text-sm text-muted-foreground bg-muted/50 p-3 rounded-md max-h-[230px] overflow-y-auto'>
+            <p className='font-semibold mb-1 text-foreground'>📦 ZIP File Structure:</p>
+            <div className='bg-muted rounded p-2 font-mono text-xs mb-3 space-y-0.5'>
+              <p>candidates.zip</p>
+              <p className='pl-3'>├── candidates.xlsx <span className='text-muted-foreground font-sans'>(candidate data)</span></p>
+              <p className='pl-3'>├── 1023.jpg <span className='text-muted-foreground font-sans'>(Candidate ID = 1023)</span></p>
+              <p className='pl-3'>├── 1024.png</p>
+              <p className='pl-3'>└── 1025.jpeg</p>
+            </div>
+            <p className='font-medium mb-1'>Photo Rules:</p>
+            <ul className='list-disc list-inside space-y-0.5 text-xs mb-3'>
+              <li>Photo filename must exactly match the <strong>Candidate ID</strong></li>
+              <li>Supported formats: <code>.jpg</code>, <code>.jpeg</code>, <code>.png</code></li>
+              <li>Optional fields in Excel can be left blank</li>
+            </ul>
+            <p className='font-medium mb-1'>Required Excel Columns:</p>
+            <ul className='list-disc list-inside space-y-0.5 text-xs'>
               <li>Candidate ID / Registration No.</li>
               <li>Application No.</li>
               <li>Center Name / Address Location</li>
               <li>Exam Name</li>
               <li>Candidate Full Name</li>
+              <li>Father&apos;s Name</li>
               <li>Mother&apos;s Name</li>
               <li>Date of Birth</li>
               <li>Gender</li>
+              <li>Aadhaar No.</li>
             </ul>
-            <p className='font-medium mb-1'>Optional Columns:</p>
-            <ul className='list-disc list-inside space-y-1 text-xs opacity-80'>
+            <p className='font-medium mb-1 mt-3'>Optional Excel Columns:</p>
+            <ul className='list-disc list-inside space-y-0.5 text-xs text-muted-foreground'>
               <li>Organization/Exam Body</li>
               <li>Exam Code</li>
               <li>Advertisement/Notification No.</li>
@@ -194,12 +234,7 @@ export function ImportCandidateModalGovt ({ onSuccess }: { onSuccess?: () => voi
               <li>Exam Mode</li>
               <li>Centre Code</li>
               <li>Full Centre Address</li>
-              <li>City</li>
-              <li>District</li>
-              <li>State</li>
-              <li>PIN</li>
-              <li>Landmark</li>
-              <li>Nearest Railway Station</li>
+              <li>City, District, State, PIN, Landmark, Nearest Railway Station</li>
               <li>Language</li>
               <li>Scribe Details</li>
               <li>Physical Test Details</li>
@@ -207,9 +242,12 @@ export function ImportCandidateModalGovt ({ onSuccess }: { onSuccess?: () => voi
               <li>Important Instructions</li>
               <li>Candidate Declaration</li>
               <li>Biometric/Verification Info</li>
+              <li>Candidate Signature</li>
+              <li>PwD Status, PwD Type</li>
             </ul>
           </div>
 
+          {/* Error */}
           {error && (
             <Alert variant='destructive'>
               <AlertCircle className='h-4 w-4' />
@@ -218,12 +256,32 @@ export function ImportCandidateModalGovt ({ onSuccess }: { onSuccess?: () => voi
             </Alert>
           )}
 
-          {successMsg && (
-            <Alert className='bg-emerald-500/15 text-emerald-600 border-emerald-500/30'>
-              <FileSpreadsheet className='h-4 w-4 text-emerald-600!' />
-              <AlertTitle>Success</AlertTitle>
-              <AlertDescription>{successMsg}</AlertDescription>
-            </Alert>
+          {/* Import Report */}
+          {report && (
+            <div className='space-y-2'>
+              <Alert className='bg-emerald-500/15 text-emerald-700 border-emerald-500/30'>
+                <CheckCircle2 className='h-4 w-4 text-emerald-600' />
+                <AlertTitle>Import Complete</AlertTitle>
+                <AlertDescription>
+                  <strong>{report.successCount}</strong> candidate(s) imported successfully.
+                  {report.errorCount > 0 && (
+                    <span className='text-orange-600 ml-1'><strong>{report.errorCount}</strong> skipped.</span>
+                  )}
+                </AlertDescription>
+              </Alert>
+              {report.errors.length > 0 && (
+                <div className='bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-900/50 rounded-md p-3 max-h-[140px] overflow-y-auto'>
+                  <p className='text-xs font-semibold text-orange-700 dark:text-orange-400 mb-1 flex items-center gap-1'>
+                    <XCircle className='h-3.5 w-3.5' /> Skipped rows:
+                  </p>
+                  <ul className='space-y-0.5'>
+                    {report.errors.map((e, idx) => (
+                      <li key={idx} className='text-xs text-orange-600 dark:text-orange-400'>{e}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
           )}
         </div>
 
@@ -231,9 +289,13 @@ export function ImportCandidateModalGovt ({ onSuccess }: { onSuccess?: () => voi
           <Button variant='outline' onClick={() => setOpen(false)} disabled={isUploading}>
             Cancel
           </Button>
-          <Button onClick={handleUpload} disabled={!file || !selectedExamId || isUploading}>
+          <Button
+            onClick={handleUpload}
+            disabled={!zipFile || !selectedExamId || isUploading}
+            className='bg-[#2D3E2C] hover:bg-[#3d5038] text-white border border-[#2D3E2C]'
+          >
             {isUploading && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
-            Import
+            {isUploading ? 'Importing...' : 'Import'}
           </Button>
         </DialogFooter>
       </DialogContent>

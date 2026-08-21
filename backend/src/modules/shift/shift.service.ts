@@ -39,7 +39,7 @@ class ShiftService {
     const limit = Number(req.query.limit) || 10;
     const search = req.query.search as string;
     const centerId = req.query.centerId as string;
-    const branchId = req.query.branchId as string;
+
     const companyId = req.query.companyId as string;
     const status = req.query.status as string;
 
@@ -50,7 +50,7 @@ class ShiftService {
     }
 
     if (centerId) filter.centerId = centerId;
-    if (branchId) filter.branchId = branchId;
+
     if (companyId) filter.companyId = companyId;
     if (status) filter.status = status;
 

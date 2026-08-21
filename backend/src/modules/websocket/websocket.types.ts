@@ -96,9 +96,6 @@ export interface ISocketUser {
   role: string;
 
   companyId?: string;
-
-  branchId?: string;
-
   centerId?: string;
 
   examId?: string;

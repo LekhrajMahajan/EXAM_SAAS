@@ -22,7 +22,7 @@ export interface OfflineSession {
   exam: string;
   subject: string;
   center: string;
-  branch: string;
+
   date: string;
   shift: string;
   startTime: string;

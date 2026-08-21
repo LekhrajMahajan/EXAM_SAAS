@@ -29,7 +29,7 @@ export const uploadFile = asyncHandler(async (req: Request, res: Response) => {
     bucket,
     checksum,
     companyId,
-    branchId,
+
     candidateId,
     employeeId,
     examId,
@@ -64,7 +64,7 @@ export const uploadFile = asyncHandler(async (req: Request, res: Response) => {
     checksum,
     uploadedBy: uploadedBy as any,
     companyId,
-    branchId,
+
     candidateId,
     employeeId,
     examId,

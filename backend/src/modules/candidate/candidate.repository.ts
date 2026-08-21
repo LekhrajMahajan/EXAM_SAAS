@@ -4,7 +4,7 @@ import { ICandidate } from "./candidate.types";
 
 class CandidateRepository extends BaseRepository<ICandidate> {
   constructor() {
-    super(Candidate, ["companyId", "branchId", "centerId", "seatId"]);
+    super(Candidate, ["companyId", "centerId", "seatId"]);
   }
 
 
@@ -103,7 +103,7 @@ class CandidateRepository extends BaseRepository<ICandidate> {
     limit?: number;
     search?: string;
     companyId?: string;
-    branchId?: string;
+
     centerId?: string;
     examId?: string;
     seatId?: string;
@@ -120,7 +120,7 @@ class CandidateRepository extends BaseRepository<ICandidate> {
       limit = 10,
       search,
       companyId,
-      branchId,
+
       centerId,
       examId,
       seatId,
@@ -137,7 +137,7 @@ class CandidateRepository extends BaseRepository<ICandidate> {
     };
 
     if (companyId) query.companyId = companyId;
-    if (branchId) query.branchId = branchId;
+
     if (centerId) query.centerId = centerId;
     if (examId) query.examId = examId;
     if (seatId) query.seatId = seatId;
@@ -203,7 +203,7 @@ class CandidateRepository extends BaseRepository<ICandidate> {
     const [candidates, total] = await Promise.all([
       Candidate.find(query)
         .populate("companyId")
-        .populate("branchId")
+
         .populate("centerId")
         .populate("seatId")
         .sort({

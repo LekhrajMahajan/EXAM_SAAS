@@ -25,9 +25,6 @@ export interface ResultQuery {
   subjectId?: string;
 
   companyId?: string;
-
-  branchId?: string;
-
   examCenterId?: string;
 
   examRoomId?: string;
@@ -156,49 +153,6 @@ class ResultRepository extends BaseRepository<IResult> {
 
 
   /*
-    |--------------------------------------------------------------------------
-    | Find All
-    |--------------------------------------------------------------------------
-    */
-
-  async findAll(query: ResultQuery) {
-    const {
-      page = 1,
-
-      limit = 20,
-
-      examId,
-
-      candidateId,
-
-      submissionId,
-
-      paperId,
-
-      subjectId,
-
-      companyId,
-
-      branchId,
-
-      examCenterId,
-
-      examRoomId,
-
-      passStatus,
-
-      resultStatus,
-    } = query;
-
-    const filter: FilterQuery<ResultDocument> = {
-      isDeleted: false,
-    };
-
-    if (examId) filter.examId = new Types.ObjectId(examId);
-
-    if (candidateId) filter.candidateId = new Types.ObjectId(candidateId);
-
-    if (submissionId) filter.submissionId = new Types.ObjectId(submissionId);
 
     if (paperId) filter.paperId = new Types.ObjectId(paperId);
 
@@ -206,7 +160,7 @@ class ResultRepository extends BaseRepository<IResult> {
 
     if (companyId) filter.companyId = new Types.ObjectId(companyId);
 
-    if (branchId) filter.branchId = new Types.ObjectId(branchId);
+
 
     if (examCenterId) filter.examCenterId = new Types.ObjectId(examCenterId);
 

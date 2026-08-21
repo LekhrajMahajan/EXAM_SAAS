@@ -28,12 +28,18 @@ export function OptionGroup({ question, selectedOption, onSelect }: OptionGroupP
   if (question.type === 'True/False') {
     return (
       <div className="space-y-3">
-        <label className="flex items-center p-4 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors bg-white">
-          <input type="radio" name={`q-${question.id}`} className="w-5 h-5 text-indigo-600" checked={selectedOption === 'True'} onChange={() => onSelect && onSelect('True')} />
+        <label 
+          className="flex items-center p-4 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors bg-white"
+          onClick={(e) => { e.preventDefault(); if (onSelect) onSelect('True'); }}
+        >
+          <input type="radio" name={`q-${question.id}`} className="w-5 h-5 text-indigo-600" checked={selectedOption === 'True'} readOnly />
           <span className="ml-3 text-slate-700 font-medium">True</span>
         </label>
-        <label className="flex items-center p-4 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors bg-white">
-          <input type="radio" name={`q-${question.id}`} className="w-5 h-5 text-indigo-600" checked={selectedOption === 'False'} onChange={() => onSelect && onSelect('False')} />
+        <label 
+          className="flex items-center p-4 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors bg-white"
+          onClick={(e) => { e.preventDefault(); if (onSelect) onSelect('False'); }}
+        >
+          <input type="radio" name={`q-${question.id}`} className="w-5 h-5 text-indigo-600" checked={selectedOption === 'False'} readOnly />
           <span className="ml-3 text-slate-700 font-medium">False</span>
         </label>
       </div>
@@ -45,7 +51,11 @@ export function OptionGroup({ question, selectedOption, onSelect }: OptionGroupP
   return (
     <div className="space-y-3">
       {question.options?.map((option, idx) => (
-        <label key={option.id} className="flex items-center p-4 border border-slate-200 rounded-lg cursor-pointer hover:bg-indigo-50 hover:border-indigo-200 transition-colors bg-white group">
+        <label 
+          key={option.id} 
+          className="flex items-center p-4 border border-slate-200 rounded-lg cursor-pointer hover:bg-indigo-50 hover:border-indigo-200 transition-colors bg-white group"
+          onClick={(e) => { e.preventDefault(); if (onSelect) onSelect(option.id); }}
+        >
           <div className="flex items-center justify-center w-6 h-6 rounded border border-slate-300 bg-slate-50 mr-4 text-xs font-bold text-slate-500 group-hover:bg-white group-hover:border-indigo-300 group-hover:text-indigo-600 transition-colors">
             {String.fromCharCode(65 + idx)}
           </div>
@@ -54,7 +64,7 @@ export function OptionGroup({ question, selectedOption, onSelect }: OptionGroupP
             name={`q-${question.id}`} 
             className={`w-5 h-5 text-indigo-600 border-slate-300 ${isMulti ? 'rounded' : ''}`}
             checked={selectedOption === option.id}
-            onChange={() => onSelect && onSelect(option.id)}
+            readOnly
           />
           <span className="ml-3 text-slate-700">{option.text}</span>
         </label>

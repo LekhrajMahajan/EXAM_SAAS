@@ -51,7 +51,7 @@ export const DUMMY_NOTIFICATIONS: NotificationRecord[] = [
     description: 'Please download your admit card for the upcoming Midterms.',
     priority: 'Normal',
     category: 'Exam',
-    audience: 'Specific Branches (Mumbai)',
+    audience: 'Specific Centers (Mumbai)',
     status: 'Scheduled',
     methods: ['In-App', 'Email', 'SMS'],
     createdBy: 'Registrar Office',

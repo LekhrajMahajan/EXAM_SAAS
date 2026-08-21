@@ -37,6 +37,7 @@ export const getTopics = asyncHandler(async (req: Request, res: Response) => {
     companyId: req.query.companyId as string,
     subjectId: req.query.subjectId as string,
     chapterId: req.query.chapterId as string,
+    examId: req.query.examId === 'null' ? { $exists: false } : (req.query.examId as string),
     status: req.query.status as string,
   });
 

@@ -38,7 +38,6 @@ export interface ActivityLog {
   performedByRole?: string;
   performedFor?: string;
   companyId?: string;
-  branchId?: string;
   candidateId?: string;
   employeeId?: string;
   examId?: string;

@@ -9,7 +9,7 @@ export const assignSubscriptionSchema = z.object({
     startDate: z.string().datetime(),
     endDate: z.string().datetime(),
     autoRenewal: z.boolean().optional(),
-    maxBranches: z.number().optional(),
+
     maxCenters: z.number().optional(),
     maxEmployees: z.number().optional(),
     maxCandidates: z.number().optional(),
@@ -24,7 +24,7 @@ export const updateSubscriptionSchema = z.object({
     startDate: z.string().datetime().optional(),
     endDate: z.string().datetime().optional(),
     autoRenewal: z.boolean().optional(),
-    maxBranches: z.number().optional(),
+
     maxCenters: z.number().optional(),
     maxEmployees: z.number().optional(),
     maxCandidates: z.number().optional(),

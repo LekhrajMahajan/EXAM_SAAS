@@ -6,21 +6,21 @@ interface CenterStatusBadgeProps {
 
 export const CenterStatusBadge = ({ status }: CenterStatusBadgeProps) => {
   const getStatusColor = () => {
-    switch (status) {
-      case 'Active':
-      case 'Approved':
-      case 'Working':
-        return 'bg-green-100 text-green-800 hover:bg-green-100';
-      case 'Inactive':
-      case 'Rejected':
-      case 'Faulty':
-        return 'bg-red-100 text-red-800 hover:bg-red-100';
-      case 'Pending':
-      case 'Maintenance':
-      case 'Repair':
-        return 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100';
+    switch (status.toUpperCase()) {
+      case 'ACTIVE':
+      case 'APPROVED':
+      case 'WORKING':
+        return 'bg-[#2D3E2C] text-[#E4FD97] hover:bg-[#2D3E2C]/90 border-transparent';
+      case 'INACTIVE':
+      case 'REJECTED':
+      case 'FAULTY':
+        return 'bg-destructive/10 text-destructive hover:bg-destructive/20 border-destructive/20';
+      case 'PENDING':
+      case 'MAINTENANCE':
+      case 'REPAIR':
+        return 'bg-amber-100 text-amber-800 hover:bg-amber-200 border-amber-200';
       default:
-        return 'bg-gray-100 text-gray-800 hover:bg-gray-100';
+        return 'bg-muted text-muted-foreground hover:bg-muted/80 border-border';
     }
   };
 

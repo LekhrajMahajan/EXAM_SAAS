@@ -39,9 +39,6 @@ export enum RoomType {
 
 export interface IRoom {
   companyId: Types.ObjectId;
-
-  branchId: Types.ObjectId;
-
   centerId: Types.ObjectId;
 
   roomCode: string;

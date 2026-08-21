@@ -64,9 +64,6 @@ export interface IResult {
   subjectId: Types.ObjectId;
 
   companyId: Types.ObjectId;
-
-  branchId: Types.ObjectId;
-
   examCenterId: Types.ObjectId;
 
   examRoomId: Types.ObjectId;

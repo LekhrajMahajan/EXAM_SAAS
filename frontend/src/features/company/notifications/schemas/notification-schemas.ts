@@ -8,9 +8,8 @@ export const broadcastSchema = z.object({
   methods: z.array(z.string()).min(1, 'Select at least one delivery method'),
   
   // Audience Targeting
-  targetAudience: z.enum(['All', 'Specific Roles', 'Specific Branches', 'Specific Centers']),
+  targetAudience: z.enum(['All', 'Specific Roles', 'Specific Centers']),
   roles: z.array(z.string()).optional(),
-  branches: z.array(z.string()).optional(),
   centers: z.array(z.string()).optional(),
   
   // Scheduling

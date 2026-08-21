@@ -18,11 +18,20 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/shared/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/shared/components/ui/select';
 import { Badge } from '@/shared/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { examApi } from '../api/exam.api';
 import type { Exam } from '../api/exam.api';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
+import { getDisplayStatus } from '@/shared/utils/exam-status';
+import { ExamStatusBadge } from '@/shared/components/badges/ExamStatusBadge';
 
 export const ExamListPage = () => {
   const { user } = useAuthStore();
@@ -31,66 +40,26 @@ export const ExamListPage = () => {
   const [exams, setExams] = useState<Exam[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [modeFilter, setModeFilter] = useState('ALL');
+  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [examNameFilter, setExamNameFilter] = useState('ALL');
   const [selectedExam, setSelectedExam] = useState<Exam | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [now, setNow] = useState(() => new Date());
 
   // Dynamic display status: prefer server-computed, fallback to client-side
-  const getDisplayStatus = useCallback((exam: Exam): string => {
-    // If server already computed it, use that
-    if (exam.displayStatus) return exam.displayStatus;
-
-    // Client-side fallback
-    if ((exam as any).isResultPublished) return 'RESULT_GENERATED';
-    if (['COMPLETED', 'CANCELLED', 'ARCHIVED', 'EXAM_ENDED', 'RESULT_GENERATED'].includes(exam.status)) return exam.status;
-
-    if (exam.status === 'ACTIVE' || exam.status === 'EXAM_STARTED') {
-      try {
-        const examDate = new Date(exam.examDate);
-        const [startH, startM] = (exam.startTime || '').split(':').map(Number);
-        if (isNaN(startH) || isNaN(startM)) return exam.status;
-        const startDT = new Date(examDate);
-        startDT.setHours(startH, startM, 0, 0);
-
-        const [endH, endM] = (exam.endTime || '').split(':').map(Number);
-        if (!isNaN(endH) && !isNaN(endM)) {
-          const endDT = new Date(examDate);
-          endDT.setHours(endH, endM, 0, 0);
-          if (now >= endDT) return 'EXAM_ENDED';
-          if (now >= startDT) return 'EXAM_STARTED';
-        } else {
-          if (now >= startDT) return 'EXAM_STARTED';
-        }
-      } catch {
-        // fallback
-      }
-    }
-    return exam.status;
+  const getDisplayStatusMemoized = useCallback((exam: Exam): string => {
+    return getDisplayStatus(exam, now);
   }, [now]);
 
   // Check if exam is in an editable state (only ACTIVE/DRAFT before start)
+  // Exception: RESERVEBA (RBI), STAFFSELF, STAFFSELE can be edited anytime
   const isEditable = useCallback((exam: Exam): boolean => {
-    if (exam.examCode === 'STAFFSELF' || exam.examCode === 'STAFFSELE') return true;
-    const ds = getDisplayStatus(exam);
-    return ['ACTIVE', 'DRAFT'].includes(ds);
-  }, [getDisplayStatus]);
-
-  // Status badge config
-  const getStatusBadge = useCallback((exam: Exam) => {
-    const ds = getDisplayStatus(exam);
-    const config: Record<string, { label: string; className: string }> = {
-      ACTIVE: { label: 'ACTIVE', className: 'bg-emerald-600 hover:bg-emerald-700 text-white' },
-      DRAFT: { label: 'DRAFT', className: 'bg-slate-500 hover:bg-slate-600 text-white' },
-      EXAM_STARTED: { label: 'EXAM STARTED', className: 'bg-amber-600 hover:bg-amber-700 text-white' },
-      EXAM_ENDED: { label: 'EXAM ENDED', className: 'bg-red-600 hover:bg-red-700 text-white' },
-      COMPLETED: { label: 'COMPLETED', className: 'bg-slate-600 hover:bg-slate-700 text-white' },
-      RESULT_GENERATED: { label: 'RESULT GENERATED', className: 'bg-purple-600 hover:bg-purple-700 text-white' },
-      CANCELLED: { label: 'CANCELLED', className: 'bg-gray-500 hover:bg-gray-600 text-white' },
-      INACTIVE: { label: 'INACTIVE', className: 'bg-gray-400 hover:bg-gray-500 text-white' },
-    };
-    const c = config[ds] || { label: ds, className: 'bg-slate-500 text-white' };
-    return c;
-  }, [getDisplayStatus]);
+    if (['STAFFSELF', 'STAFFSELE', 'RESERVEBA'].includes(exam.examCode)) {
+      return true;
+    }
+    return ['ACTIVE', 'DRAFT'].includes(getDisplayStatusMemoized(exam));
+  }, [getDisplayStatusMemoized]);
 
   // Re-check every 30 seconds so badges update live when exam time arrives
   useEffect(() => {
@@ -131,6 +100,13 @@ export const ExamListPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search]);
 
+  const filteredExams = exams.filter(exam => {
+    if (modeFilter !== 'ALL' && exam.examMode !== modeFilter) return false;
+    if (statusFilter !== 'ALL' && getDisplayStatusMemoized(exam) !== statusFilter) return false;
+    if (examNameFilter !== 'ALL' && (exam._id || (exam as any).id) !== examNameFilter) return false;
+    return true;
+  });
+
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -139,30 +115,69 @@ export const ExamListPage = () => {
           <p className="text-muted-foreground">Manage all your examinations</p>
         </div>
         {user?.role !== 'Company Admin' && (
-          <Button onClick={() => navigate('new')}>
+          <Button variant="outline" className="hover:bg-[#2D3E2C] hover:text-white dark:hover:bg-[#E4FD97] dark:hover:text-[#2D3E2C]" onClick={() => navigate('new')}>
             <Plus className="mr-2 h-4 w-4" /> Create Exam
           </Button>
         )}
       </div>
 
-      <Card className="bg-slate-900/50 border-slate-800">
+      <Card className="bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 shadow-sm">
         <CardContent className="p-4 space-y-4">
           <div className="flex gap-4">
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search exams..."
-                className="pl-9"
+                className="pl-9 bg-slate-50 dark:bg-slate-900/50 dark:border-slate-800 dark:text-slate-200"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
+
+            <Select value={examNameFilter} onValueChange={setExamNameFilter}>
+              <SelectTrigger className="w-[200px] bg-slate-50 dark:bg-slate-900/50 dark:border-slate-800 dark:text-slate-200">
+                <SelectValue placeholder="All Exams" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">All Exams</SelectItem>
+                {exams.map(exam => (
+                  <SelectItem key={exam._id} value={exam._id}>
+                    {exam.examTitle || (exam as any).examName || 'Unnamed Exam'}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={modeFilter} onValueChange={setModeFilter}>
+              <SelectTrigger className="w-[150px] bg-slate-50 dark:bg-slate-900/50 dark:border-slate-800 dark:text-slate-200">
+                <SelectValue placeholder="All Modes" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">All Modes</SelectItem>
+                <SelectItem value="ONLINE">Online</SelectItem>
+                <SelectItem value="OFFLINE">Offline</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[180px] bg-slate-50 dark:bg-slate-900/50 dark:border-slate-800 dark:text-slate-200">
+                <SelectValue placeholder="All Statuses" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">All Statuses</SelectItem>
+                <SelectItem value="ACTIVE">Active</SelectItem>
+                <SelectItem value="EXAM_STARTED">Exam Started</SelectItem>
+                <SelectItem value="PENDING_RESULT_GENERATE">Pending Result Generate</SelectItem>
+                <SelectItem value="PENDING_PUBLISH_RESULT">Pending Publish Result</SelectItem>
+                <SelectItem value="RESULT_PUBLISHED">Result Published</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
-          <div className="rounded-md border border-slate-800 overflow-hidden">
+          <div className="rounded-md border border-slate-200 dark:border-slate-800 overflow-hidden">
             <div className="overflow-x-auto">
               <Table>
-                <TableHeader className="bg-slate-900">
+                <TableHeader className="bg-slate-50 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300">
                   <TableRow>
                     <TableHead>Code</TableHead>
                     <TableHead>Title</TableHead>
@@ -179,14 +194,14 @@ export const ExamListPage = () => {
                         Loading exams...
                       </TableCell>
                     </TableRow>
-                  ) : exams.length === 0 ? (
+                  ) : filteredExams.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
                         No exams found.
                       </TableCell>
                     </TableRow>
                   ) : (
-                    exams.map((exam) => (
+                    filteredExams.map((exam) => (
                       <TableRow key={exam._id}>
                         <TableCell className="font-medium">{exam.examCode}</TableCell>
                         <TableCell>{exam.examTitle}</TableCell>
@@ -195,14 +210,7 @@ export const ExamListPage = () => {
                           <Badge variant="outline">{exam.examMode}</Badge>
                         </TableCell>
                         <TableCell>
-                          {(() => {
-                            const badge = getStatusBadge(exam);
-                            return (
-                              <Badge variant="default" className={badge.className}>
-                                {badge.label}
-                              </Badge>
-                            );
-                          })()}
+                          <ExamStatusBadge exam={exam} />
                         </TableCell>
                         <TableCell className="text-right">
                           <Button variant="ghost" size="icon" onClick={() => {
@@ -250,78 +258,170 @@ export const ExamListPage = () => {
       </Card>
 
       <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-        <DialogContent className="sm:max-w-[600px] bg-slate-900 border-slate-800 text-slate-50">
+        <DialogContent className="sm:max-w-[650px] bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border-slate-200 dark:border-slate-800">
           <DialogHeader>
             <DialogTitle>Exam Details</DialogTitle>
           </DialogHeader>
           {selectedExam && (
-            <div className="space-y-4 mt-4 max-h-[70vh] overflow-y-auto pr-2">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Title</p>
-                  <p className="font-medium">{selectedExam.examTitle}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Code</p>
-                  <p className="font-medium">{selectedExam.examCode}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Category</p>
-                  <p className="font-medium">{selectedExam.examCategory || '-'}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Type</p>
-                  <p className="font-medium">{selectedExam.examType || '-'}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Mode</p>
-                  <p className="font-medium">{selectedExam.examMode}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Date</p>
-                  <p className="font-medium">{new Date(selectedExam.examDate).toLocaleDateString()}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Time</p>
-                  <p className="font-medium">{selectedExam.startTime} - {selectedExam.endTime}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Duration</p>
-                  <p className="font-medium">{selectedExam.duration} mins</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Total Marks</p>
-                  <p className="font-medium">{selectedExam.totalMarks}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Passing Marks</p>
-                  <p className="font-medium">{selectedExam.passingMarks}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Negative Marks</p>
-                  <p className="font-medium">{selectedExam.negativeMarks}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Language</p>
-                  <p className="font-medium">{selectedExam.language}</p>
+            <div className="space-y-5 mt-2 max-h-[75vh] overflow-y-auto pr-2">
+
+              {/* ── Basic Information ── */}
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 border-b pb-1">Basic Information</p>
+                <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Title</p>
+                    <p className="font-medium text-sm">{selectedExam.examTitle}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Code</p>
+                    <p className="font-medium text-sm">{selectedExam.examCode}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Category</p>
+                    <p className="font-medium text-sm">{selectedExam.examCategory || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Type</p>
+                    <p className="font-medium text-sm">{selectedExam.examType || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Mode</p>
+                    <p className="font-medium text-sm">{selectedExam.examMode || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Language</p>
+                    <p className="font-medium text-sm">{selectedExam.language || '-'}</p>
+                  </div>
+                  {selectedExam.difficulty && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">Difficulty</p>
+                      <p className="font-medium text-sm">{selectedExam.difficulty}</p>
+                    </div>
+                  )}
                 </div>
               </div>
-              
+
+              {/* ── Schedule & Timing ── */}
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 border-b pb-1">Schedule &amp; Timing</p>
+                <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Exam Date</p>
+                    <p className="font-medium text-sm">{new Date(selectedExam.examDate).toLocaleDateString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Duration</p>
+                    <p className="font-medium text-sm">{selectedExam.duration} mins</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Start Time</p>
+                    <p className="font-medium text-sm">{selectedExam.startTime}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">End Time</p>
+                    <p className="font-medium text-sm">{selectedExam.endTime}</p>
+                  </div>
+                  {selectedExam.shift && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">Shift</p>
+                      <p className="font-medium text-sm">{selectedExam.shift}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* ── Marking Scheme ── */}
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 border-b pb-1">Marking Scheme</p>
+                <div className="grid grid-cols-3 gap-x-6 gap-y-3">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Total Marks</p>
+                    <p className="font-medium text-sm">{selectedExam.totalMarks}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Positive Marks</p>
+                    <p className="font-medium text-sm">{selectedExam.passingMarks}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Negative Marks</p>
+                    <p className="font-medium text-sm">{selectedExam.negativeMarks ?? '-'}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* ── Shuffle Options ── */}
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 border-b pb-1">Shuffle Options</p>
+                <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+                  <div className="flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full ${selectedExam.shuffleSubjects ? 'bg-[#2D3E2C]' : 'bg-slate-300'}`} />
+                    <span className="text-sm">Shuffle Subjects: <strong>{selectedExam.shuffleSubjects ? 'On' : 'Off'}</strong></span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full ${selectedExam.shuffleQuestions ? 'bg-[#2D3E2C]' : 'bg-slate-300'}`} />
+                    <span className="text-sm">Shuffle Questions: <strong>{selectedExam.shuffleQuestions ? 'On' : 'Off'}</strong></span>
+                  </div>
+                </div>
+              </div>
+
+              {/* ── Proctoring & Anti-Cheat ── */}
+              {selectedExam.securitySettings && (
+                (() => {
+                  const activeSettings = [
+                    { label: 'Face Monitoring', enabled: selectedExam.securitySettings!.faceDetectionEnabled, value: selectedExam.securitySettings!.faceDetectionLimit, unit: 'sec' },
+                    { label: 'Multiple / Wrong Faces', enabled: selectedExam.securitySettings!.multipleFacesEnabled, value: selectedExam.securitySettings!.multipleFacesLimit, unit: 'sec' },
+                    { label: 'Proctoring Warning Limit', enabled: selectedExam.securitySettings!.proctoringWarningEnabled, value: selectedExam.securitySettings!.proctoringWarningLimit, unit: 'warnings' },
+                    { label: 'Tab Switching Prevention', enabled: selectedExam.securitySettings!.tabSwitchingEnabled, value: null, unit: '' },
+                    { label: 'Browser Lock', enabled: selectedExam.securitySettings!.browserLock, value: null, unit: '' },
+                    { label: 'Full Screen Mode', enabled: selectedExam.securitySettings!.fullScreenMode, value: null, unit: '' },
+                    { label: 'Copy/Paste Allowed', enabled: selectedExam.securitySettings!.copyPasteAllowed, value: null, unit: '' },
+                    { label: 'Right Click Disabled', enabled: selectedExam.securitySettings!.rightClickDisabled, value: null, unit: '' },
+                    { label: 'Developer Tools Blocked', enabled: selectedExam.securitySettings!.developerToolsBlocked, value: null, unit: '' },
+                  ].filter(item => item.enabled === true);
+
+                  if (activeSettings.length === 0) return null;
+
+                  return (
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 border-b pb-1">Proctoring &amp; Anti-Cheat Settings</p>
+                      <div className="grid grid-cols-1 gap-y-2 text-sm">
+                        {activeSettings.map((item, idx) => (
+                          <div key={idx} className="flex items-center justify-between bg-muted/40 rounded px-3 py-2">
+                            <span className="text-slate-700 dark:text-slate-300">{item.label}</span>
+                            <div className="flex items-center gap-2">
+                              {item.value !== null && item.value !== undefined && (
+                                <span className="text-xs text-muted-foreground">{item.value} {item.unit}</span>
+                              )}
+                              <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-[#2D3E2C]/10 text-[#2D3E2C] dark:bg-[#2D3E2C]/30 dark:text-slate-200 border border-[#2D3E2C]/30">
+                                ON
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()
+              )}
+
+              {/* ── Instructions ── */}
               {selectedExam.instructions && (
                 <div>
-                  <p className="text-sm text-muted-foreground mb-1">Instructions</p>
-                  <div className="p-3 bg-slate-800 rounded-md text-sm whitespace-pre-wrap">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 border-b pb-1">Instructions</p>
+                  <div className="p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 rounded-md text-sm whitespace-pre-wrap">
                     {selectedExam.instructions}
                   </div>
                 </div>
               )}
 
+              {/* ── Subjects ── */}
               {selectedExam.subjects && selectedExam.subjects.length > 0 && (
                 <div>
-                  <p className="text-sm text-muted-foreground mb-2">Subjects</p>
-                  <div className="rounded-md border border-slate-800">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 border-b pb-1">Exam Paper Subjects</p>
+                  <div className="rounded-md border border-slate-200 dark:border-slate-800">
                     <Table>
-                      <TableHeader className="bg-slate-900">
+                      <TableHeader className="bg-[#2D3E2C] [&_th]:text-white">
                         <TableRow>
                           <TableHead>Subject Name</TableHead>
                           <TableHead className="text-right">Questions</TableHead>
@@ -339,6 +439,7 @@ export const ExamListPage = () => {
                   </div>
                 </div>
               )}
+
             </div>
           )}
         </DialogContent>

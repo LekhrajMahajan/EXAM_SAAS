@@ -84,8 +84,6 @@ export const auditLogQuerySchema = z.object({
 
     companyId: objectId.optional(),
 
-    branchId: objectId.optional(),
-
     examId: objectId.optional(),
 
     candidateId: objectId.optional(),
@@ -118,8 +116,6 @@ export const dashboardSchema = z.object({
   query: z.object({
     companyId: objectId.optional(),
 
-    branchId: objectId.optional(),
-
     examId: objectId.optional(),
   }),
 });
@@ -133,8 +129,6 @@ export const dashboardSchema = z.object({
 export const statisticsSchema = z.object({
   query: z.object({
     companyId: objectId.optional(),
-
-    branchId: objectId.optional(),
 
     examId: objectId.optional(),
 

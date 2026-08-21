@@ -35,7 +35,7 @@ export const ProfileCard = ({ staff }: ProfileCardProps) => {
 
             <div className="flex flex-wrap gap-x-6 gap-y-2 mt-4 text-sm text-slate-600">
               <div className="flex items-center gap-2">
-                <Badge variant="secondary">{staff.employeeId}</Badge>
+                <Badge variant="secondary">{staff.employeeCode}</Badge>
               </div>
               <div className="flex items-center gap-2">
                 <Mail className="h-4 w-4 text-slate-400" />
@@ -43,12 +43,9 @@ export const ProfileCard = ({ staff }: ProfileCardProps) => {
               </div>
               <div className="flex items-center gap-2">
                 <Phone className="h-4 w-4 text-slate-400" />
-                {staff.mobile}
+                {staff.phone}
               </div>
-              <div className="flex items-center gap-2">
-                <Building className="h-4 w-4 text-slate-400" />
-                {staff.branch}
-              </div>
+
               <div className="flex items-center gap-2">
                 <MapPin className="h-4 w-4 text-slate-400" />
                 {staff.center || 'Unassigned'}

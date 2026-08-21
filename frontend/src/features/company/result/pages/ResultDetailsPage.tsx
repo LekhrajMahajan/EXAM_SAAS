@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { PageHeader } from '@/shared/components/layout/page-header';
 import { useParams, Link } from 'react-router-dom';
-import { PreviewCard } from '../components/PreviewCard';
 import { ResultAnswersView } from '../components/ResultAnswersView';
 import { Button } from '@/shared/components/ui/button';
-import { ChevronLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, User, Target, FileText } from 'lucide-react';
 import { apiClient } from '@/core/api/http/axios-client';
 import { toast } from 'react-hot-toast';
+import { Card, CardHeader } from '@/shared/components/ui/card';
 
 export function ResultDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -60,6 +60,7 @@ export function ResultDetailsPage() {
     id: result.id,
     candidateName: result.candidate?.name || result.candidateName || 'Unknown Candidate',
     applicationNumber: result.candidate?.applicationNumber || result.applicationNo || 'N/A',
+    photo: result.candidate?.photo || null,
     exam: result.exam?.name || result.exam?.examTitle || 'Unknown Exam',
     subject: 'General',
     shift: 'General',
@@ -73,11 +74,16 @@ export function ResultDetailsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild className="text-slate-500 hover:text-slate-900">
+    <div className="space-y-6 p-8">
+      <div className="flex items-stretch gap-4">
+        <Button 
+          variant="outline" 
+          size="icon" 
+          asChild 
+          className="h-auto px-4 bg-card hover:bg-muted border border-border shadow-xl rounded-xl shrink-0"
+        >
           <Link to="/company/results">
-            <ChevronLeft className="w-5 h-5" />
+            <ArrowLeft className="w-5 h-5 text-muted-foreground" />
           </Link>
         </Button>
         <PageHeader 
@@ -86,12 +92,63 @@ export function ResultDetailsPage() {
         />
       </div>
 
-      <div className="bg-transparent border border-slate-800/50 rounded-lg p-6">
-         <PreviewCard result={previewData as any} />
+      {/* Top Box: Exam Name */}
+      <Card className="bg-white dark:bg-[#16191F] border border-slate-200 dark:border-slate-800 shadow-sm">
+        <CardHeader className="py-5">
+          <div className="flex items-center gap-4">
+            <div className="p-2.5 bg-primary/10 rounded-lg">
+              <FileText className="w-6 h-6 text-primary" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Exam Name</p>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">{previewData.exam}</h2>
+            </div>
+          </div>
+        </CardHeader>
+      </Card>
+
+      {/* Middle Row: Two Boxes */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Box 1: Candidate Info */}
+        <Card className="bg-white dark:bg-[#16191F] border border-slate-200 dark:border-slate-800 shadow-sm">
+          <CardHeader className="py-5">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center border border-primary/20 overflow-hidden">
+                {previewData.photo ? (
+                  <img src={previewData.photo} alt={previewData.candidateName} className="w-full h-full object-cover" />
+                ) : (
+                  <User className="w-6 h-6 text-primary" />
+                )}
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-900 dark:text-white text-lg">{previewData.candidateName}</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5 font-mono">App No: {previewData.applicationNumber}</p>
+              </div>
+            </div>
+          </CardHeader>
+        </Card>
+
+        {/* Box 2: Marks Obtained */}
+        <Card className="bg-white dark:bg-[#16191F] border border-slate-200 dark:border-slate-800 shadow-sm">
+          <CardHeader className="py-5">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center border border-primary/20">
+                <Target className="w-6 h-6 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Marks Obtained</p>
+                <div className="flex items-baseline gap-2 mt-0.5">
+                  <h3 className="font-bold text-slate-900 dark:text-white text-3xl">{previewData.marksObtained}</h3>
+                  <span className="text-base text-slate-500 dark:text-slate-400 font-medium">/ {previewData.totalMarks}</span>
+                </div>
+              </div>
+            </div>
+          </CardHeader>
+        </Card>
       </div>
 
       <div className="mt-8">
-        <h3 className="text-lg font-semibold text-white mb-4">Question Analysis</h3>
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Question Analysis</h3>
         <ResultAnswersView answers={result.answers || []} />
       </div>
     </div>

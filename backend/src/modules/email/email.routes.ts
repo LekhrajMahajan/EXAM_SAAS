@@ -47,9 +47,6 @@ router.post(
     UserRole.MASTER_ADMIN,
 
     UserRole.COMPANY_ADMIN,
-
-    UserRole.BRANCH_MANAGER,
-
     UserRole.CENTER_MANAGER,
 
     UserRole.EXAM_MANAGER,
@@ -69,9 +66,6 @@ router.post(
     UserRole.MASTER_ADMIN,
 
     UserRole.COMPANY_ADMIN,
-
-    UserRole.BRANCH_MANAGER,
-
     UserRole.CENTER_MANAGER,
 
     UserRole.EXAM_MANAGER,
@@ -91,9 +85,6 @@ router.post(
     UserRole.MASTER_ADMIN,
 
     UserRole.COMPANY_ADMIN,
-
-    UserRole.BRANCH_MANAGER,
-
     UserRole.CENTER_MANAGER,
 
     UserRole.EXAM_MANAGER,

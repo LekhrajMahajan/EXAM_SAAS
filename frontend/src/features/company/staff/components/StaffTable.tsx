@@ -22,7 +22,7 @@ interface StaffTableProps {
 
 export const StaffTable = ({ staffList, onView, onEdit, onToggleStatus, onDelete, variant = 'default' }: StaffTableProps) => {
   return (
-    <div className="rounded-md border border-slate-800 bg-slate-900/50 overflow-hidden">
+    <div className="rounded-md border border-border bg-card text-card-foreground shadow-sm overflow-hidden">
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
@@ -68,10 +68,10 @@ export const StaffTable = ({ staffList, onView, onEdit, onToggleStatus, onDelete
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1">
-                    <Button variant="ghost" size="icon" onClick={() => onView?.(staff)} title="View Profile">
+                    <Button variant="ghost" size="icon" className="text-[#4A5D23] hover:text-[#4A5D23] hover:bg-[#4A5D23]/10 transition-colors" onClick={() => onView?.(staff)} title="View Profile">
                       <Eye className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => onEdit?.(staff)} title="Edit Details">
+                    <Button variant="ghost" size="icon" className="text-[#4A5D23] hover:text-[#4A5D23] hover:bg-[#4A5D23]/10 transition-colors" onClick={() => onEdit?.(staff)} title="Edit Details">
                       <Edit className="h-4 w-4" />
                     </Button>
                     <Button 
@@ -79,11 +79,11 @@ export const StaffTable = ({ staffList, onView, onEdit, onToggleStatus, onDelete
                       size="icon" 
                       onClick={() => onToggleStatus?.(staff)} 
                       title={staff.status.toUpperCase() === 'ACTIVE' ? 'Deactivate' : 'Activate'}
-                      className={staff.status.toUpperCase() === 'ACTIVE' ? 'text-green-500 hover:text-green-600 hover:bg-green-500/10' : 'text-slate-400'}
+                      className={staff.status.toUpperCase() === 'ACTIVE' ? 'text-[#94d82d] hover:text-[#82c91e] hover:bg-[#94d82d]/10 transition-colors' : 'text-slate-400 transition-colors'}
                     >
                       <Power className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => onDelete?.(staff)} title="Delete Employee">
+                    <Button variant="ghost" size="icon" className="text-[#4A5D23] hover:text-[#4A5D23] hover:bg-[#4A5D23]/10 transition-colors" onClick={() => onDelete?.(staff)} title="Delete Employee">
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>

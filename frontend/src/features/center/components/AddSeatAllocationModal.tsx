@@ -170,7 +170,7 @@ export const AddSeatAllocationModal = ({ isOpen, onClose, onSuccess }: AddSeatAl
               )}
 
               {isFull && !isOverCapacity && (
-                <div className="p-3 bg-green-50 text-green-700 rounded-md flex items-center text-sm">
+                <div className="p-3 bg-primary/10 text-primary rounded-md flex items-center text-sm border border-primary/20">
                   <CheckCircle2 className="w-4 h-4 mr-2" />
                   Lab is full. Please assign the remaining candidates to another lab.
                 </div>
@@ -217,7 +217,7 @@ export const AddSeatAllocationModal = ({ isOpen, onClose, onSuccess }: AddSeatAl
           <Button 
             onClick={handleSubmit} 
             disabled={!selectedExam || !selectedLab || selectedCandidates.length === 0 || isOverCapacity || isLoading}
-            className="bg-blue-600 hover:bg-blue-700"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium shadow-lg shadow-primary/20"
           >
             {isLoading ? 'Allocating...' : 'Seat Allocation'}
           </Button>

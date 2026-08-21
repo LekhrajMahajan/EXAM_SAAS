@@ -17,6 +17,10 @@ export enum StaffAssignmentRole {
   MEDICAL_OFFICER = "MEDICAL_OFFICER",
   COMMAND_CENTER = "COMMAND_CENTER",
   AI_PROCTOR = "AI_PROCTOR",
+  REASSIGNMENT = "REASSIGNMENT",
+  REPLACEMENT = "REPLACEMENT",
+  EMERGENCY = "EMERGENCY",
+  TEMPORARY = "TEMPORARY",
 }
 
 export enum AssignmentStatus {
@@ -29,6 +33,8 @@ export enum AssignmentStatus {
   REPLACEMENT_REQUESTED = "REPLACEMENT_REQUESTED",
   CANCELLED = "CANCELLED",
   CONFIRMED = "CONFIRMED",
+  INACTIVE = "INACTIVE",
+  COMPLETED = "COMPLETED",
 }
 
 export enum AssignmentType {
@@ -44,7 +50,6 @@ export enum AssignmentType {
 export interface IStaffAssignment {
   companyId: Types.ObjectId;
   examId: Types.ObjectId;
-  branchId?: Types.ObjectId | null;
   centerId?: Types.ObjectId | null;
   building?: string;
   floor?: string;

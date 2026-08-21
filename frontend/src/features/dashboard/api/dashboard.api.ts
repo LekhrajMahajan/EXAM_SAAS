@@ -1,5 +1,6 @@
 import { apiClient } from '@/core/api/http/axios-client';
 import type { StatItem, ActivityItem, NotificationItem, QuickAction } from '../types';
+import { useAuthStore } from '@/features/auth/store/useAuthStore';
 
 export interface DashboardCardsResponse {
   upcomingExams: number;
@@ -57,7 +58,7 @@ export const dashboardApi = {
     try {
       const res = await apiClient.get('/dashboard/role-stats');
       const data = res.data?.data || res.data;
-      return {
+      const stats = {
         stats: data.stats || [],
         quickActions: data.quickActions || [],
         activities: (data.activities || []).map((a: Record<string, unknown>, i: number) => ({
@@ -86,6 +87,57 @@ export const dashboardApi = {
         totalStaff: Number(data.totalStaff || 0),
         systemHealth: data.systemHealth,
       };
+
+      // Check role and dynamically inject candidate/center notifications for Govt Authority
+      const user = useAuthStore.getState().user;
+      if (user?.role === 'PRIVATE_AUTHORITY' || user?.role === 'GOVERNMENT_AUTHORITY' || user?.role === 'Private Authority' || user?.role === 'Government Authority') {
+        try {
+          const [candidateRes, centerRes] = await Promise.all([
+            apiClient.get('/import-candidate').catch(() => null),
+            apiClient.get('/import-center-assign-exam').catch(() => null)
+          ]);
+
+          const dynamicNotifs: any[] = [];
+          let readDynamicNotifs: string[] = [];
+          try {
+            readDynamicNotifs = JSON.parse(localStorage.getItem('dynamicReadNotifs') || '[]');
+          } catch (e) {
+            // ignore
+          }
+
+          const cData = candidateRes?.data?.data || [];
+          if (cData.length > 0) {
+            dynamicNotifs.push({
+              id: 'dynamic-candidate',
+              title: 'Candidate Import Requested',
+              message: `You have been requested to add ${cData.length} candidates.`,
+              isRead: readDynamicNotifs.includes('dynamic-candidate'),
+              timestamp: 'Just now',
+              priority: 'high'
+            });
+          }
+
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const totalCenters = (centerRes?.data?.data || []).reduce((acc: number, item: any) => acc + (item.centers?.length || 0), 0);
+          if (totalCenters > 0) {
+            dynamicNotifs.push({
+              id: 'dynamic-center',
+              title: 'Center Assignment Requested',
+              message: `You have been requested to assign ${totalCenters} centers.`,
+              isRead: readDynamicNotifs.includes('dynamic-center'),
+              timestamp: 'Just now',
+              priority: 'high'
+            });
+          }
+
+          stats.notifications = [...dynamicNotifs, ...stats.notifications];
+          stats.unreadCount = stats.notifications.filter((n: any) => !n.isRead).length;
+        } catch (e) {
+          console.error("Failed to fetch dynamic notifications", e);
+        }
+      }
+
+      return stats;
     } catch {
       return { stats: [], quickActions: [], activities: [], notifications: [], unreadCount: 0 };
     }

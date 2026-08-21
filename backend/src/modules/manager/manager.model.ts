@@ -32,7 +32,6 @@ const ManagerSchema = new Schema<IManager>(
     email: {
       type: String,
       required: true,
-      unique: true,
       trim: true,
       lowercase: true,
     },
@@ -56,11 +55,6 @@ const ManagerSchema = new Schema<IManager>(
       type: String,
       required: true,
       select: false,
-    },
-    branchId: {
-      type: Schema.Types.ObjectId,
-      ref: "Branch",
-      default: null,
     },
     centerId: {
       type: Schema.Types.ObjectId,

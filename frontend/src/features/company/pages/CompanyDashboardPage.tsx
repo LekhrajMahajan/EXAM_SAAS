@@ -5,7 +5,6 @@ import { StatCard } from "../components/dashboard/StatCard";
 import { StatisticsGrid } from "../components/dashboard/StatisticsGrid";
 import { RecentActivityCard } from "../components/dashboard/RecentActivityCard";
 import { QuickActionCard } from "../components/dashboard/QuickActionCard";
-import { NotificationCard } from "../components/dashboard/NotificationCard";
 import { useAuthStore } from "@/features/auth/store/useAuthStore";
 import { useUserStore } from "@/stores/user/user.store";
 import { Navigate, Link } from "react-router-dom";
@@ -13,7 +12,6 @@ import { useQuery } from "@tanstack/react-query";
 import { dashboardApi } from "@/features/dashboard/api/dashboard.api";
 
 const QUICK_ACTIONS = [
-  { title: "Add Branch", icon: Building2, path: "/company/branches/create" },
   { title: "Create Exam", icon: FileText, path: "/company/exams/create" },
   { title: "Invite Staff", icon: Users, path: "/company/staff/create" },
   { title: "Manage Centers", icon: MapPin, path: "/company/centers" },
@@ -60,7 +58,7 @@ export const CompanyDashboardPage = () => {
           description={`Overview of your company's operations and performance under the ${planCode} Plan.`} 
         />
         <div className="flex items-center gap-3 bg-card text-card-foreground px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-all duration-200 w-fit">
-          <div className="p-1.5 rounded-md bg-[#E4FD97] text-[#2D3E2C] shrink-0">
+          <div className="p-1.5 rounded-md bg-secondary text-[#2D3E2C] shrink-0">
             <Sparkles className="h-4 w-4" />
           </div>
           <div>
@@ -79,15 +77,15 @@ export const CompanyDashboardPage = () => {
       {planCode === "ENTERPRISE" && (
         <div className="bg-card text-card-foreground border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-200 relative overflow-hidden">
           <div className="absolute top-0 right-0 p-6 opacity-5 dark:opacity-10 pointer-events-none">
-            <ShieldCheck className="h-40 w-40 text-[#2D3E2C] dark:text-[#E4FD97]" />
+            <ShieldCheck className="h-40 w-40 text-[#2D3E2C] dark:text-secondary" />
           </div>
           <div className="relative z-10 space-y-4">
             <div className="flex flex-wrap items-center gap-2.5">
-              <div className="p-1.5 rounded-md bg-[#E4FD97] text-[#2D3E2C] shrink-0">
+              <div className="p-1.5 rounded-md bg-secondary text-[#2D3E2C] shrink-0">
                 <Activity className="h-4 w-4" />
               </div>
               <h3 className="text-lg md:text-xl font-bold tracking-tight text-[#2D3E2C] dark:text-white">Enterprise Live Command Center</h3>
-              <span className="bg-[#2D3E2C]/10 text-[#2D3E2C] dark:bg-[#E4FD97]/15 dark:text-[#E4FD97] text-xs px-2.5 py-0.5 rounded-full font-bold border border-[#2D3E2C]/20 dark:border-[#E4FD97]/30">
+              <span className="bg-[#2D3E2C] text-[#E4FD97] dark:bg-[#2D3E2C] dark:text-[#E4FD97] text-xs px-2.5 py-0.5 rounded-full font-bold border border-[#2D3E2C] dark:border-[#2D3E2C]">
                 AI Proctoring Active
               </span>
             </div>
@@ -97,13 +95,13 @@ export const CompanyDashboardPage = () => {
             <div className="flex flex-wrap gap-3 pt-2">
               <Link 
                 to="/company/live-monitoring" 
-                className="inline-flex items-center justify-start px-4 py-2 text-sm font-semibold rounded-md border transition-colors border-[#2D3E2C] text-[#2D3E2C] hover:bg-[#2D3E2C] hover:text-[#E4FD97] dark:border-[#334155] dark:text-[#E2E8F0] dark:hover:bg-[#2D3E2C] dark:hover:text-[#E4FD97] gap-2 shadow-sm qa-button"
+                className="inline-flex items-center justify-start px-4 py-2 text-sm font-semibold rounded-md border transition-colors border-[#2D3E2C] text-[#2D3E2C] hover:bg-[#2D3E2C] hover:text-secondary dark:border-[#334155] dark:text-[#E2E8F0] dark:hover:bg-[#2D3E2C] dark:hover:text-secondary gap-2 shadow-sm qa-button"
               >
                 <Activity className="h-4 w-4" /> Open Real-time Monitoring
               </Link>
               <Link 
                 to="/company/ai-proctoring" 
-                className="inline-flex items-center justify-start px-4 py-2 text-sm font-semibold rounded-md border transition-colors border-[#2D3E2C] text-[#2D3E2C] hover:bg-[#2D3E2C] hover:text-[#E4FD97] dark:border-[#334155] dark:text-[#E2E8F0] dark:hover:bg-[#2D3E2C] dark:hover:text-[#E4FD97] gap-2 shadow-sm qa-button"
+                className="inline-flex items-center justify-start px-4 py-2 text-sm font-semibold rounded-md border transition-colors border-[#2D3E2C] text-[#2D3E2C] hover:bg-[#2D3E2C] hover:text-secondary dark:border-[#334155] dark:text-[#E2E8F0] dark:hover:bg-[#2D3E2C] dark:hover:text-secondary gap-2 shadow-sm qa-button"
               >
                 <ShieldCheck className="h-4 w-4" /> View AI Fraud Audit Logs
               </Link>
@@ -117,7 +115,7 @@ export const CompanyDashboardPage = () => {
           <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="space-y-2">
               <div className="flex items-center gap-2.5">
-                <div className="p-1.5 rounded-md bg-[#E4FD97] text-[#2D3E2C] shrink-0">
+                <div className="p-1.5 rounded-md bg-secondary text-[#2D3E2C] shrink-0">
                   <BarChart3 className="h-4 w-4" />
                 </div>
                 <h3 className="text-lg font-bold text-[#2D3E2C] dark:text-white">Professional Multi-Center Analytics & Scheduling</h3>
@@ -128,7 +126,7 @@ export const CompanyDashboardPage = () => {
             </div>
             <Link 
               to="/company/reports" 
-              className="inline-flex items-center justify-start px-4 py-2 text-sm font-semibold rounded-md border transition-colors border-[#2D3E2C] text-[#2D3E2C] hover:bg-[#2D3E2C] hover:text-[#E4FD97] dark:border-[#334155] dark:text-[#E2E8F0] dark:hover:bg-[#2D3E2C] dark:hover:text-[#E4FD97] gap-2 shadow-sm qa-button w-fit shrink-0"
+              className="inline-flex items-center justify-start px-4 py-2 text-sm font-semibold rounded-md border transition-colors border-[#2D3E2C] text-[#2D3E2C] hover:bg-[#2D3E2C] hover:text-secondary dark:border-[#334155] dark:text-[#E2E8F0] dark:hover:bg-[#2D3E2C] dark:hover:text-secondary gap-2 shadow-sm qa-button w-fit shrink-0"
             >
               Generate Analytics Report
             </Link>
@@ -139,7 +137,7 @@ export const CompanyDashboardPage = () => {
       {planCode === "STARTER" && (
         <div className="bg-card text-card-foreground border border-amber-200 dark:border-amber-500/40 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-sm shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="p-1.5 rounded-md bg-[#E4FD97] text-[#2D3E2C] shrink-0">
+            <div className="p-1.5 rounded-md bg-secondary text-[#2D3E2C] shrink-0">
               <Sparkles className="h-4 w-4" />
             </div>
             <span className="text-slate-700 dark:text-slate-300">
@@ -148,7 +146,7 @@ export const CompanyDashboardPage = () => {
           </div>
           <Link 
             to="/company/subscription" 
-            className="inline-flex items-center justify-start px-4 py-1.5 text-xs font-semibold rounded-md border transition-colors border-[#2D3E2C] text-[#2D3E2C] hover:bg-[#2D3E2C] hover:text-[#E4FD97] dark:border-[#334155] dark:text-[#E2E8F0] dark:hover:bg-[#2D3E2C] dark:hover:text-[#E4FD97] gap-2 shadow-sm qa-button shrink-0 text-center"
+            className="inline-flex items-center justify-start px-4 py-1.5 text-xs font-semibold rounded-md border transition-colors border-[#2D3E2C] text-[#2D3E2C] hover:bg-[#2D3E2C] hover:text-secondary dark:border-[#334155] dark:text-[#E2E8F0] dark:hover:bg-[#2D3E2C] dark:hover:text-secondary gap-2 shadow-sm qa-button shrink-0 text-center"
           >
             Upgrade Plan
           </Link>
@@ -174,10 +172,9 @@ export const CompanyDashboardPage = () => {
         </StatisticsGrid>
       )}
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <RecentActivityCard activities={dashData?.activities || []} />
         <QuickActionCard actions={QUICK_ACTIONS} />
-        <NotificationCard notifications={dashData?.notifications || []} />
       </div>
     </div>
   );

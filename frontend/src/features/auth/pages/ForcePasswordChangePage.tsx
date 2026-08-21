@@ -66,7 +66,7 @@ export const ForcePasswordChangePage = () => {
         navigate('/master-admin/dashboard', { replace: true });
       } else if (profile?.role === 'Company Admin' || profile?.role === 'COMPANY_ADMIN') {
         navigate('/company/dashboard', { replace: true });
-      } else if (profile?.role === 'Branch Manager' || profile?.role === 'BRANCH_MANAGER') {
+      } else if (profile?.role === 'Branch Manager') {
         navigate('/dashboard/branch-manager', { replace: true });
       } else if (profile?.role === 'Center Manager' || profile?.role === 'CENTER_MANAGER') {
         if (profile?.centerSetupStatus !== 'ACTIVE') {

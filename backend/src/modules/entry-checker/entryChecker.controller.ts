@@ -260,15 +260,21 @@ export const getMyAssignments = asyncHandler(async (req: Request, res: Response)
     // Find all assignments for this center where this staff is assigned
     const assignments = await CenterAssignExamStaff.find(query).toArray();
 
-    const examNames = assignments.map((a: any) => a.examName).filter(Boolean);
-    // Get unique exam names
-    const uniqueExamNames = [...new Set(examNames)];
+    const examIds = assignments.map((a: any) => a.examId).filter(Boolean);
+    const uniqueExamIds = [...new Set(examIds.map(id => id.toString()))].map(id => new mongoose.Types.ObjectId(id));
+
+    const ExamModel = require("../exam/exam.model").default;
+    const exams = await ExamModel.find(
+      { _id: { $in: uniqueExamIds } },
+      { examTitle: 1, examDate: 1, startTime: 1, endTime: 1 }
+    ).lean();
 
     return sendResponse(res, HTTP_STATUS.OK, {
       success: true,
       message: "Assignments fetched successfully",
       data: {
-        examNames: uniqueExamNames
+        examNames: exams.map((e: any) => e.examTitle),
+        exams: exams,
       }
     });
   } catch (error: any) {

@@ -7,7 +7,7 @@ export interface StaffListParams {
   search?: string;
   role?: string;
   department?: string;
-  branch?: string;
+
   center?: string;
   status?: string;
   verificationStatus?: string;

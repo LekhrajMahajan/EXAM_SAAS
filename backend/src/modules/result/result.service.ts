@@ -22,7 +22,7 @@ import {
 } from "./result.types";
 
 import { BaseService } from "../../common/base.service";
-
+import Exam from "../exam/exam.model";
 import ExamSubmission from "../exam-submission/examSubmission.model";
 import CandidateAnswer from "../candidate-answer/candidateAnswer.model";
 import Question from "../question-bank/question.model";
@@ -962,7 +962,6 @@ class ResultService extends BaseService<IResult> {
                 paperId: submission.paperId,
                 subjectId: submission.subjectId,
                 companyId: submission.companyId,
-                branchId: submission.branchId,
                 examCenterId: submission.examCenterId,
                 examRoomId: submission.examRoomId,
                 totalQuestions: submission.totalQuestions,
@@ -1085,7 +1084,6 @@ class ResultService extends BaseService<IResult> {
                 paperId: activePaperId,
                 subjectId: exam.subjectId,
                 companyId: exam.companyId,
-                branchId: exam.branchId,
                 totalQuestions: totalQuestions,
                 attemptedQuestions: correct + wrong,
                 correctAnswers: correct,
@@ -1104,6 +1102,10 @@ class ResultService extends BaseService<IResult> {
             });
 
             generatedCount++;
+        }
+
+        if (generatedCount > 0) {
+            await Exam.findByIdAndUpdate(examId, { isResultGenerated: true });
         }
 
         return {
@@ -1357,7 +1359,6 @@ class ResultService extends BaseService<IResult> {
     async getDetails(resultId: string) {
         const result = await Result.findById(resultId)
             .populate('examId', 'examTitle examCode')
-            .populate('candidateId', 'firstName lastName enrollmentNo applicationNumber photo')
             .lean();
 
         if (!result) {
@@ -1367,14 +1368,26 @@ class ResultService extends BaseService<IResult> {
         let cName = '';
         let cAppNo = 'N/A';
         let cPhoto = '';
-        let cId = (result.candidateId as any)?._id;
+        let cId = (result.candidateId as any)?._id || result.candidateId;
 
-        if (result.candidateId && typeof result.candidateId === 'object' && !mongoose.Types.ObjectId.isValid(result.candidateId as any)) {
-            const cand = result.candidateId as any;
-            cName = cand.firstName ? `${cand.firstName} ${cand.lastName || ''}`.trim() : '';
-            cName = cName || cand.candidateFullName || cand.fullName || cand.name || '';
-            cAppNo = cand.applicationNumber || cand.enrollmentNo || cand.applicationNo || cAppNo;
-            cPhoto = cand.photo || '';
+        const ImportCandidate = mongoose.models.ImportCandidate || mongoose.model("ImportCandidate", new mongoose.Schema({}, { strict: false, collection: 'importcandidate' }));
+        const Candidate = mongoose.models.Candidate || mongoose.model("Candidate", new mongoose.Schema({}, { strict: false, collection: 'candidates' }));
+
+        let cand: any = null;
+        if (cId) {
+            cand = await Candidate.findById(cId).lean();
+            if (!cand) {
+                cand = await ImportCandidate.findById(cId).lean();
+            }
+        }
+
+        if (cand) {
+            if (cand.firstName || cand.candidateFullName || cand.fullName || cand.name) {
+                cName = cand.firstName ? `${cand.firstName} ${cand.lastName || ''}`.trim() : '';
+                cName = cName || cand.candidateFullName || cand.fullName || cand.name || '';
+                cAppNo = cand.applicationNumber || cand.enrollmentNo || cand.applicationNo || cAppNo;
+                cPhoto = cand.photo || cand.candidatePhoto || '';
+            }
         }
 
         let candAns: any = null;
@@ -1428,15 +1441,25 @@ class ResultService extends BaseService<IResult> {
                 let selectedAnswerText = '';
 
                 if (question) {
-                    correctAnswerText = question.correctAnswer.join(', ');
+                    correctAnswerText = question.correctAnswer.map((ansLetter: string) => {
+                        const opt = (question.options || []).find((o: any) => o.optionId === ansLetter || o.optionLabel === ansLetter);
+                        return opt?.optionText ? `${ansLetter} - ${opt.optionText.replace(/<[^>]*>?/gm, '')}` : ansLetter;
+                    }).join(', ');
                     
                     if (question.questionType === "SINGLE_CHOICE" || question.questionType === "TRUE_FALSE") {
-                        selectedAnswerText = answer.selectedOption || '';
-                        isCorrect = question.correctAnswer.includes(selectedAnswerText);
+                        const ansLetter = answer.selectedOption || '';
+                        const opt = (question.options || []).find((o: any) => o.optionId === ansLetter || o.optionLabel === ansLetter);
+                        selectedAnswerText = opt?.optionText ? `${ansLetter} - ${opt.optionText.replace(/<[^>]*>?/gm, '')}` : ansLetter;
+                        isCorrect = question.correctAnswer.includes(ansLetter);
                     } else if (question.questionType === "MULTIPLE_CHOICE") {
-                        selectedAnswerText = (answer.selectedOptions || []).join(', ');
+                        const selectedLetters = answer.selectedOptions || [];
+                        selectedAnswerText = selectedLetters.map((ansLetter: string) => {
+                            const opt = (question.options || []).find((o: any) => o.optionId === ansLetter || o.optionLabel === ansLetter);
+                            return opt?.optionText ? `${ansLetter} - ${opt.optionText.replace(/<[^>]*>?/gm, '')}` : ansLetter;
+                        }).join(', ');
+
                         const correctAns = [...question.correctAnswer].sort().join(",");
-                        const selectedAns = [...(answer.selectedOptions || [])].sort().join(",");
+                        const selectedAns = [...selectedLetters].sort().join(",");
                         isCorrect = correctAns === selectedAns && correctAns.length > 0;
                     }
                 }
@@ -1471,10 +1494,17 @@ class ResultService extends BaseService<IResult> {
 
                 if (res.options && Array.isArray(res.options)) {
                      const correctOptions = res.options.filter((opt: any) => opt.isCorrect);
-                     correctAnswerText = correctOptions.map((opt: any) => opt.text || opt.optionId).join(', ');
+                     correctAnswerText = correctOptions.map((opt: any) => {
+                         const txt = opt.optionText || opt.text;
+                         return txt ? `${opt.optionId} - ${txt.replace(/<[^>]*>?/gm, '')}` : opt.optionId;
+                     }).join(', ');
                      
                      const selectedOptions = Array.isArray(res.candidateAnswer) ? res.candidateAnswer : [res.candidateAnswer];
-                     selectedAnswerText = selectedOptions.join(', ');
+                     selectedAnswerText = selectedOptions.map((optId: any) => {
+                         const opt = res.options.find((o: any) => o.optionId === optId);
+                         const txt = opt?.optionText || opt?.text;
+                         return txt ? `${optId} - ${txt.replace(/<[^>]*>?/gm, '')}` : optId;
+                     }).join(', ');
                      
                      const correctAnsStr = correctOptions.map((opt: any) => String(opt.optionId)).sort().join(",");
                      const selectedAnsStr = selectedOptions.map(String).sort().join(",");

@@ -50,52 +50,47 @@ export function WelcomeBanner({ unreadCount = 0, pendingApprovals = 0 }: Welcome
   const profile = useUserStore((state) => state.profile);
 
   const role = user?.role || profile?.roleId || 'User';
-  const name = user?.name || 'Welcome';
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-  const gradient = ROLE_COLORS[role] || 'bg-gradient-to-br from-slate-600 to-slate-700';
-  const tagline = ROLE_TAGLINES[role] || 'Welcome to ExamGuard Pro.';
+  const displayRole = role.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  const name = user?.name || (role === 'PRIVATE_AUTHORITY' ? 'Private Authority' : displayRole);
+  
+  // Format current date
+  const now = new Date();
+  const formattedDate = now.toLocaleDateString('en-US', { 
+    weekday: 'long', 
+    month: 'long', 
+    day: 'numeric', 
+    year: 'numeric'
+  });
+  const formattedTime = now.toLocaleTimeString('en-US', { 
+    hour: 'numeric', 
+    minute: '2-digit' 
+  });
+  
+  // Try to get last login if available, otherwise just fallback
+  let lastLoginDisplay = '';
+  if (user?.lastLoginAt) {
+    const lastLogin = new Date(user.lastLoginAt);
+    lastLoginDisplay = `Last login: ${lastLogin.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}, ${lastLogin.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
+  } else {
+    lastLoginDisplay = `Last login: Just now`;
+  }
+  
 
   return (
-    <div className={`relative overflow-hidden rounded-2xl p-6 text-white shadow-lg ${gradient}`}>
-      {/* Decorative circles */}
-      <div className="absolute -top-10 -right-10 w-48 h-48 rounded-full bg-white/10 blur-2xl" />
-      <div className="absolute -bottom-8 -left-8 w-36 h-36 rounded-full bg-white/10 blur-xl" />
+    <div className="relative overflow-hidden rounded-2xl p-6 shadow-lg bg-[#2D3E2C]">
+      {/* Decorative circles - subtle */}
+      <div className="absolute -top-10 -right-10 w-48 h-48 rounded-full bg-white/5 blur-2xl" />
+      <div className="absolute -bottom-8 -left-8 w-36 h-36 rounded-full bg-white/5 blur-xl" />
 
-      <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="relative flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div className="space-y-1.5">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-white/70" />
-            <span className="text-sm font-medium text-white/80">{greeting}</span>
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight">{name}</h1>
-          <p className="text-sm text-white/75 max-w-md">{tagline}</p>
+          <h1 className="text-3xl font-bold tracking-tight text-[#E4FD97]">Welcome back, {name}!</h1>
+          <p className="text-sm font-medium text-[#E4FD97]/80">Role: {displayRole}</p>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          <Badge
-            variant="secondary"
-            className="bg-white/20 text-white border-white/30 hover:bg-white/30 backdrop-blur-sm gap-1 text-xs"
-          >
-            <Shield className="w-3 h-3" />
-            {role}
-          </Badge>
-          {unreadCount > 0 && (
-            <Badge
-              variant="secondary"
-              className="bg-amber-400/30 text-white border-amber-300/30 hover:bg-amber-400/40 backdrop-blur-sm text-xs"
-            >
-              {unreadCount} unread
-            </Badge>
-          )}
-          {pendingApprovals > 0 && (
-            <Badge
-              variant="secondary"
-              className="bg-rose-400/30 text-white border-rose-300/30 hover:bg-rose-400/40 backdrop-blur-sm text-xs"
-            >
-              {pendingApprovals} pending
-            </Badge>
-          )}
+        <div className="flex flex-col sm:items-end gap-1 text-sm text-[#E4FD97]/80">
+          <p>{formattedDate} at {formattedTime}</p>
+          <p>{lastLoginDisplay}</p>
         </div>
       </div>
     </div>

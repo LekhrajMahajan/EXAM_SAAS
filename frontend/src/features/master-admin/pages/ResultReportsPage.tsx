@@ -32,7 +32,7 @@ interface ResultReportRow {
   shift: string;
   examCenter: string;
   company: string;
-  branch: string;
+
   marksObtained: number;
   maximumMarks: number;
   percentage: number;

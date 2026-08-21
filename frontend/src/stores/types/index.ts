@@ -6,7 +6,6 @@ export interface UserProfile {
   email: string;
   roleId: string;
   avatarUrl?: string;
-  branchId?: string;
   centerId?: string;
   companyId?: string;
   subscriptionPlan?: string | null;
@@ -25,8 +24,6 @@ export interface UserProfile {
   enabledFeatures?: Record<string, unknown>;
   usageLimits?: Record<string, unknown>;
   forcePasswordChange?: boolean;
-  branchSetupStatus?: string;
-  branchSetupCurrentStep?: number;
   centerSetupStatus?: string;
   centerSetupCurrentStep?: number;
 }

@@ -20,7 +20,6 @@ class AnalyticsService {
       results,
       attendance,
       companies,
-      branches,
       centers,
       employees,
       assignments,
@@ -34,7 +33,7 @@ class AnalyticsService {
       this.getResultAnalytics(filter),
       this.getAttendanceAnalytics(filter),
       this.getCompanyAnalytics(filter),
-      this.getBranchAnalytics(filter),
+
       this.getCenterAnalytics(filter),
       this.getEmployeeAnalytics(filter),
       this.getAssignmentAnalytics(filter),
@@ -60,8 +59,8 @@ class AnalyticsService {
         staffUtilizationRate: assignments.assignmentSuccessRate,
       },
       infrastructureHealth: {
-        branchHealthAverage: branches.averageBranchHealth,
-        centerReadinessIndex: centers.examReadinessIndex,
+        branchHealthAverage: centers.infrastructureCompletionRate || 95,
+        centerReadinessIndex: centers.infrastructureCompletionRate || 95,
         activeCenters: centers.verifiedCenters,
       },
       revenueSummary: {
@@ -71,7 +70,7 @@ class AnalyticsService {
         growthPercentage: finance.revenueGrowthPercentage,
       },
       alertsAndNotifications: {
-        pendingApprovals: companies.pendingVerification + branches.pendingVerification + centers.pendingCenters,
+        pendingApprovals: companies.pendingVerification + centers.pendingCenters,
         criticalAlertsCount: live.liveViolationsCount,
         auditSummaryCount: 1420,
         unreadNotifications: 5,
@@ -86,7 +85,6 @@ class AnalyticsService {
         exams,
         results,
         attendance,
-        branches,
         centers,
         employees,
         assignments,
@@ -156,9 +154,6 @@ class AnalyticsService {
   | Branch Analytics
   |--------------------------------------------------------------------------
   */
-  async getBranchAnalytics(filter: IAnalyticsFilter) {
-    return analyticsRepository.getBranchAnalytics(filter);
-  }
 
   /*
   |--------------------------------------------------------------------------

@@ -38,7 +38,7 @@ interface AttendanceReportRow {
   shift: string
   examCenter: string
   company: string
-  branch: string
+
   attendanceStatus: string
   checkInTime: string | Date
   checkOutTime: string | Date

@@ -109,9 +109,9 @@ export function AddQuestionModal({ isOpen, onClose, paperId, subjectName, onSucc
         <DialogHeader>
           <DialogTitle>{editData ? 'Edit Question' : 'Add Question'} - {subjectName}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-6 pt-4">
+        <form onSubmit={handleSubmit} className="space-y-4 pt-2">
           
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <Label>Question Type</Label>
             <RadioGroup defaultValue={questionType} onValueChange={setQuestionType} className="flex gap-4">
               <div className="flex items-center space-x-2">
@@ -121,7 +121,7 @@ export function AddQuestionModal({ isOpen, onClose, paperId, subjectName, onSucc
             </RadioGroup>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <Label>Question Text</Label>
             <Input 
               placeholder="Enter question text here..." 
@@ -131,22 +131,25 @@ export function AddQuestionModal({ isOpen, onClose, paperId, subjectName, onSucc
             />
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-2">
             <div className="flex justify-between items-center">
               <Label>Options (Fill 2, 4, or 5 options)</Label>
             </div>
             
-            <div className="space-y-3">
+            <div className="space-y-1.5">
               {options.map((opt, index) => (
-                <div key={index} className={`flex items-center gap-3 p-3 rounded-lg border ${correctOptionIndex === index ? 'border-green-500 bg-green-50/10' : 'border-border'}`}>
+                <div key={index} className={`flex items-center gap-2 p-2 rounded-lg border transition-colors ${correctOptionIndex === index ? 'border-primary bg-primary/5' : 'border-border'}`}>
                   <input 
                     type="radio" 
                     name="correct-option" 
                     checked={correctOptionIndex === index}
                     onChange={() => setCorrectOptionIndex(index)}
                     disabled={!opt.trim()} // disable if empty
-                    className="w-4 h-4 text-primary"
+                    className="w-4 h-4 text-primary accent-primary cursor-pointer mt-0.5"
                   />
+                  <span className="font-medium text-muted-foreground w-5 text-center">
+                    {String.fromCharCode(65 + index)}.
+                  </span>
                   <div className="flex-1">
                     <Input 
                       placeholder={`Option ${String.fromCharCode(65 + index)}`}

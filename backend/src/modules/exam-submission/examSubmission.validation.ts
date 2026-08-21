@@ -32,8 +32,6 @@ export const startExamSchema = z.object({
 
     companyId: objectId,
 
-    branchId: objectId,
-
     examCenterId: objectId,
 
     examRoomId: objectId,
@@ -158,8 +156,6 @@ export const submissionQuerySchema = z.object({
 
     companyId: objectId.optional(),
 
-    branchId: objectId.optional(),
-
     examCenterId: objectId.optional(),
 
     submissionStatus: z.nativeEnum(SubmissionStatus).optional(),
@@ -176,9 +172,7 @@ export const dashboardSchema = z.object({
   query: z.object({
     examId: objectId.optional(),
 
-    companyId: objectId.optional(),
-
-    branchId: objectId.optional(),
+    companyId: objectId.optional()
   }),
 });
 

@@ -8,6 +8,7 @@ import { sendResponse } from "../../utils/response";
 import { HTTP_STATUS } from "../../constants/httpStatus";
 import { AttendanceStatus } from "./attendance.types";
 import staffAttendanceService from "./staffAttendance.service";
+import { CandidateLogin } from "../candidate-exam/candidateLogin.model";
 
 export const mockCheckIn = asyncHandler(
   async (req: Request, res: Response) => {
@@ -636,3 +637,24 @@ export const getEnterpriseAnalytics = asyncHandler(async (req: Request, res: Res
   const result = await staffAttendanceService.getAnalytics(req.query);
   return sendResponse(res, HTTP_STATUS.OK, { success: true, message: "Attendance analytics retrieved successfully.", data: result });
 });
+
+/*
+|--------------------------------------------------------------------------
+| Get Exam Logins
+|--------------------------------------------------------------------------
+*/
+
+export const getExamLogins = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { examId } = req.params;
+    const logins = await CandidateLogin.find({ examId })
+      .select("candidateId status loginAt logoutAt")
+      .lean();
+
+    return sendResponse(res, HTTP_STATUS.OK, {
+      success: true,
+      message: "Candidate logins fetched successfully.",
+      data: logins,
+    });
+  },
+);

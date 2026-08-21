@@ -82,6 +82,16 @@ const CompanySchema = new Schema<ICompany>(
       default: null,
     },
 
+    aadharCardDocument: {
+      type: String,
+      default: null,
+    },
+
+    msmeCertificateDocument: {
+      type: String,
+      default: null,
+    },
+
     paymentStatus: {
       type: String,
       enum: ["PENDING", "SUCCESS", "FAILED"],
@@ -149,10 +159,6 @@ const CompanySchema = new Schema<ICompany>(
 
     subscriptionEndDate: Date,
 
-    maxBranches: {
-      type: Number,
-      default: 1,
-    },
 
     maxCenters: {
       type: Number,

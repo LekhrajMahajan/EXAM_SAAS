@@ -3,9 +3,9 @@ import { Outlet } from 'react-router-dom';
 
 export const ExamManagerLayout = () => {
   return (
-    <div className="min-h-screen bg-background text-foreground flex">
+    <div className="h-full bg-background text-foreground flex flex-col">
       {/* ExamManager sidebar will go here */}
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1">
         <Outlet />
       </main>
     </div>

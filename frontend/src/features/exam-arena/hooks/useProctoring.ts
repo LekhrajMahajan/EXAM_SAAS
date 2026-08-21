@@ -2,34 +2,56 @@ import { useEffect, useRef, useState } from 'react';
 import * as faceapi from '@vladmandic/face-api';
 
 export interface ProctoringState {
-  warnings: number;
+  fdWarnings: number;
+  mfWarnings: number;
+  maxWarnings: number;
   reason: string | null;
   isAutoSubmitted: boolean;
   statusMessage: string;
   isWarningActive: boolean;
+  activeWarningType: 'FACE_DETECTION' | 'MULTIPLE_FACES' | null;
 }
 
-export function useProctoring(baselineDescriptor: Float32Array | null, onAutoSubmit: (reason?: string) => void) {
+export interface SecuritySettings {
+  faceDetectionEnabled?: boolean;
+  faceDetectionLimit?: number;
+  multipleFacesEnabled?: boolean;
+  multipleFacesLimit?: number;
+  proctoringWarningEnabled?: boolean;
+  proctoringWarningLimit?: number;
+  tabSwitchingEnabled?: boolean;
+}
+
+export function useProctoring(
+  baselineDescriptor: Float32Array | null,
+  settings: SecuritySettings,
+  onAutoSubmit: (reason?: string) => void
+) {
+  const maxWarnings = settings.proctoringWarningEnabled ? (settings.proctoringWarningLimit ?? 3) : Infinity;
+
   const [state, setState] = useState<ProctoringState>({
-    warnings: 0,
+    fdWarnings: 0,
+    mfWarnings: 0,
+    maxWarnings,
     reason: null,
     isAutoSubmitted: false,
     statusMessage: 'Initializing camera...',
-    isWarningActive: false
+    isWarningActive: false,
+    activeWarningType: null
   });
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   
-  const MAX_WARNINGS = 4;
-  const noFaceTimer = useRef(0);
-  const multipleFaceTimer = useRef(0);
-  const wrongFaceTimer = useRef(0);
+  const noFaceTimer = useRef<number>(0);
+  const multipleFaceTimer = useRef<number>(0);
+  const wrongFaceTimer = useRef<number>(0);
+  const lastFrameTime = useRef<number>(0);
 
   // 1. Tab Switching Detection
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.hidden && !state.isAutoSubmitted) {
+    const triggerTabSwitchWarning = () => {
+      if (settings.tabSwitchingEnabled && !state.isAutoSubmitted) {
         const reason = 'Exam auto-submitted due to tab switching or minimizing window.';
         setState(prev => ({
           ...prev,
@@ -40,12 +62,22 @@ export function useProctoring(baselineDescriptor: Float32Array | null, onAutoSub
       }
     };
 
+    const handleVisibilityChange = () => {
+      if (document.hidden) triggerTabSwitchWarning();
+    };
+
+    const handleBlur = () => {
+      triggerTabSwitchWarning();
+    };
+
+    window.addEventListener('blur', handleBlur);
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => {
+      window.removeEventListener('blur', handleBlur);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.isAutoSubmitted]);
+  }, [state.isAutoSubmitted, settings.tabSwitchingEnabled]);
 
   // 2. Face Detection Logic
   useEffect(() => {
@@ -53,17 +85,6 @@ export function useProctoring(baselineDescriptor: Float32Array | null, onAutoSub
     
     const initializeFaceApi = async () => {
       try {
-        setState(prev => ({ ...prev, statusMessage: 'Loading face detection models...' }));
-        // Load models from CDN to avoid downloading locally
-        const MODEL_URL = 'https://cdn.jsdelivr.net/gh/vladmandic/face-api/model/';
-        await Promise.all([
-          faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-          faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-          faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
-        ]);
-
-        if (!isMounted) return;
-
         setState(prev => ({ ...prev, statusMessage: 'Starting camera...' }));
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
         streamRef.current = stream;
@@ -73,6 +94,19 @@ export function useProctoring(baselineDescriptor: Float32Array | null, onAutoSub
           // Must play video explicitly in some browsers
           await videoRef.current.play().catch(e => console.warn("Video play error", e));
         }
+
+        if (!isMounted) return;
+
+        setState(prev => ({ ...prev, statusMessage: 'Loading face detection models...' }));
+        // Load models from CDN to avoid downloading locally
+        const MODEL_URL = 'https://cdn.jsdelivr.net/gh/vladmandic/face-api/model/';
+        await Promise.all([
+          faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+          faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+          faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+        ]);
+
+        if (!isMounted) return;
 
         setState(prev => ({ ...prev, statusMessage: 'Proctoring Active' }));
         startDetectionLoop();
@@ -91,73 +125,118 @@ export function useProctoring(baselineDescriptor: Float32Array | null, onAutoSub
         const video = videoRef.current;
         if (video.paused || video.ended) return;
 
+        const fdEnabled = settings.faceDetectionEnabled ?? false;
+        const fdLimit = settings.faceDetectionLimit || 15;
+        const mfEnabled = settings.multipleFacesEnabled ?? false;
+        const mfLimit = settings.multipleFacesLimit || 15;
+
+        if (!fdEnabled && !mfEnabled) return;
+
         try {
-          // Lowered scoreThreshold slightly to catch faces in the background better
-          const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 416, scoreThreshold: 0.25 }))
+          // Using SsdMobilenetv1 for much higher accuracy in detecting multiple faces and background faces
+          const detections = await faceapi.detectAllFaces(video, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.3 }))
             .withFaceLandmarks()
             .withFaceDescriptors();
 
+          const now = Date.now();
+          if (lastFrameTime.current === 0) lastFrameTime.current = now;
+          const delta = Math.min(now - lastFrameTime.current, 2000); // cap at 2s max delta if tab was asleep
+          lastFrameTime.current = now;
+
           if (detections.length === 0) {
-            noFaceTimer.current += 3;
-            multipleFaceTimer.current = 0;
-            wrongFaceTimer.current = 0;
-            if (noFaceTimer.current >= 9) {
-              handleWarning('No face detected. Please face the camera properly.', 'Exam auto-submitted due to no face detected for an extended period.');
-              noFaceTimer.current = 0;
+            multipleFaceTimer.current = Math.max(0, multipleFaceTimer.current - delta);
+            wrongFaceTimer.current = Math.max(0, wrongFaceTimer.current - delta);
+            if (fdEnabled) {
+              noFaceTimer.current += delta;
+              if (noFaceTimer.current >= fdLimit * 1000) {
+                handleWarning('No face detected. Please face the camera properly.', 'Exam auto-submitted due to no face detected for an extended period.', 'FACE_DETECTION');
+                noFaceTimer.current = 0;
+              }
             }
           } else if (detections.length > 1) {
-            multipleFaceTimer.current += 3;
-            noFaceTimer.current = 0;
-            wrongFaceTimer.current = 0;
-            if (multipleFaceTimer.current >= 6) {
-              handleWarning('Multiple faces detected. Ensure nobody else is in the frame.', 'Exam auto-submitted due to multiple faces detected.');
-              multipleFaceTimer.current = 0;
+            noFaceTimer.current = Math.max(0, noFaceTimer.current - delta);
+            wrongFaceTimer.current = Math.max(0, wrongFaceTimer.current - delta);
+            if (mfEnabled) {
+              multipleFaceTimer.current += delta;
+              if (multipleFaceTimer.current >= mfLimit * 1000) {
+                handleWarning('Multiple faces detected. Ensure nobody else is in the frame.', 'Exam auto-submitted due to multiple faces detected.', 'MULTIPLE_FACES');
+                multipleFaceTimer.current = 0;
+              }
             }
           } else {
-            noFaceTimer.current = 0;
-            multipleFaceTimer.current = 0;
-            const distance = faceapi.euclideanDistance(detections[0].descriptor, baselineDescriptor);
-            if (distance > 0.55) {
-              wrongFaceTimer.current += 3;
-              if (wrongFaceTimer.current >= 9) {
-                handleWarning('Unrecognized face detected. Please verify your identity.', 'Exam auto-submitted due to unrecognized face.');
-                wrongFaceTimer.current = 0;
+            noFaceTimer.current = Math.max(0, noFaceTimer.current - delta);
+            multipleFaceTimer.current = Math.max(0, multipleFaceTimer.current - delta);
+            if (mfEnabled) {
+              const distance = faceapi.euclideanDistance(detections[0].descriptor, baselineDescriptor);
+              // Set threshold strictly at 0.45 so even similar looking different faces are caught
+              if (distance > 0.45) {
+                wrongFaceTimer.current += delta;
+                if (wrongFaceTimer.current >= mfLimit * 1000) {
+                  handleWarning('Unrecognized face warning', 'Exam auto-submitted due to unrecognized face.', 'FACE_DETECTION');
+                  wrongFaceTimer.current = 0;
+                }
+              } else {
+                wrongFaceTimer.current = Math.max(0, wrongFaceTimer.current - delta);
+                // Face matches, clear any active warnings
+                setState(prev => {
+                  if (prev.isWarningActive || prev.statusMessage !== 'Proctoring Active') {
+                    return { ...prev, isWarningActive: false, activeWarningType: null, statusMessage: 'Proctoring Active' };
+                  }
+                  return prev;
+                });
               }
             } else {
-              wrongFaceTimer.current = 0;
+              // Face detected, and mfEnabled is false (no mismatch check), clear warnings
+              setState(prev => {
+                if (prev.isWarningActive || prev.statusMessage !== 'Proctoring Active') {
+                  return { ...prev, isWarningActive: false, activeWarningType: null, statusMessage: 'Proctoring Active' };
+                }
+                return prev;
+              });
             }
           }
         } catch (error) {
           console.error("Detection error", error);
         }
-      }, 3000); // Check every 3 seconds
+      }, 1000); // Check every 1 second for higher accuracy
     };
 
-    const handleWarning = (msg: string, autoSubmitReason: string) => {
+    const handleWarning = (msg: string, autoSubmitReason: string, type: 'FACE_DETECTION' | 'MULTIPLE_FACES') => {
       setState(prev => {
-        const newWarnings = prev.warnings + 1;
-        if (newWarnings >= MAX_WARNINGS) {
+        const newFdWarnings = type === 'FACE_DETECTION' ? prev.fdWarnings + 1 : prev.fdWarnings;
+        const newMfWarnings = type === 'MULTIPLE_FACES' ? prev.mfWarnings + 1 : prev.mfWarnings;
+        
+        const currentWarnings = type === 'FACE_DETECTION' ? newFdWarnings : newMfWarnings;
+        const maxWarns = settings.proctoringWarningEnabled ? (settings.proctoringWarningLimit ?? 3) : Infinity;
+        
+        // Auto-submit only when currentWarnings strictly exceeds maxWarnings
+        if (settings.proctoringWarningEnabled && currentWarnings > maxWarns) {
           if (!prev.isAutoSubmitted) {
             setTimeout(() => onAutoSubmit(autoSubmitReason), 0);
             return {
               ...prev,
-              warnings: newWarnings,
+              fdWarnings: newFdWarnings,
+              mfWarnings: newMfWarnings,
+              maxWarnings: maxWarns,
               isAutoSubmitted: true,
               reason: autoSubmitReason,
-              isWarningActive: true
+              isWarningActive: true,
+              activeWarningType: type
             };
           }
         }
         
-        setTimeout(() => {
-          setState(s => ({ ...s, isWarningActive: false }));
-        }, 3000);
+        // Removed the 3-second auto-clear setTimeout so the warning stays on screen
+        // until the candidate corrects the issue and the face is detected normally again.
 
         return {
           ...prev,
-          warnings: newWarnings,
+          fdWarnings: newFdWarnings,
+          mfWarnings: newMfWarnings,
+          maxWarnings: maxWarns,
           statusMessage: msg,
-          isWarningActive: true
+          isWarningActive: true,
+          activeWarningType: type
         };
       });
     };
@@ -174,7 +253,7 @@ export function useProctoring(baselineDescriptor: Float32Array | null, onAutoSub
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [baselineDescriptor, state.isAutoSubmitted]);
+  }, [baselineDescriptor, state.isAutoSubmitted, settings]);
 
   return { state, videoRef };
 }

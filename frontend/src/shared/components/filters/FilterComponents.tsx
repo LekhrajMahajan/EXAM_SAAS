@@ -47,7 +47,7 @@ export function QuickFilters({ filters, activeFilter, onSelect }: { filters: str
         <button
           key={f}
           onClick={() => onSelect(f)}
-          className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${activeFilter === f ? 'bg-[#2D3E2C] text-white border-[#2D3E2C]' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'}`}
+          className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${activeFilter === f ? 'bg-[#2D3E2C] dark:bg-[#E4FD97] text-white dark:text-[#2D3E2C] border-[#2D3E2C] dark:border-[#E4FD97]' : 'bg-white dark:bg-slate-900/50 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'}`}
         >
           {f}
         </button>

@@ -33,7 +33,6 @@ export interface IIpRule {
   ruleType: IpRuleType;
   category: IpRuleCategory;
   companyId?: string | Record<string, unknown>; // could be object or string based on populate
-  branchId?: string | Record<string, unknown>;
   examCenterId?: string | Record<string, unknown>;
   status: IpRuleStatus;
   riskLevel: IpRiskLevel;
@@ -227,7 +226,6 @@ export interface ISecurityEvent {
   userId?: { _id: string; firstName: string; lastName: string; email: string; role?: string; };
   employeeId?: string;
   companyId?: { _id: string; name: string; };
-  branchId?: string;
   
   ipAddress?: string;
   device?: string;

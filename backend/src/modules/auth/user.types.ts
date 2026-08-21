@@ -3,8 +3,6 @@ import { UserRole } from "../../constants/roles";
 
 export interface IUser {
   companyId?: Types.ObjectId | null;
-
-  branchId?: Types.ObjectId | null;
   centerId?: Types.ObjectId | null;
 
   firstName: string;

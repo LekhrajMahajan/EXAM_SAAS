@@ -3,6 +3,7 @@ import { BaseRepository } from "../../common/base.repository";
 import Admin from "../admin/admin.model";
 import Manager from "../manager/manager.model";
 import Candidate from "../candidate/candidate.model";
+import Employee from "../employee/employee.model";
 import { IUpdateProfile } from "./user.types";
 
 class UserRepository extends BaseRepository<any> {
@@ -29,7 +30,16 @@ class UserRepository extends BaseRepository<any> {
 
   async updateProfile(userId: string, payload: Partial<IUpdateProfile>) {
     const Model = await this.getModelForUser(userId);
-    return Model.findByIdAndUpdate(userId, payload, { new: true, runValidators: true }).select("-password");
+    const updatedUser = await Model.findByIdAndUpdate(userId, payload, { new: true, runValidators: true }).select("-password");
+    
+    // Also update Employee collection if it exists (e.g. for Exam Managers)
+    try {
+      await Employee.findOneAndUpdate({ userId }, payload, { new: true, runValidators: true });
+    } catch (err) {
+      // Ignore if no employee found or error occurs
+    }
+    
+    return updatedUser;
   }
 
   async changePassword(userId: string, newPassword: string) {

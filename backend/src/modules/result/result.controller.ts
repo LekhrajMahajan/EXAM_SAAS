@@ -274,18 +274,38 @@ export const getResultById = asyncHandler(
         const id = req.params.id;
         const result = await Result.findById(id)
             .populate('examId', 'examTitle examCode')
-            .populate('candidateId', 'firstName lastName enrollmentNo applicationNumber photo')
             .lean();
 
         if (!result) {
             return res.status(httpStatus.NOT_FOUND).json({ success: false, message: "Result not found" });
         }
 
-        const ImportCandidate = mongoose.models.importcandidate || mongoose.models.ImportCandidate;
-        let cName = `${(result.candidateId as any)?.firstName || ''} ${(result.candidateId as any)?.lastName || ''}`.trim();
-        let cAppNo = (result.candidateId as any)?.applicationNumber || (result.candidateId as any)?.enrollmentNo;
-        let candidateFound = !!(result.candidateId as any)?._id;
-        let cPhoto = (result.candidateId as any)?.photo;
+        const ImportCandidate = mongoose.models.ImportCandidate || mongoose.model("ImportCandidate", new mongoose.Schema({}, { strict: false, collection: 'importcandidate' }));
+        const Candidate = mongoose.models.Candidate || mongoose.model("Candidate", new mongoose.Schema({}, { strict: false, collection: 'candidates' }));
+        
+        let cName = '';
+        let cAppNo = '';
+        let cPhoto = null;
+        let candidateFound = false;
+
+        const candId = (result.candidateId as any)?._id || result.candidateId;
+        let cand: any = null;
+        if (candId) {
+            cand = await Candidate.findById(candId).lean();
+            if (!cand) {
+                cand = await ImportCandidate.findById(candId).lean();
+            }
+        }
+
+        if (cand) {
+            if (cand.firstName || cand.candidateFullName || cand.fullName || cand.name) {
+                cName = cand.firstName ? `${cand.firstName} ${cand.lastName || ''}`.trim() : '';
+                cName = cName || cand.candidateFullName || cand.fullName || cand.name || '';
+                cAppNo = cand.applicationNumber || cand.enrollmentNo || cand.applicationNo || '';
+                cPhoto = cand.photo || cand.candidatePhoto || null;
+                if (cName) candidateFound = true;
+            }
+        }
 
         let answers: any[] = [];
         const CandidateExamAnswer = mongoose.models.CandidateExamAnswer || mongoose.model("CandidateExamAnswer", new mongoose.Schema({}, { strict: false, collection: 'candidateexamanswer' }));
@@ -295,27 +315,17 @@ export const getResultById = asyncHandler(
             const ansName = (candAns as any).name || (candAns as any).candidateName || '';
             const ansAppNo = (candAns as any).applicationNo || '';
             
-            if (ansName && ansName !== 'Unknown Candidate') {
+            if (!candidateFound && ansName && ansName !== 'Unknown Candidate') {
                 cName = ansName;
                 candidateFound = true;
             }
-            if (ansAppNo && ansAppNo !== 'N/A') {
+            if (!cAppNo && ansAppNo && ansAppNo !== 'N/A') {
                 cAppNo = ansAppNo;
                 candidateFound = true;
             }
         }
 
-        const candId = (result.candidateId as any)?._id || result.candidateId || candAns?.candidateId;
-
-        if (!candidateFound && ImportCandidate && candId) {
-            const importCand = await ImportCandidate.findById(candId).lean();
-            if (importCand) {
-                cName = importCand.candidateFullName || importCand.fullName || '';
-                cAppNo = importCand.applicationNo || 'N/A';
-                cPhoto = importCand.photo || null;
-                candidateFound = true;
-            }
-        }
+        // Fallback removed, already checked in the new manual flow above
 
         if (candAns) {
             if ((candAns as any).results && Array.isArray((candAns as any).results)) {
@@ -469,7 +479,7 @@ export const getResults = asyncHandler(
 
         const total = await Result.countDocuments(filter);
         const results = await Result.find(filter)
-            .populate('examId', 'examTitle examCode')
+            .populate('examId', 'examTitle _id status examDate startTime endTime isResultGenerated isResultPublished')
             .skip(skip)
             .limit(limit)
             .lean();
@@ -481,12 +491,23 @@ export const getResults = asyncHandler(
             let cAppNo = '';
             let candidateFound = false;
 
-            if (r.candidateId && typeof r.candidateId === 'object' && !mongoose.Types.ObjectId.isValid(r.candidateId as any)) {
-                if ('firstName' in r.candidateId || 'candidateFullName' in r.candidateId || 'fullName' in r.candidateId) {
-                    const cand = r.candidateId as any;
-                    cName = cand.firstName ? `${cand.firstName} ${cand.lastName || ''}`.trim() : cName;
-                    cName = cName || cand.candidateFullName || cand.fullName || '';
-                    cAppNo = cand.applicationNumber || cand.enrollmentNo || cand.applicationNo || cAppNo;
+            const ImportCandidate = mongoose.models.ImportCandidate || mongoose.model("ImportCandidate", new mongoose.Schema({}, { strict: false, collection: 'importcandidate' }));
+            const Candidate = mongoose.models.Candidate || mongoose.model("Candidate", new mongoose.Schema({}, { strict: false, collection: 'candidates' }));
+            
+            const candId = (r.candidateId as any)?._id || r.candidateId;
+            let cand: any = null;
+            if (candId) {
+                cand = await Candidate.findById(candId).lean();
+                if (!cand) {
+                    cand = await ImportCandidate.findById(candId).lean();
+                }
+            }
+
+            if (cand) {
+                if (cand.firstName || cand.candidateFullName || cand.fullName || cand.name) {
+                    cName = cand.firstName ? `${cand.firstName} ${cand.lastName || ''}`.trim() : '';
+                    cName = cName || cand.candidateFullName || cand.fullName || cand.name || '';
+                    cAppNo = cand.applicationNumber || cand.enrollmentNo || cand.applicationNo || '';
                     if (cName) candidateFound = true;
                 }
             }
@@ -511,11 +532,8 @@ export const getResults = asyncHandler(
                 }
             }
 
-            const ImportCandidate = mongoose.models.ImportCandidate || mongoose.model("ImportCandidate", new mongoose.Schema({}, { strict: false, collection: 'importcandidate' }));
-            const candId = (r.candidateId as any)?._id || r.candidateId || candAns?.candidateId;
-            if (!candidateFound && ImportCandidate && candId) {
+            if (!candidateFound && candId) {
                 const importCand = await ImportCandidate.findById(candId).lean();
-                console.log("DEBUG - candId:", candId, "importCand:", !!importCand, importCand ? importCand.candidateFullName : null);
                 if (importCand) {
                     cName = (importCand as any).candidateFullName || (importCand as any).fullName || '';
                     cAppNo = (importCand as any).applicationNo || 'N/A';
@@ -534,6 +552,7 @@ export const getResults = asyncHandler(
                 applicationNumber: cAppNo,
                 candidateName: cName,
                 exam: (r.examId as any)?.examTitle || 'Unknown Exam',
+                examObj: r.examId,
                 subject: 'General', 
                 shift: 'Morning',
                 center: 'Main Center',
@@ -718,6 +737,132 @@ export const passPercentage = asyncHandler(
 
         });
 
+    }
+);
+
+/*
+|--------------------------------------------------------------------------
+| Export Exam Results
+|--------------------------------------------------------------------------
+*/
+
+export const exportExamResults = asyncHandler(
+    async (req: Request, res: Response) => {
+        const examId = req.params.examId as string;
+        
+        const results = await Result.find({ examId })
+            .populate('examId', 'examTitle examCode')
+            .lean();
+
+        const ImportCandidate = mongoose.models.ImportCandidate || mongoose.model("ImportCandidate", new mongoose.Schema({}, { strict: false, collection: 'importcandidate' }));
+        const Candidate = mongoose.models.Candidate || mongoose.model("Candidate", new mongoose.Schema({}, { strict: false, collection: 'candidates' }));
+        const CandidateExamAnswer = mongoose.models.CandidateExamAnswer || mongoose.model("CandidateExamAnswer", new mongoose.Schema({}, { strict: false, collection: 'candidateexamanswer' }));
+
+        const data = await Promise.all(results.map(async (r) => {
+            let cName = '';
+            let cAppNo = '';
+            let candidateFound = false;
+
+            const candId = (r.candidateId as any)?._id || r.candidateId;
+            let cand: any = null;
+            if (candId) {
+                cand = await Candidate.findById(candId).lean();
+                if (!cand) {
+                    cand = await ImportCandidate.findById(candId).lean();
+                }
+            }
+
+            if (cand) {
+                if (cand.firstName || cand.candidateFullName || cand.fullName || cand.name) {
+                    cName = cand.firstName ? `${cand.firstName} ${cand.lastName || ''}`.trim() : '';
+                    cName = cName || cand.candidateFullName || cand.fullName || cand.name || '';
+                    cAppNo = cand.applicationNumber || cand.enrollmentNo || cand.applicationNo || '';
+                    if (cName) candidateFound = true;
+                }
+            }
+
+            let candAns: any = null;
+            const subId = (r.submissionId as any)?._id || r.submissionId;
+            if (subId) {
+                candAns = await CandidateExamAnswer.findOne({ $or: [{ _id: subId }, { submissionId: subId }, { _id: String(subId) }, { submissionId: String(subId) }] }).lean();
+            }
+
+            if (candAns) {
+                const ansName = (candAns as any).name || (candAns as any).candidateName || '';
+                const ansAppNo = (candAns as any).applicationNo || '';
+                
+                if (!candidateFound && ansName && ansName !== 'Unknown Candidate') {
+                    cName = ansName;
+                    candidateFound = true;
+                }
+                if (!cAppNo && ansAppNo && ansAppNo !== 'N/A') {
+                    cAppNo = ansAppNo;
+                    candidateFound = true;
+                }
+            }
+
+            if (!candidateFound && candId) {
+                const importCand = await ImportCandidate.findById(candId).lean();
+                if (importCand) {
+                    cName = (importCand as any).candidateFullName || (importCand as any).fullName || '';
+                    cAppNo = (importCand as any).applicationNo || 'N/A';
+                    candidateFound = true;
+                }
+            }
+
+            if (!cName) cName = 'Unknown Candidate';
+            if (!cAppNo) cAppNo = 'N/A';
+            
+            let answers: any[] = [];
+            if (candAns && (candAns as any).results && Array.isArray((candAns as any).results)) {
+                answers = (candAns as any).results.map((res: any) => {
+                    let isCorrect = false;
+                    let selected = Array.isArray(res.candidateAnswer) ? res.candidateAnswer.map(String).join(", ") : String(res.candidateAnswer || "");
+                    let correct = Array.isArray(res.correctAnswer) ? res.correctAnswer.map(String).join(", ") : String(res.correctAnswer || "");
+                    
+                    if (selected && correct && correct.includes(selected)) {
+                        isCorrect = true;
+                    }
+                    if (selected === correct) isCorrect = true;
+
+                    return {
+                        questionId: res.questionId,
+                        questionText: res.questionText || 'Question',
+                        isAnswered: res.status !== 'NOT_VISITED' && res.candidateAnswer !== null && res.candidateAnswer !== undefined,
+                        selectedAnswer: selected,
+                        correctAnswer: correct,
+                        isCorrect: isCorrect,
+                        marks: res.marks || 1,
+                        negativeMarks: res.negativeMarks || 0
+                    };
+                });
+            }
+
+            console.log("EXPORT DEBUG: candidateName:", cName, "subId:", subId, "candAns found:", candAns != null, "answers length:", answers.length);
+
+            return {
+                id: r._id,
+                applicationNumber: cAppNo,
+                candidateName: cName,
+                exam: (r.examId as any)?.examTitle || 'Unknown Exam',
+                subject: 'General', 
+                shift: 'Morning',
+                center: 'Main Center',
+                marksObtained: r.marksObtained,
+                totalMarks: r.totalMarks,
+                percentage: r.percentage,
+                grade: r.percentage >= 90 ? 'A+' : r.percentage >= 80 ? 'A' : r.percentage >= 70 ? 'B' : r.percentage >= 60 ? 'C' : 'D',
+                status: r.resultStatus === 'EVALUATED' ? 'Generated' : r.resultStatus,
+                publishStatus: r.resultStatus === 'PUBLISHED' ? 'Published' : 'Draft',
+                answers: answers
+            };
+        }));
+
+        sendResponse(res, httpStatus.OK, {
+            success: true,
+            message: "Exam export data fetched successfully",
+            data,
+        });
     }
 );
 

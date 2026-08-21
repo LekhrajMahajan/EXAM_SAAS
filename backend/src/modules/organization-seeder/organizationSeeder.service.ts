@@ -86,7 +86,7 @@ export class OrganizationSeederService {
           status: forceReseed ? "RESEEDED" : "COMPLETED",
           planCode,
           createdRoles: [
-            "COMPANY_ADMIN", "ADMIN", "BRANCH_MANAGER", "CENTER_MANAGER",
+            "COMPANY_ADMIN", "ADMIN", "CENTER_MANAGER",
             "EXAM_MANAGER", "PAPER_SETTER", "QUESTION_SETTER", "BIOMETRIC_VERIFIER",
             "ENTRY_CHECKER", "OBSERVER", "GOVT_AUTHORITY", "TECHNICAL_MANAGER",
             "INVIGILATOR", "AI_PROCTOR", "COMMAND_CENTER", "CANDIDATE"
@@ -443,7 +443,7 @@ export class OrganizationSeederService {
     const roleDefinitions = [
       { code: "COMPANY_ADMIN", name: "COMPANY_ADMIN", displayName: "Company Admin", level: 0, desc: "Root tenant administrator with full permissions", match: ["*"] },
       { code: "ADMIN", name: "ADMIN", displayName: "Admin", level: 1, desc: "Assistant enterprise administrative controller", match: ["branches.", "centers.", "employees.", "candidates.", "exams.", "reports.", "settings.view"] },
-      { code: "BRANCH_MANAGER", name: "BRANCH_MANAGER", displayName: "Branch Manager", level: 2, desc: "Manages operational branches, exam centers, and regional candidates", match: ["branches.", "centers.", "candidates.", "exams.view", "reports.view"] },
+
       { code: "CENTER_MANAGER", name: "CENTER_MANAGER", displayName: "Center Manager", level: 3, desc: "Supervises testing venue readiness, rooms, and attendance check-ins", match: ["centers.", "attendance.", "rooms.", "seats.", "exams.view"] },
       { code: "EXAM_MANAGER", name: "EXAM_MANAGER", displayName: "Exam Manager", level: 4, desc: "Schedules examinations, shifts, and monitors test execution", match: ["exams.", "shifts.", "paper.view", "subjects.view", "reports.view"] },
       { code: "PAPER_SETTER", name: "PAPER_SETTER", displayName: "Paper Setter", level: 5, desc: "Creates and approves examination test papers and section rules", match: ["paper.", "question_bank.", "subjects.", "topics."] },
@@ -537,7 +537,7 @@ export class OrganizationSeederService {
     const baseWidgets: DashboardWidgetConfig[] = [
       { widgetId: "w-01", title: "Quick Stats Summary", category: "METRIC", roleRequired: ["COMPANY_ADMIN", "ADMIN", "EXAM_MANAGER"], planRequired: "STARTER", isEnabled: true, layout: { x: 0, y: 0, w: 6, h: 4 } },
       { widgetId: "w-02", title: "Upcoming Exam Shifts", category: "SCHEDULE", roleRequired: ["COMPANY_ADMIN", "ADMIN", "EXAM_MANAGER", "CENTER_MANAGER"], planRequired: "STARTER", isEnabled: true, layout: { x: 6, y: 0, w: 6, h: 4 } },
-      { widgetId: "w-03", title: "Recent Candidate Registrations", category: "CANDIDATES", roleRequired: ["COMPANY_ADMIN", "ADMIN", "BRANCH_MANAGER"], planRequired: "STARTER", isEnabled: true, layout: { x: 0, y: 4, w: 12, h: 6 } },
+      { widgetId: "w-03", title: "Recent Candidate Registrations", category: "CANDIDATES", roleRequired: ["COMPANY_ADMIN", "ADMIN", "CENTER_MANAGER"], planRequired: "STARTER", isEnabled: true, layout: { x: 0, y: 4, w: 12, h: 6 } },
     ];
 
     if (planCode === "PROFESSIONAL" || planCode === "ENTERPRISE") {

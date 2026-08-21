@@ -16,12 +16,6 @@ const StaffAssignmentSchema = new Schema<IStaffAssignment>(
       required: true,
       index: true,
     },
-    branchId: {
-      type: Schema.Types.ObjectId,
-      ref: "Branch",
-      default: null,
-      index: true,
-    },
     centerId: {
       type: Schema.Types.ObjectId,
       ref: "Center",

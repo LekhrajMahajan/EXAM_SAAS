@@ -1,16 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/features/auth/hooks';
 import { Card, CardContent } from '@/shared/components/ui/card';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { Label } from '@/shared/components/ui/label';
-import { Map, MapPin, Navigation } from 'lucide-react';
+import { Map, MapPin, Navigation, ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useCenterLocationStore } from '../store/useCenterLocationStore';
 
 export const CenterLocationPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const isReadOnly = Boolean(id) && user?.role !== 'CENTER_MANAGER';
 
@@ -85,14 +86,24 @@ export const CenterLocationPage: React.FC = () => {
 
   return (
     <div className="p-8 max-w-7xl mx-auto">
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="p-2 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-            <Map className="w-6 h-6 text-blue-400" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-slate-200">Google Maps Integration</h1>
-            <p className="text-slate-400">Pinpoint your center&apos;s exact location to help candidates navigate easily.</p>
+      <div className="flex items-stretch gap-3 mb-8">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => navigate(-1)}
+          className="h-auto px-4 bg-card hover:bg-muted border border-border shadow-xl rounded-xl shrink-0"
+        >
+          <ArrowLeft className="w-5 h-5 text-muted-foreground" />
+        </Button>
+        <div className="flex-1">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-3 bg-[#E4FD97] rounded-xl text-[#2D3E2C] mt-1 shrink-0">
+              <Map className="w-8 h-8" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">Google Maps Integration</h1>
+              <p className="text-muted-foreground">Pinpoint your center&apos;s exact location to help candidates navigate easily.</p>
+            </div>
           </div>
         </div>
       </div>
@@ -100,34 +111,34 @@ export const CenterLocationPage: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Left Column: Form */}
         <div className="lg:col-span-5 space-y-6">
-          <Card className="bg-slate-900/80 border-slate-800 backdrop-blur-md shadow-xl">
-            <div className="p-4 border-b border-slate-800 flex items-center gap-2">
-              <MapPin className="w-5 h-5 text-slate-400" />
-              <h2 className="font-semibold text-slate-200 text-lg">Coordinates</h2>
+          <Card className="bg-card border-border backdrop-blur-md shadow-xl text-foreground">
+            <div className="p-4 border-b border-border bg-muted/50 flex items-center gap-2">
+              <MapPin className="w-5 h-5 text-primary" />
+              <h2 className="font-semibold text-foreground text-lg">Coordinates</h2>
             </div>
             <CardContent className="p-6 space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="googleMapUrl" className="text-slate-300">Google Maps Embed URL</Label>
+                <Label htmlFor="googleMapUrl" className="text-foreground">Google Maps Embed URL</Label>
                 <Input
                   id="googleMapUrl"
                   placeholder="Paste iframe code or embed URL here"
-                  className="bg-slate-950 border-slate-800 text-slate-200"
+                  className="bg-background border-border text-foreground"
                   value={googleMapUrl}
                   onChange={(e) => extractSrcFromIframe(e.target.value)}
                 />
-                <p className="text-xs text-slate-500 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   Go to Google Maps &gt; Share &gt; Embed a map &gt; Copy HTML
                 </p>
               </div>
 
               <div className="space-y-4 pt-2">
                 <div className="space-y-2">
-                  <Label htmlFor="latitude" className="text-slate-300">Latitude</Label>
+                  <Label htmlFor="latitude" className="text-foreground">Latitude</Label>
                   <Input
                     id="latitude"
                     type="number"
                     placeholder="e.g. 23.215665"
-                    className="bg-slate-950 border-slate-800 text-slate-200"
+                    className="bg-background border-border text-foreground"
                     value={latitude}
                     onChange={(e) => setLatitude(e.target.value)}
                     disabled={isReadOnly}
@@ -135,12 +146,12 @@ export const CenterLocationPage: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="longitude" className="text-slate-300">Longitude</Label>
+                  <Label htmlFor="longitude" className="text-foreground">Longitude</Label>
                   <Input
                     id="longitude"
                     type="number"
                     placeholder="e.g. 72.648213"
-                    className="bg-slate-950 border-slate-800 text-slate-200"
+                    className="bg-background border-border text-foreground"
                     value={longitude}
                     onChange={(e) => setLongitude(e.target.value)}
                     onPaste={(e) => {
@@ -159,7 +170,7 @@ export const CenterLocationPage: React.FC = () => {
                   {!isReadOnly && (
                     <Button 
                       variant="outline" 
-                      className="w-full flex items-center justify-center gap-2 border-blue-500/30 text-blue-400 bg-blue-500/5 hover:bg-blue-500/10 hover:text-blue-300 transition-colors"
+                      className="w-full flex items-center justify-center gap-2 border-border text-foreground bg-background hover:bg-muted transition-colors"
                       onClick={handleUseCurrentLocation}
                     >
                       <Navigation className="w-4 h-4" />
@@ -168,7 +179,7 @@ export const CenterLocationPage: React.FC = () => {
                   )}
                   <Button 
                     variant="outline" 
-                    className={`${isReadOnly ? 'col-span-2' : 'w-full'} flex items-center justify-center gap-2 border-emerald-500/30 text-emerald-400 bg-emerald-500/5 hover:bg-emerald-500/10 hover:text-emerald-300 transition-colors`}
+                    className={`${isReadOnly ? 'col-span-2' : 'w-full'} flex items-center justify-center gap-2 border-border text-foreground bg-background hover:bg-muted transition-colors`}
                     onClick={() => {
                       if(latitude && longitude) {
                         setGoogleMapUrl(`https://maps.google.com/maps?q=${latitude},${longitude}&hl=en&z=15&output=embed`);
@@ -184,9 +195,9 @@ export const CenterLocationPage: React.FC = () => {
                 </div>
 
               {!isReadOnly && (
-                <div className="pt-4 border-t border-slate-800">
+                <div className="pt-4 border-t border-border">
                   <Button 
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                    className="w-full bg-[#E4FD97] hover:bg-[#d0ed76] text-[#2D3E2C] font-bold"
                     onClick={handleSave}
                     disabled={isSaving}
                   >
@@ -200,7 +211,7 @@ export const CenterLocationPage: React.FC = () => {
 
         {/* Right Column: Map Preview */}
         <div className="lg:col-span-7">
-          <Card className="bg-slate-900/80 border-slate-800 backdrop-blur-md shadow-xl h-full min-h-[400px] overflow-hidden flex flex-col">
+          <Card className="bg-card border-border backdrop-blur-md shadow-xl h-full min-h-[400px] overflow-hidden flex flex-col text-foreground">
             {googleMapUrl ? (
               <iframe
                 src={googleMapUrl}
@@ -213,9 +224,9 @@ export const CenterLocationPage: React.FC = () => {
                 title="Google Maps Preview"
               ></iframe>
             ) : (
-              <div className="flex-1 flex flex-col items-center justify-center p-8 text-slate-500">
-                <div className="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center mb-4">
-                  <Map className="w-8 h-8 text-slate-600" />
+              <div className="flex-1 flex flex-col items-center justify-center p-8 text-muted-foreground">
+                <div className="w-16 h-16 rounded-full bg-muted border border-border flex items-center justify-center mb-4">
+                  <Map className="w-8 h-8 text-primary" />
                 </div>
                 <p>No map URL provided.</p>
                 <p className="text-sm mt-2 max-w-sm text-center">

@@ -26,12 +26,17 @@ class ExamService extends BaseService<IExam> {
   */
 
   static computeDisplayStatus(exam: any): string {
-    // If result is published → RESULT_GENERATED
-    if (exam.isResultPublished) return "RESULT_GENERATED";
+    // If result is published → RESULT_PUBLISHED
+    if (exam.isResultPublished) return "RESULT_PUBLISHED";
+    // If result is generated but not published → PENDING_PUBLISH_RESULT
+    if (exam.isResultGenerated) return "PENDING_PUBLISH_RESULT";
 
     // If already in a terminal state, return as-is
-    const terminalStatuses = ["COMPLETED", "CANCELLED", "ARCHIVED", "EXAM_ENDED", "RESULT_GENERATED"];
-    if (terminalStatuses.includes(exam.status)) return exam.status;
+    const terminalStatuses = ["COMPLETED", "CANCELLED", "ARCHIVED", "EXAM_ENDED", "RESULT_PUBLISHED", "PENDING_PUBLISH_RESULT", "PENDING_RESULT_GENERATE"];
+    if (terminalStatuses.includes(exam.status)) {
+      if (exam.status === "EXAM_ENDED" || exam.status === "COMPLETED") return "PENDING_RESULT_GENERATE";
+      return exam.status;
+    }
 
     // For ACTIVE or EXAM_STARTED exams, compute based on time
     if (exam.status === "ACTIVE" || exam.status === "EXAM_STARTED") {
@@ -51,16 +56,20 @@ class ExamService extends BaseService<IExam> {
             if (!isNaN(endH) && !isNaN(endM)) {
               const endIsoString = `${istDateString}T${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}:00+05:30`;
               const endDateTime = new Date(endIsoString);
+              
+              if (endDateTime < startDateTime) {
+                endDateTime.setDate(endDateTime.getDate() + 1);
+              }
 
-              if (now >= endDateTime) return "EXAM_ENDED";
+              if (now >= endDateTime) return "PENDING_RESULT_GENERATE";
               if (now >= startDateTime) return "EXAM_STARTED";
             } else {
               // Fallback: use startTime + duration
               if (exam.duration) {
                 const endDateTime = new Date(startDateTime.getTime() + exam.duration * 60000);
-                if (now >= endDateTime) return "EXAM_ENDED";
+                if (now >= endDateTime) return "PENDING_RESULT_GENERATE";
+                if (now >= startDateTime) return "EXAM_STARTED";
               }
-              if (now >= startDateTime) return "EXAM_STARTED";
             }
           }
         }
@@ -162,9 +171,16 @@ class ExamService extends BaseService<IExam> {
     if (!payload.securitySettings) {
         payload.securitySettings = {
             faceVerification: examSettings.PROCTORING_FACE_VERIFICATION ?? false,
+            faceDetectionEnabled: false,
+            faceDetectionLimit: 15,
+            multipleFacesEnabled: false,
+            multipleFacesLimit: 15,
+            proctoringWarningEnabled: false,
+            proctoringWarningLimit: 3,
             webcamMonitoring: examSettings.PROCTORING_WEBCAM_MONITORING ?? false,
             screenRecording: examSettings.PROCTORING_SCREEN_RECORDING ?? false,
             screenSharingDetection: false,
+            tabSwitchingEnabled: false,
             tabSwitchLimit: examSettings.PROCTORING_TAB_SWITCH_DETECTION ? 3 : 0,
             browserLock: examSettings.PROCTORING_BROWSER_LOCK ?? false,
             fullScreenMode: examSettings.PROCTORING_FULL_SCREEN ?? false,
@@ -193,7 +209,7 @@ class ExamService extends BaseService<IExam> {
   async update(id: string, payload: Partial<IExam>) {
     const exam = await super.getById(id);
 
-    if (exam.approvalStatus === ExamApprovalStatus.PUBLISHED && exam.examCode !== "STAFFSELF" && exam.examCode !== "STAFFSELE") {
+    if (exam.approvalStatus === ExamApprovalStatus.PUBLISHED && exam.examCode !== "STAFFSELF" && exam.examCode !== "STAFFSELE" && exam.examCode !== "RESERVEBA") {
       throw new ApiError(
         HTTP_STATUS.BAD_REQUEST,
         "Published exam cannot be modified.",
@@ -235,7 +251,7 @@ class ExamService extends BaseService<IExam> {
 
         if (payload.duration) {
             const minDuration = 1;
-            const maxDuration = examSettings.EXAM_MAX_DURATION ?? 180;
+            const maxDuration = examSettings.EXAM_MAX_DURATION ?? 1440; // Increased to 24h
             if (payload.duration < minDuration || payload.duration > maxDuration) {
                 throw new ApiError(HTTP_STATUS.BAD_REQUEST, `Duration must be between ${minDuration} and ${maxDuration} minutes.`);
             }
@@ -328,7 +344,6 @@ class ExamService extends BaseService<IExam> {
     // Prepare cloned data
     const cloneData: Partial<IExam> = {
       companyId: originalExam.companyId,
-      branchId: originalExam.branchId,
       centerId: originalExam.centerId,
       shiftId: payload.shiftId as any,
 
@@ -351,9 +366,16 @@ class ExamService extends BaseService<IExam> {
         ? originalExam.securitySettings 
         : {
             faceVerification: false,
+            faceDetectionEnabled: false,
+            faceDetectionLimit: 15,
+            multipleFacesEnabled: false,
+            multipleFacesLimit: 15,
+            proctoringWarningEnabled: false,
+            proctoringWarningLimit: 3,
             webcamMonitoring: false,
             screenRecording: false,
             screenSharingDetection: false,
+            tabSwitchingEnabled: false,
             tabSwitchLimit: 0,
             browserLock: false,
             fullScreenMode: false,

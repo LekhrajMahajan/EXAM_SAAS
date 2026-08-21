@@ -16,6 +16,7 @@ import {
   statistics,
   softDeleteActivityLog,
   restoreActivityLog,
+  seedExamManagerLogs,
 } from "./activityLog.controller";
 
 import {
@@ -45,10 +46,9 @@ router.get(
 
   authorize(
     UserRole.MASTER_ADMIN,
-
     UserRole.COMPANY_ADMIN,
-
     UserRole.EXAM_MANAGER,
+    UserRole.CENTER_MANAGER,
   ),
 
   validateRequest(dashboardSchema),
@@ -63,10 +63,9 @@ router.get(
 
   authorize(
     UserRole.MASTER_ADMIN,
-
     UserRole.COMPANY_ADMIN,
-
     UserRole.EXAM_MANAGER,
+    UserRole.CENTER_MANAGER,
   ),
 
   validateRequest(statisticsSchema),
@@ -87,11 +86,9 @@ router.get(
 
   authorize(
     UserRole.MASTER_ADMIN,
-
     UserRole.COMPANY_ADMIN,
-
     UserRole.EXAM_MANAGER,
-
+    UserRole.CENTER_MANAGER,
     UserRole.CANDIDATE,
   ),
 
@@ -151,10 +148,9 @@ router.get(
 
   authorize(
     UserRole.MASTER_ADMIN,
-
     UserRole.COMPANY_ADMIN,
-
     UserRole.EXAM_MANAGER,
+    UserRole.CENTER_MANAGER,
   ),
 
   validateRequest(activityLogQuerySchema),
@@ -202,6 +198,12 @@ router.patch(
   validateRequest(restoreActivityLogSchema),
 
   restoreActivityLog,
+);
+
+// TEMPORARY: Seed data for EXAM_MANAGER
+router.post(
+  "/seed-exam-manager",
+  seedExamManagerLogs
 );
 
 export default router;

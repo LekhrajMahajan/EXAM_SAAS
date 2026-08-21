@@ -136,13 +136,6 @@ const EmployeeSchema = new Schema<IEmployee>(
       default: null,
     },
 
-    branchId: {
-      type: Schema.Types.ObjectId,
-      ref: "Branch",
-      default: null,
-      index: true,
-    },
-
     centerId: {
       type: Schema.Types.ObjectId,
       ref: "Center",
@@ -374,7 +367,6 @@ EmployeeSchema.index({
 
 EmployeeSchema.index({
   companyId: 1,
-  branchId: 1,
   centerId: 1,
 });
 

@@ -191,6 +191,7 @@ class CandidateExamService {
         _id: candidate._id,
         candidateName: candidate.candidateFullName || candidate.fullName,
         applicationNo: candidate.applicationNo,
+        photo: candidate.candidatePhoto || candidate.photo || candidate.profilePhoto || "",
       },
       exam: {
         _id: exam._id,
@@ -198,7 +199,10 @@ class CandidateExamService {
         examCode: exam.examCode || payload.examCode,
         examDate: exam.examDate,
         startTime: exam.startTime,
-        duration: exam.duration
+        duration: exam.duration,
+        securitySettings: exam.securitySettings,
+        shuffleSubjects: exam.shuffleSubjects,
+        shuffleQuestions: exam.shuffleQuestions
       },
       sessionToken: token,
       sessionId: sessionId,
@@ -395,12 +399,16 @@ class CandidateExamService {
     
     // Shuffle sections
     const sectionKeys = Object.keys(groupedBySection);
-    shuffleArray(sectionKeys);
+    if (exam.shuffleSubjects) {
+      shuffleArray(sectionKeys);
+    }
     
     // Shuffle questions within each section and reconstruct the list
     const shuffledPaperQuestions = [];
     for (const sec of sectionKeys) {
-       shuffleArray(groupedBySection[sec]);
+       if (exam.shuffleQuestions) {
+         shuffleArray(groupedBySection[sec]);
+       }
        shuffledPaperQuestions.push(...groupedBySection[sec]);
     }
     // ------------------------------------------------

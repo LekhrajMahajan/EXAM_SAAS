@@ -18,6 +18,8 @@ interface CenterFiltersProps {
   onCenterFilterChange?: (val: string) => void;
   stateFilter?: string;
   onStateFilterChange?: (val: string) => void;
+  cityFilter?: string;
+  onCityFilterChange?: (val: string) => void;
   statusFilter?: string;
   onStatusFilterChange?: (val: string) => void;
   approvalFilter?: string;
@@ -32,6 +34,8 @@ export const CenterFilters = ({
   onCenterFilterChange,
   stateFilter = "all",
   onStateFilterChange,
+  cityFilter = "all",
+  onCityFilterChange,
   statusFilter = "all",
   onStatusFilterChange,
   approvalFilter = "all",
@@ -46,6 +50,11 @@ export const CenterFilters = ({
   const uniqueStates = useMemo(() => {
     const states = centers.map(c => c.state).filter(Boolean);
     return Array.from(new Set(states));
+  }, [centers]);
+
+  const uniqueCities = useMemo(() => {
+    const cities = centers.map(c => c.city).filter(Boolean);
+    return Array.from(new Set(cities));
   }, [centers]);
 
   return (
@@ -81,6 +90,18 @@ export const CenterFilters = ({
             <SelectItem value="all">All States</SelectItem>
             {uniqueStates.map((state) => (
               <SelectItem key={state} value={state!}>{state}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={cityFilter} onValueChange={onCityFilterChange}>
+          <SelectTrigger className="w-[130px] hidden sm:flex bg-background dark:bg-[#0A0D14] border-border dark:border-slate-800 text-foreground dark:text-slate-300 h-9 rounded-lg">
+            <SelectValue placeholder="City" />
+          </SelectTrigger>
+          <SelectContent className="bg-card dark:bg-[#111726] border-border dark:border-slate-800 text-foreground dark:text-slate-200">
+            <SelectItem value="all">All Cities</SelectItem>
+            {uniqueCities.map((city) => (
+              <SelectItem key={city} value={city!}>{city}</SelectItem>
             ))}
           </SelectContent>
         </Select>

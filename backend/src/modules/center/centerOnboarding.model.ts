@@ -4,8 +4,6 @@ import { CenterSetupStatus, DocumentApprovalStatus } from "./center.types";
 export interface ICenterOnboarding extends Document {
   centerId: Types.ObjectId;
   companyId: Types.ObjectId;
-  branchId: Types.ObjectId;
-
   status: CenterSetupStatus;
   
   commercialAgreement: {
@@ -68,12 +66,6 @@ const CenterOnboardingSchema = new Schema<ICenterOnboarding>(
     companyId: {
       type: Schema.Types.ObjectId,
       ref: "Company",
-      required: true,
-      index: true,
-    },
-    branchId: {
-      type: Schema.Types.ObjectId,
-      ref: "Branch",
       required: true,
       index: true,
     },

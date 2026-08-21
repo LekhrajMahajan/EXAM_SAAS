@@ -15,7 +15,6 @@ export interface AuditLogQuery {
   page?: number;
   limit?: number;
   companyId?: string;
-  branchId?: string;
   examId?: string;
   candidateId?: string;
   employeeId?: string;
@@ -35,7 +34,7 @@ class AuditLogRepository extends BaseRepository<IAuditLog> {
     super(AuditLog, [
       "performedBy",
       "companyId",
-      "branchId",
+
       "candidateId",
       "employeeId",
       "examId",
@@ -92,7 +91,7 @@ class AuditLogRepository extends BaseRepository<IAuditLog> {
       page = 1,
       limit = 20,
       companyId,
-      branchId,
+
       examId,
       candidateId,
       employeeId,
@@ -112,7 +111,7 @@ class AuditLogRepository extends BaseRepository<IAuditLog> {
     };
 
     if (companyId) filter.companyId = new Types.ObjectId(companyId);
-    if (branchId) filter.branchId = new Types.ObjectId(branchId);
+
     if (examId) filter.examId = new Types.ObjectId(examId);
     if (candidateId) filter.candidateId = new Types.ObjectId(candidateId);
     if (employeeId) filter.employeeId = new Types.ObjectId(employeeId);
@@ -135,7 +134,7 @@ class AuditLogRepository extends BaseRepository<IAuditLog> {
     const data = await AuditLog.find(filter)
       .populate("performedBy")
       .populate("companyId")
-      .populate("branchId")
+
       .populate("candidateId")
       .populate("employeeId")
       .populate("examId")

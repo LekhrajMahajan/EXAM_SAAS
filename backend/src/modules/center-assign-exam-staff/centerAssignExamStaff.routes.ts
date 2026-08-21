@@ -14,19 +14,22 @@ router.use(authenticate);
 
 router.get(
   "/",
-  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.EXAM_MANAGER, UserRole.BRANCH_MANAGER, UserRole.CENTER_MANAGER),
+  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.EXAM_MANAGER,
+    UserRole.CENTER_MANAGER),
   getAssignments
 );
 
 router.post(
   "/",
-  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.EXAM_MANAGER, UserRole.BRANCH_MANAGER, UserRole.CENTER_MANAGER),
+  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.EXAM_MANAGER,
+    UserRole.CENTER_MANAGER),
   createOrUpdateAssignment
 );
 
 router.delete(
   "/:id",
-  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.EXAM_MANAGER, UserRole.BRANCH_MANAGER, UserRole.CENTER_MANAGER),
+  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.EXAM_MANAGER,
+    UserRole.CENTER_MANAGER),
   deleteAssignment
 );
 

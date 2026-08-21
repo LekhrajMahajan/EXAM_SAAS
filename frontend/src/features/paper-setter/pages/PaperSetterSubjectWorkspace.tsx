@@ -103,7 +103,7 @@ export function PaperSetterSubjectWorkspace() {
             <Button variant="outline" size="icon" onClick={() => navigate(`/dashboard/paper-setter`)}>
               <ArrowLeft className="w-4 h-4" />
             </Button>
-            <Badge variant="outline" className="text-sm py-1 bg-slate-900 border-slate-700 font-medium">
+            <Badge variant="outline" className="text-sm py-1 font-medium">
               {questions.length} / {targetQuestions} Questions
             </Badge>
             {isDraft && (
@@ -114,6 +114,8 @@ export function PaperSetterSubjectWorkspace() {
                     setIsAddModalOpen(true);
                   }} 
                   size="sm"
+                  variant="outline"
+                  className="border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
                   disabled={limitReached}
                 >
                   <Plus className="w-4 h-4 mr-2" />
@@ -122,7 +124,8 @@ export function PaperSetterSubjectWorkspace() {
                 <Button 
                   onClick={() => setIsBulkModalOpen(true)} 
                   size="sm" 
-                  variant="secondary"
+                  variant="outline"
+                  className="border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
                   disabled={limitReached}
                 >
                   <UploadCloud className="w-4 h-4 mr-2" />
@@ -160,7 +163,7 @@ export function PaperSetterSubjectWorkspace() {
                           <Button 
                             variant="ghost" 
                             size="icon" 
-                            className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                            className="h-8 w-8 text-muted-foreground hover:text-foreground"
                             onClick={() => handleEdit(q)}
                           >
                             <Edit2 className="h-4 w-4" />
@@ -168,7 +171,7 @@ export function PaperSetterSubjectWorkspace() {
                           <Button 
                             variant="ghost" 
                             size="icon" 
-                            className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                             onClick={() => handleDelete(q.questionId?._id || q.questionId || q._id)}
                           >
                             <Trash2 className="h-4 w-4" />
@@ -179,7 +182,7 @@ export function PaperSetterSubjectWorkspace() {
                     <div className="prose prose-sm max-w-none mb-3" dangerouslySetInnerHTML={{ __html: q.questionId?.question || q.questionId?.text || q.question || q.text }} />
                     <div className="grid gap-2 text-sm text-muted-foreground">
                       {(q.questionId?.options || q.options)?.map((opt: any, optIndex: number) => (
-                        <div key={optIndex} className={`flex items-center space-x-2 p-3 rounded-md border transition-colors ${opt.isCorrect ? 'bg-green-500/10 border-green-500/30 text-green-600 dark:text-green-400' : 'bg-secondary/30 border-transparent text-muted-foreground'}`}>
+                        <div key={optIndex} className={`flex items-center space-x-2 p-3 rounded-md border transition-colors ${opt.isCorrect ? 'bg-primary/90 border-primary text-primary-foreground font-medium' : 'bg-background border-border text-foreground hover:bg-muted/50'}`}>
                           <span className="font-medium">{String.fromCharCode(65 + optIndex)}.</span>
                           <span dangerouslySetInnerHTML={{ __html: opt.optionText || opt.text }} />
                         </div>

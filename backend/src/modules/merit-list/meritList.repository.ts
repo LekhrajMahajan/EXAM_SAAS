@@ -15,9 +15,6 @@ export interface MeritListQuery {
   candidateId?: string;
 
   companyId?: string;
-
-  branchId?: string;
-
   examCenterId?: string;
 
   subjectId?: string;

@@ -5,7 +5,6 @@ export enum ReportType {
   ATTENDANCE = 'ATTENDANCE',
   BIOMETRIC = 'BIOMETRIC',
   CENTER = 'CENTER',
-  BRANCH = 'BRANCH',
   COMPANY = 'COMPANY',
   LIVE_MONITORING = 'LIVE_MONITORING',
   ACTIVITY_LOG = 'ACTIVITY_LOG',
@@ -42,7 +41,7 @@ export interface ReportFilter {
   startDate?: string;
   endDate?: string;
   companyId?: string;
-  branchId?: string;
+
   centerId?: string;
   examId?: string;
   candidateId?: string;
@@ -59,7 +58,7 @@ export interface Report {
   visibility: ReportVisibility;
   generatedBy: any; // Can be string or populated object
   companyId?: string;
-  branchId?: string;
+
   centerId?: string;
   examId?: string;
   fileId?: string;

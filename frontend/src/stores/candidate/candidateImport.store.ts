@@ -10,11 +10,13 @@ export interface ImportedCandidate {
   examName: string;
   examId?: any;
   candidateFullName: string;
-  fatherName?: string;
+  fatherName: string;
   motherName: string;
   dateOfBirth: string;
   gender: string;
+  aadharNumber: string;
   category?: string;
+  candidatePhoto?: string;
   postName?: string;
   paperSubject?: string;
   examStage?: string;
@@ -40,7 +42,6 @@ export interface ImportedCandidate {
   importantInstructions?: string;
   candidateDeclaration?: string;
   biometricInfo?: string;
-  candidatePhoto?: string;
   candidateSignature?: string;
   pwdStatus?: string;
   pwdType?: string;
@@ -48,6 +49,8 @@ export interface ImportedCandidate {
   examCode?: string;
   notificationNo?: string;
   importedAt: string;
+  isSentToCompanyAdmin?: boolean;
+  dynamicFields?: Record<string, any>;
   [key: string]: any;
 }
 
@@ -55,18 +58,21 @@ interface CandidateImportState {
   importedCandidates: ImportedCandidate[];
   isLoading: boolean;
   error: string | null;
-  fetchImportedCandidates: () => Promise<void>;
+  fetchImportedCandidates: (showLoader?: boolean) => Promise<void>;
   updateCandidate: (id: string, data: Partial<ImportedCandidate>) => Promise<boolean>;
   deleteCandidate: (id: string) => Promise<boolean>;
   sendToCenter: (examId: string) => Promise<{ success: boolean; data?: any; error?: string }>;
+  sendToAdmin: (examId: string) => Promise<{ success: boolean; data?: any; error?: string }>;
 }
 
 export const useCandidateImportStore = create<CandidateImportState>((set) => ({
   importedCandidates: [],
   isLoading: false,
   error: null,
-  fetchImportedCandidates: async () => {
-    set({ isLoading: true, error: null });
+  fetchImportedCandidates: async (showLoader = true) => {
+    if (showLoader) {
+      set({ isLoading: true, error: null });
+    }
     try {
       const response = await api.get('/import-candidate');
       if (response.data.success) {
@@ -117,14 +123,30 @@ export const useCandidateImportStore = create<CandidateImportState>((set) => ({
     }
   },
   sendToCenter: async (examId: string) => {
-    set({ isLoading: true, error: null });
+    set({ error: null });
     try {
       const response = await api.post('/import-candidate/send-to-center', { examId });
+      if (response.data.success) {
+        return { success: true, data: response.data.data };
+      } else {
+        set({ error: response.data.message || 'Failed to send to center' });
+        return { success: false, error: response.data.message };
+      }
+    } catch (error: any) {
+      const msg = error.response?.data?.message || 'An error occurred';
+      set({ error: msg });
+      return { success: false, error: msg };
+    }
+  },
+  sendToAdmin: async (examId: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await api.post('/import-candidate/send-to-admin', { examId });
       if (response.data.success) {
         set({ isLoading: false });
         return { success: true, data: response.data.data };
       } else {
-        set({ error: response.data.message || 'Failed to send to center', isLoading: false });
+        set({ error: response.data.message || 'Failed to send to admin', isLoading: false });
         return { success: false, error: response.data.message };
       }
     } catch (error: any) {

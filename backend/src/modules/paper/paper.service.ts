@@ -521,60 +521,110 @@ class PaperService extends BaseService<IPaper> {
   // Get Assigned Papers with Auto Create
   // --------------------------------------------------------------------------
 
-  async getAssignedPapersWithAutoCreate(employeeId: string, companyId?: string) {
-    const assignments = await staffAssignmentRepository.findActiveByEmployee(employeeId, companyId);
-    
-    // Filter for PAPER_SETTER role
-    const paperSetterAssignments = assignments.filter(a => a.role === 'PAPER_SETTER' && a.examId);
-    
-    if (paperSetterAssignments.length === 0) {
-      return { papers: [], total: 0, page: 1, limit: 100, totalPages: 0 };
-    }
+  async getAssignedPapersWithAutoCreate(employeeId: string, companyId?: string, userId?: string) {
+    const assignedPapers: any[] = [];
+    const processedPaperIds = new Set<string>();
 
-    const assignedPapers = [];
+    console.log(`[getAssigned] Starting: employeeId=${employeeId}, companyId=${companyId}, userId=${userId}`);
 
-    for (const assignment of paperSetterAssignments) {
-      const examIdStr = (assignment.examId as any)._id?.toString() || assignment.examId.toString();
-      
-      // Check if paper exists for this exam assigned to this employee
-      let paper = await Paper.findOne({ examId: examIdStr, assignedTo: employeeId, isDeleted: false }).populate("examId");
-      
-      if (!paper) {
-        // Fetch Exam to get details
-        const exam = await Exam.findById(examIdStr);
-        if (exam) {
-          // Auto create paper
-          let totalQuestions = 0;
-          if (exam.subjects && exam.subjects.length > 0) {
-            exam.subjects.forEach(sub => {
-              totalQuestions += sub.questions;
-            });
-          }
+    // ─── Step 1: Find papers directly assigned to this employee ────────────────
+    if (employeeId) {
+      const directPapers = await Paper.find({ assignedTo: employeeId, isDeleted: false })
+        .populate("examId")
+        .lean();
 
-          const pCode = `P${Math.floor(100000 + Math.random() * 900000)}`;
-          const newPaper = new Paper({
-            companyId: assignment.companyId,
-            examId: examIdStr,
-            assignedTo: employeeId,
-            paperCode: pCode,
-            paperName: `${exam.examTitle} - Paper Set ${pCode}`,
-            duration: exam.duration || 60,
-            totalQuestions: totalQuestions || 1,
-            totalMarks: exam.totalMarks || 1,
-            passingMarks: exam.passingMarks || 0,
-            approvalStatus: PaperApprovalStatus.DRAFT,
-            status: PaperStatus.ACTIVE,
-          });
-          
-          await newPaper.save();
-          paper = await Paper.findById(newPaper._id).populate("examId");
+      console.log(`[getAssigned] Direct papers by employeeId: ${directPapers.length}`);
+      for (const p of directPapers) {
+        const pid = (p._id as any).toString();
+        if (!processedPaperIds.has(pid)) {
+          assignedPapers.push(p);
+          processedPaperIds.add(pid);
         }
       }
-      
-      if (paper) {
-        assignedPapers.push(paper);
+    }
+
+    // ─── Step 2: Find papers by userId (covers case where assignedTo was set to userId) ─
+    if (userId) {
+      const userPapers = await Paper.find({ assignedTo: userId, isDeleted: false })
+        .populate("examId")
+        .lean();
+
+      console.log(`[getAssigned] Papers by userId: ${userPapers.length}`);
+      for (const p of userPapers) {
+        const pid = (p._id as any).toString();
+        if (!processedPaperIds.has(pid)) {
+          assignedPapers.push(p);
+          processedPaperIds.add(pid);
+        }
       }
     }
+
+    // ─── Step 3: If nothing found yet, use staffAssignment to auto-create ────────
+    if (assignedPapers.length === 0 && employeeId) {
+      console.log(`[getAssigned] No papers found directly, trying assignment-based auto-create...`);
+      const assignments = await staffAssignmentRepository.findActiveByEmployee(employeeId, companyId);
+      const paperSetterAssignments = assignments.filter(a => a.role === 'PAPER_SETTER' && a.examId);
+
+      console.log(`[getAssigned] Staff assignments found: ${assignments.length}, PAPER_SETTER: ${paperSetterAssignments.length}`);
+
+      const processedExamIds = new Set<string>();
+      for (const assignment of paperSetterAssignments) {
+        const examIdStr = (assignment.examId as any)._id?.toString() || assignment.examId.toString();
+        if (processedExamIds.has(examIdStr)) continue;
+        processedExamIds.add(examIdStr);
+
+        // Check if paper was already created (might have a different assignedTo, e.g. examId-level paper)
+        let paper = await Paper.findOne({ examId: examIdStr, assignedTo: employeeId, isDeleted: false })
+          .populate("examId");
+
+        if (!paper && userId) {
+          paper = await Paper.findOne({ examId: examIdStr, assignedTo: userId, isDeleted: false })
+            .populate("examId");
+        }
+
+        if (!paper) {
+          const exam = await Exam.findById(examIdStr);
+          if (exam) {
+            let totalQuestions = 0;
+            if (exam.subjects && exam.subjects.length > 0) {
+              exam.subjects.forEach((sub: any) => { totalQuestions += sub.questions; });
+            }
+            const pCode = `P${Date.now().toString().slice(-6)}${Math.floor(10 + Math.random() * 90)}`;
+            try {
+              const newPaper = new Paper({
+                companyId: assignment.companyId || companyId,
+                examId: examIdStr,
+                assignedTo: employeeId,
+                paperCode: pCode,
+                paperName: `${exam.examTitle} - Set ${pCode}`,
+                duration: exam.duration || 60,
+                totalQuestions: totalQuestions || 1,
+                totalMarks: exam.totalMarks || 1,
+                passingMarks: exam.passingMarks || 0,
+                approvalStatus: PaperApprovalStatus.DRAFT,
+                status: PaperStatus.ACTIVE,
+              });
+              await newPaper.save();
+              paper = await Paper.findById(newPaper._id)
+                .populate("examId") as any;
+              console.log(`[getAssigned] Auto-created paper: ${pCode}`);
+            } catch (err: any) {
+              console.error(`[getAssigned] Auto-create failed:`, err?.message);
+            }
+          }
+        }
+
+        if (paper) {
+          const pid = (paper._id as any).toString();
+          if (!processedPaperIds.has(pid)) {
+            assignedPapers.push(paper);
+            processedPaperIds.add(pid);
+          }
+        }
+      }
+    }
+
+    console.log(`[getAssigned] Total papers returned: ${assignedPapers.length}`);
 
     return {
       papers: assignedPapers,
@@ -588,6 +638,7 @@ class PaperService extends BaseService<IPaper> {
   // --------------------------------------------------------------------------
   // Statistics
   // --------------------------------------------------------------------------
+
 
   async statistics(companyId?: string) {
     const totalPapers = await paperRepository.count(companyId);

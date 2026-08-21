@@ -301,25 +301,11 @@ export const SIDEBAR_MENU: SidebarMenuItem[] = [
     roles: ['Company Admin'],
   },
   {
-    id: 'ca-branches',
-    title: 'Branches & Centers',
+    id: 'ca-centers',
+    title: 'Centers',
     icon: Building2,
-    path: '/company/branches',
+    path: '/company/centers',
     roles: ['Company Admin'],
-    children: [
-      {
-        id: 'ca-branches-list',
-        title: 'Branches',
-        path: '/company/branches',
-        roles: ['Company Admin'],
-      },
-      {
-        id: 'ca-centers-list',
-        title: 'Centers',
-        path: '/company/centers',
-        roles: ['Company Admin'],
-      }
-    ]
   },
   {
     id: 'ca-staff',
@@ -375,34 +361,20 @@ export const SIDEBAR_MENU: SidebarMenuItem[] = [
     ]
   },
   {
-    id: 'ca-candidates',
-    title: 'Candidates',
-    icon: UserCircle,
-    path: '/company/candidates',
-    roles: ['Company Admin'],
-  },
-  {
     id: 'ca-papers',
-    title: 'Send center assign exam',
+    title: 'Assign Exam to Center',
     icon: FileSignature,
     path: '/company/papers',
     roles: ['Company Admin'],
   },
   {
-    id: 'ca-question-bank',
-    title: 'Question Bank',
-    icon: Package,
-    path: '/company/question-bank',
-    roles: ['Company Admin'],
-    requiredFeature: 'questionBank',
-  },
-  {
-    id: 'ca-shifts',
-    title: 'Shift & Scheduling',
-    icon: Activity,
-    path: '/company/shifts',
+    id: 'ca-candidates',
+    title: 'Assign Candidate to Center',
+    icon: UserCircle,
+    path: '/company/candidates',
     roles: ['Company Admin'],
   },
+
   {
     id: 'ca-results',
     title: 'Results',
@@ -410,6 +382,7 @@ export const SIDEBAR_MENU: SidebarMenuItem[] = [
     path: '/company/results',
     roles: ['Company Admin'],
   },
+/*
   {
     id: 'ca-live-monitoring',
     title: 'Live Monitoring',
@@ -456,35 +429,7 @@ export const SIDEBAR_MENU: SidebarMenuItem[] = [
     path: '/company/settings',
     roles: ['Company Admin'],
   },
-  // --- Branch Manager Routes ---
-  {
-    id: 'bm-dashboard',
-    title: 'Branch Dashboard',
-    icon: Home,
-    path: '/dashboard/branch-manager',
-    roles: ['BRANCH_MANAGER', 'Branch Manager'],
-  },
-  {
-    id: 'bm-centers',
-    title: 'Assigned Centers',
-    icon: Building2,
-    path: '/dashboard/branch-manager/centers',
-    roles: ['BRANCH_MANAGER', 'Branch Manager'],
-  },
-  {
-    id: 'bm-staff',
-    title: 'Branch Staff',
-    icon: Users,
-    path: '/dashboard/branch-manager/staff',
-    roles: ['BRANCH_MANAGER', 'Branch Manager'],
-  },
-  {
-    id: 'bm-labs',
-    title: 'Branch Lab Details',
-    icon: Monitor,
-    path: '/dashboard/branch-manager/labs',
-    roles: ['BRANCH_MANAGER', 'Branch Manager'],
-  },
+  */
   // --- Center Manager Routes ---
   {
     id: 'cm-dashboard',
@@ -570,6 +515,13 @@ export const SIDEBAR_MENU: SidebarMenuItem[] = [
     path: '/dashboard/center-manager/payments',
     roles: ['CENTER_MANAGER', 'Center Manager'],
   },
+  {
+    id: 'cm-audit-logs',
+    title: 'Audit Logs',
+    icon: Activity,
+    path: '/dashboard/center-manager/audit-logs',
+    roles: ['CENTER_MANAGER', 'Center Manager'],
+  },
   // --- Exam Manager Routes ---
   {
     id: 'em-dashboard',
@@ -593,24 +545,10 @@ export const SIDEBAR_MENU: SidebarMenuItem[] = [
     roles: ['EXAM_MANAGER', 'Exam Manager'],
   },
   {
-    id: 'em-scheduling',
-    title: 'Exam Scheduling',
-    icon: CalendarCheck,
-    path: '/exam-manager/scheduling',
-    roles: ['EXAM_MANAGER', 'Exam Manager'],
-  },
-  {
-    id: 'em-shifts',
-    title: 'Shifts',
+    id: 'em-audit-logs',
+    title: 'Audit Logs',
     icon: Activity,
-    path: '/exam-manager/shifts',
-    roles: ['EXAM_MANAGER', 'Exam Manager'],
-  },
-  {
-    id: 'em-candidate-import',
-    title: 'Candidate Import',
-    icon: Upload,
-    path: '/exam-manager/candidate-import',
+    path: '/exam-manager/audit-logs',
     roles: ['EXAM_MANAGER', 'Exam Manager'],
   },
   // --- Paper Setter Routes ---
@@ -630,6 +568,13 @@ export const SIDEBAR_MENU: SidebarMenuItem[] = [
     roles: ['GOVT_AUTHORITY', 'Govt Authority', 'Government Authority'],
   },
   {
+    id: 'govt-import-centers',
+    title: 'Import center assign exam',
+    icon: Upload,
+    path: '/dashboard/govt-authority/import-centers',
+    roles: ['GOVT_AUTHORITY', 'Govt Authority', 'Government Authority'],
+  },
+  {
     id: 'govt-candidates',
     title: 'Import Candidate',
     icon: Upload,
@@ -637,10 +582,24 @@ export const SIDEBAR_MENU: SidebarMenuItem[] = [
     roles: ['GOVT_AUTHORITY', 'Govt Authority', 'Government Authority'],
   },
   {
-    id: 'govt-import-centers',
-    title: 'Import center assign exam',
+    id: 'private-dashboard',
+    title: 'Dashboard',
+    icon: Home,
+    path: '/dashboard/private-authority',
+    roles: ['PRIVATE_AUTHORITY', 'Private Authority'],
+  },
+  {
+    id: 'private-import-centers',
+    title: 'Import Center Assign Exam',
+    icon: FileText,
+    path: '/dashboard/private-authority/import-centers',
+    roles: ['PRIVATE_AUTHORITY', 'Private Authority'],
+  },
+  {
+    id: 'private-candidates',
+    title: 'Import Candidate',
     icon: Upload,
-    path: '/dashboard/govt-authority/import-centers',
-    roles: ['GOVT_AUTHORITY', 'Govt Authority', 'Government Authority'],
+    path: '/dashboard/private-authority/import-candidates',
+    roles: ['PRIVATE_AUTHORITY', 'Private Authority'],
   }
 ];

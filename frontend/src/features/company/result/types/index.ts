@@ -7,6 +7,7 @@ export interface CandidateResult {
   applicationNumber: string;
   candidateName: string;
   exam: string;
+  examObj?: any;
   subject: string;
   shift: string;
   center: string;

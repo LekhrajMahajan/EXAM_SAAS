@@ -78,9 +78,6 @@ export interface ICertificate {
   subjectId: Types.ObjectId;
 
   companyId: Types.ObjectId;
-
-  branchId: Types.ObjectId;
-
   examCenterId: Types.ObjectId;
 
   /*

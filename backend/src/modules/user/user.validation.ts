@@ -21,6 +21,8 @@ export const updateProfileSchema = z.object({
     firstName: z.string().trim().min(2).max(100),
 
     lastName: z.string().trim().min(2).max(100),
+    
+    phone: z.string().trim().optional().nullable(),
 
     employeeId: z.string().trim().optional().nullable(),
 

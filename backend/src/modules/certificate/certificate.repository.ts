@@ -22,9 +22,6 @@ export interface CertificateQuery {
   candidateId?: string;
 
   companyId?: string;
-
-  branchId?: string;
-
   examCenterId?: string;
 
   certificateStatus?: CertificateStatus;

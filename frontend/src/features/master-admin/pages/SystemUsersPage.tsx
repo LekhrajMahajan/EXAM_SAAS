@@ -155,12 +155,7 @@ export const SystemUsersPage = ({ isTab = false }: { isTab?: boolean }) => {
         </span>
       ),
     },
-    {
-      id: "branch",
-      header: "Branch",
-      accessorKey: "department", // Using department since we don't have branch
-      cell: () => <span className="text-slate-400 text-sm italic">N/A</span>,
-    },
+
     {
       id: "department",
       header: "Department",

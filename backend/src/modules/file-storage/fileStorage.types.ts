@@ -100,9 +100,6 @@ export interface IFileStorage {
   uploadedBy?: Types.ObjectId;
 
   companyId?: Types.ObjectId;
-
-  branchId?: Types.ObjectId;
-
   candidateId?: Types.ObjectId;
 
   employeeId?: Types.ObjectId;

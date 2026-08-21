@@ -8,11 +8,13 @@ import { Input } from '@/shared/components/ui/input';
 import { Button } from '@/shared/components/ui/button';
 import { Search, QrCode } from 'lucide-react';
 import { VerificationCard } from '../components/VerificationCard';
-import { DUMMY_CERTIFICATES } from '../utils/placeholder';
+import { useCertificates } from '../hooks/useCertificates';
 import type { CertificateRecord } from '../types';
 
 export function CertificateVerificationPage() {
   const [verificationResult, setVerificationResult] = useState<CertificateRecord | null>(null);
+  const { data: certData } = useCertificates();
+  const certificates = certData?.data || [];
   
   const { register, handleSubmit, formState: { errors } } = useForm<VerifyCertificateForm>({
     resolver: zodResolver(verifyCertificateSchema),
@@ -20,7 +22,7 @@ export function CertificateVerificationPage() {
 
   const onSubmit = (data: VerifyCertificateForm) => {
     // Mock lookup
-    const found = DUMMY_CERTIFICATES.find(c => c.certificateNumber === data.certificateNumber);
+    const found = certificates.find(c => c.certificateNumber === data.certificateNumber);
     if (found) {
        setVerificationResult(found);
     } else {
@@ -42,43 +44,43 @@ export function CertificateVerificationPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="space-y-6 p-6 max-w-4xl mx-auto">
       <PageHeader 
         title="Verify Certificate" 
         description="Check the authenticity of an issued certificate using its unique number or QR code." 
       />
 
-      <Card className="border-slate-200 shadow-sm mb-8">
+      <Card className="border-border shadow-sm mb-8">
          <CardContent className="p-6 sm:p-8">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                
                <div>
-                  <h3 className="font-bold text-slate-900 mb-2">Manual Verification</h3>
-                  <p className="text-sm text-slate-500 mb-4">Enter the certificate number located at the top-right of the document.</p>
+                  <h3 className="font-bold text-foreground mb-2">Manual Verification</h3>
+                  <p className="text-sm text-muted-foreground mb-4">Enter the certificate number located at the top-right of the document.</p>
                   
                   <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                      <div>
                        <div className="relative w-full">
-                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                          <Input 
                            placeholder="e.g. CERT-2026-99182" 
-                           className="pl-9 font-mono"
+                           className="pl-9 font-mono bg-muted/50"
                            {...register('certificateNumber')}
                          />
                        </div>
-                       {errors.certificateNumber && <p className="text-xs text-red-500 mt-1">{errors.certificateNumber.message}</p>}
+                       {errors.certificateNumber && <p className="text-xs text-destructive mt-1">{errors.certificateNumber.message}</p>}
                      </div>
-                     <Button type="submit" className="w-full bg-slate-900 hover:bg-slate-800">Verify Now</Button>
+                     <Button type="submit" className="w-full">Verify Now</Button>
                   </form>
                </div>
 
-               <div className="hidden md:flex flex-col items-center justify-center border-l border-slate-200 pl-8">
-                  <div className="w-24 h-24 bg-slate-50 border border-slate-200 border-dashed rounded-xl flex items-center justify-center mb-4">
-                     <QrCode className="w-10 h-10 text-slate-400" />
+               <div className="hidden md:flex flex-col items-center justify-center border-l border-border pl-8">
+                  <div className="w-24 h-24 bg-card border border-border border-dashed rounded-xl flex items-center justify-center mb-4">
+                     <QrCode className="w-10 h-10 text-muted-foreground" />
                   </div>
-                  <h3 className="font-bold text-slate-900 mb-1">Scan QR Code</h3>
-                  <p className="text-sm text-slate-500 text-center mb-4">Use a scanner device or webcam to read the QR code on the physical certificate.</p>
-                  <Button variant="outline">Activate Scanner</Button>
+                  <h3 className="font-bold text-foreground mb-1">Scan QR Code</h3>
+                  <p className="text-sm text-muted-foreground text-center mb-4">Use a scanner device or webcam to read the QR code on the physical certificate.</p>
+                  <Button variant="outline" className="bg-card">Activate Scanner</Button>
                </div>
 
             </div>

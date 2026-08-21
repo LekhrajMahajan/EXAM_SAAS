@@ -52,13 +52,6 @@ const examSubmissionSchema = new Schema<IExamSubmission>(
       index: true,
     },
 
-    branchId: {
-      type: Schema.Types.ObjectId,
-      ref: "Branch",
-      required: true,
-      index: true,
-    },
-
     examCenterId: {
       type: Schema.Types.ObjectId,
       ref: "ExamCenter",
@@ -193,10 +186,7 @@ examSubmissionSchema.index({
   submissionStatus: 1,
 });
 
-examSubmissionSchema.index({
-  companyId: 1,
-  branchId: 1,
-});
+
 
 examSubmissionSchema.index({
   examCenterId: 1,

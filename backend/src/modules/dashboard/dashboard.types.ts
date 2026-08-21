@@ -64,9 +64,6 @@ export interface IDashboardFilter {
   endDate?: Date;
 
   companyId?: string;
-
-  branchId?: string;
-
   centerId?: string;
 }
 

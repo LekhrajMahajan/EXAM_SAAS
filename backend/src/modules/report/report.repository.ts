@@ -6,7 +6,7 @@ class ReportRepository extends BaseRepository<any> {
     super(Report, [
       "generatedBy",
       "companyId",
-      "branchId",
+
       "centerId",
       "examId",
       "fileId"

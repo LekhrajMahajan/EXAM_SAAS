@@ -88,9 +88,6 @@ export interface IActivityLog {
   performedFor?: Types.ObjectId;
 
   companyId?: Types.ObjectId;
-
-  branchId?: Types.ObjectId;
-
   candidateId?: Types.ObjectId;
 
   employeeId?: Types.ObjectId;

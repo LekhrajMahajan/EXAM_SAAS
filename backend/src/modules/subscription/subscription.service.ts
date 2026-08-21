@@ -66,7 +66,7 @@ class SubscriptionService {
       autoRenewal: autoRenewal || false,
       notes,
       assignedBy: new Types.ObjectId(assignedBy),
-      maxBranches: plan.usageLimits?.maxBranches,
+
       maxCenters: plan.usageLimits?.maxCenters,
       maxEmployees: plan.usageLimits?.maxEmployees,
       maxCandidates: plan.usageLimits?.maxCandidates,
@@ -88,7 +88,7 @@ class SubscriptionService {
       subscriptionPlan: plan.planCode as "STARTER" | "PROFESSIONAL" | "ENTERPRISE", // Legacy enum logic might conflict, but we try
       subscriptionStartDate: new Date(startDate),
       subscriptionEndDate: new Date(endDate),
-      maxBranches: plan.usageLimits?.maxBranches,
+
       maxCenters: plan.usageLimits?.maxCenters,
       maxEmployees: plan.usageLimits?.maxEmployees,
       maxCandidates: plan.usageLimits?.maxCandidates,
@@ -384,7 +384,7 @@ class SubscriptionService {
       autoRenewal: false,
       notes: `Purchased via Razorpay Order: ${orderId}`,
       assignedBy: actorId,
-      maxBranches: plan.usageLimits?.maxBranches,
+
       maxCenters: plan.usageLimits?.maxCenters,
       maxEmployees: plan.usageLimits?.maxEmployees,
       maxCandidates: plan.usageLimits?.maxCandidates,
@@ -407,7 +407,7 @@ class SubscriptionService {
       subscriptionId: subscription._id as Types.ObjectId,
       subscriptionStartDate: startDate,
       subscriptionEndDate: endDate,
-      maxBranches: plan.usageLimits?.maxBranches,
+
       maxCenters: plan.usageLimits?.maxCenters,
       maxEmployees: plan.usageLimits?.maxEmployees,
       maxCandidates: plan.usageLimits?.maxCandidates,

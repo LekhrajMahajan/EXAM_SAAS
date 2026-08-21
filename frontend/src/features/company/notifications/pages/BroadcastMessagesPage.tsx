@@ -10,7 +10,7 @@ export function BroadcastMessagesPage() {
     <div className="space-y-6 max-w-4xl">
       <PageHeader 
         title="Broadcast Messages" 
-        description="Trigger manual notifications to specific user segments, branches, or centers." 
+        description="Trigger manual notifications to specific user segments or centers." 
       />
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">

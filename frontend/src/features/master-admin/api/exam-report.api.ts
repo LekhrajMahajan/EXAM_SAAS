@@ -18,7 +18,7 @@ export interface ExamListParams {
   search?: string;
   status?: string;
   companyId?: string;
-  branchId?: string;
+
   centerId?: string;
 }
 
@@ -32,7 +32,7 @@ export interface ExamListItem {
   shift: string;
   examCenter: string;
   company: string;
-  branch: string;
+
   candidatesAssigned: number;
   candidatesAppeared: number;
   candidatesAbsent: number;

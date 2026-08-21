@@ -111,12 +111,6 @@ const observerSchema = new Schema(
       required: true,
     },
 
-    branchId: {
-      type: Schema.Types.ObjectId,
-
-      ref: "Branch",
-    },
-
     centerId: {
       type: Schema.Types.ObjectId,
 

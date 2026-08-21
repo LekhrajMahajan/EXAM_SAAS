@@ -6,10 +6,12 @@ export interface TopicListParams {
   page?: number;
   limit?: number;
   search?: string;
+  examId?: string;
 }
 
 export interface Topic {
   _id: string;
+  examId?: any;
   subjectId: any;
   subjectName?: string;
   chapterId: string;

@@ -60,9 +60,6 @@ export enum Category {
 
 export interface ICandidate {
   companyId: Types.ObjectId;
-
-  branchId: Types.ObjectId;
-
   centerId: Types.ObjectId;
 
   seatId?: Types.ObjectId | null;

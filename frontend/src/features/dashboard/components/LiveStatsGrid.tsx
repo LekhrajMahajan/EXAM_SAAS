@@ -91,7 +91,7 @@ export function LiveStatsGrid({ stats, isLoading = false }: LiveStatsGridProps) 
         const scheme = COLOR_MAP[stat.colorScheme] || COLOR_MAP.slate;
 
         const trendColor =
-          stat.trend === 'up' ? 'text-emerald-500' :
+          stat.trend === 'up' ? 'text-[#2D3E2C]' :
           stat.trend === 'down' ? 'text-rose-500' :
           'text-slate-400';
 

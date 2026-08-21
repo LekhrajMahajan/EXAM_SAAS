@@ -30,7 +30,7 @@ export function ResultAnswersView({ answers }: ResultDetailsProps) {
   return (
     <div className="space-y-4">
       {answers.map((answer, index) => (
-        <Card key={answer.questionId || index} className={`border-l-4 ${answer.isCorrect ? 'border-l-emerald-500' : (answer.isAnswered ? 'border-l-rose-500' : 'border-l-slate-300')}`}>
+        <Card key={answer.questionId || index} className={`border-l-4 ${answer.isCorrect ? 'border-l-primary' : (answer.isAnswered ? 'border-l-rose-500' : 'border-l-slate-300')}`}>
           <CardHeader className="py-4">
             <div className="flex items-start justify-between">
               <div className="flex items-start gap-3">
@@ -38,16 +38,16 @@ export function ResultAnswersView({ answers }: ResultDetailsProps) {
                   {index + 1}
                 </span>
                 <div 
-                  className="text-sm font-medium text-slate-200 prose prose-sm max-w-none prose-invert" 
+                  className="text-sm font-medium text-slate-800 dark:text-slate-200 prose prose-sm max-w-none dark:prose-invert" 
                   dangerouslySetInnerHTML={{ __html: answer.questionText || 'Unknown Question' }} 
                 />
               </div>
               <div className="shrink-0 flex items-center gap-2">
-                <span className={`text-sm font-bold ${answer.isCorrect ? 'text-emerald-600' : (answer.isAnswered ? 'text-rose-600' : 'text-slate-500')}`}>
+                <span className={`text-sm font-bold ${answer.isCorrect ? 'text-primary' : (answer.isAnswered ? 'text-rose-600' : 'text-slate-500')}`}>
                   {answer.isCorrect ? `+${answer.marks}` : (answer.isAnswered ? `-${answer.negativeMarks}` : '0')}
                 </span>
                 {answer.isCorrect ? (
-                  <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                  <CheckCircle2 className="w-5 h-5 text-primary" />
                 ) : answer.isAnswered ? (
                   <XCircle className="w-5 h-5 text-rose-500" />
                 ) : (
@@ -58,15 +58,27 @@ export function ResultAnswersView({ answers }: ResultDetailsProps) {
           </CardHeader>
           <CardContent className="py-0 pb-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ml-9">
-              <div className="bg-slate-800/50 rounded p-3 border border-slate-700/50">
-                <span className="text-xs text-slate-400 font-medium uppercase tracking-wider block mb-1">Candidate&apos;s Answer</span>
-                <span className={`text-sm font-medium ${answer.isAnswered ? (answer.isCorrect ? 'text-emerald-400' : 'text-rose-400') : 'text-slate-500'}`}>
+              <div className={`rounded p-3 border ${
+                answer.isAnswered && !answer.isCorrect 
+                  ? 'bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-900/50'
+                  : answer.isCorrect
+                    ? 'bg-[#2D3E2C] border-[#2D3E2C]'
+                    : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700/50'
+              }`}>
+                <span className={`text-xs font-medium uppercase tracking-wider block mb-1 ${
+                  answer.isCorrect ? 'text-[#E4FD97]/70' : 'text-slate-500 dark:text-slate-400'
+                }`}>Candidate&apos;s Answer</span>
+                <span className={`text-sm font-medium ${
+                  answer.isAnswered 
+                    ? (answer.isCorrect ? 'text-[#E4FD97]' : 'text-rose-700 dark:text-rose-400') 
+                    : 'text-slate-500'
+                }`}>
                   {answer.isAnswered ? answer.selectedAnswer || 'Selected empty answer' : 'Not Attempted'}
                 </span>
               </div>
-              <div className="bg-emerald-950/30 rounded p-3 border border-emerald-900/50">
-                <span className="text-xs text-emerald-500 font-medium uppercase tracking-wider block mb-1">Correct Answer</span>
-                <span className="text-sm font-medium text-emerald-400">
+              <div className="bg-[#2D3E2C] rounded p-3 border border-[#2D3E2C]">
+                <span className="text-xs text-[#E4FD97]/70 font-medium uppercase tracking-wider block mb-1">Correct Answer</span>
+                <span className="text-sm font-medium text-[#E4FD97]">
                   {answer.correctAnswer}
                 </span>
               </div>

@@ -222,10 +222,7 @@ export const UserDetailsPage = () => {
                   <div className="text-sm text-muted-foreground mb-1">Company</div>
                   <div className="font-medium">{companyObj.companyName || companyObj.legalName || (typeof employee.companyId === 'string' ? employee.companyId : 'N/A')}</div>
                 </div>
-                <div>
-                  <div className="text-sm text-muted-foreground mb-1">Branch</div>
-                  <div className="font-medium">{typeof employee.branchId === 'object' ? (employee.branchId as Record<string, unknown>)?.name as string : employee.branchId || 'Head Office'}</div>
-                </div>
+
                 <div>
                   <div className="text-sm text-muted-foreground mb-1">Department</div>
                   <div className="font-medium">{employee.department || 'N/A'}</div>

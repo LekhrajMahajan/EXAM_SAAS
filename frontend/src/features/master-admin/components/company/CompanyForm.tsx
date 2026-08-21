@@ -40,22 +40,22 @@ const FormFileUpload = ({ value, onChange, accept, maxSizeMB, id }: { value: str
   return (
     <div className="space-y-2">
       {value ? (
-         <div className="flex items-center gap-2 border p-2 rounded-lg bg-slate-50">
+         <div className="flex items-center gap-2 border border-input p-2 rounded-lg bg-background">
            <div className="flex-1 overflow-hidden">
-             {value.startsWith('http') || value.startsWith('blob:') || value.startsWith('/') ? (
+             {value.startsWith('http') || value.startsWith('blob:') || value.startsWith('/') || value.startsWith('data:') ? (
                <a href={value.split('#')[0]} target="_blank" rel="noreferrer" className="text-sm text-primary truncate hover:underline block">
                  {value.includes('#') ? decodeURIComponent(value.split('#')[1]) : value.split('/').pop() || 'View File'}
                </a>
              ) : (
-               <span className="text-sm text-slate-600 truncate block">{value}</span>
+               <span className="text-sm text-muted-foreground truncate block">{value}</span>
              )}
            </div>
-           <Button variant="ghost" size="sm" onClick={() => onChange("")} type="button" className="text-red-600 hover:text-red-700 hover:bg-red-50">Remove</Button>
+           <Button variant="ghost" size="sm" onClick={() => onChange("")} type="button" className="text-destructive hover:text-destructive hover:bg-destructive/10">Remove</Button>
          </div>
       ) : (
          <div className="relative">
-           {isUploading && <div className="absolute inset-0 bg-white/75 flex items-center justify-center z-10 rounded-lg">
-             <div className="bg-white border shadow-sm px-4 py-2 rounded-md text-sm font-medium text-primary flex items-center gap-2">
+           {isUploading && <div className="absolute inset-0 bg-background/80 flex items-center justify-center z-10 rounded-lg backdrop-blur-sm">
+             <div className="bg-background border shadow-sm px-4 py-2 rounded-md text-sm font-medium text-primary flex items-center gap-2">
                <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" /> Uploading...
              </div>
            </div>}
@@ -120,8 +120,10 @@ export const CompanyForm = ({ company, onSubmit, isPending, submitButtonText }: 
       mouDocument: "",
       panCardDocument: "",
       gstDocument: "",
+      aadharCardDocument: "",
+      msmeCertificateDocument: "",
       subscriptionPlan: undefined,
-      maxBranches: 1,
+
       maxCenters: 1,
       maxEmployees: 5,
       maxCandidates: 100,
@@ -156,10 +158,12 @@ export const CompanyForm = ({ company, onSubmit, isPending, submitButtonText }: 
         mouDocument: company.mouDocument || "",
         panCardDocument: company.panCardDocument || "",
         gstDocument: company.gstDocument || "",
+        aadharCardDocument: company.aadharCardDocument || "",
+        msmeCertificateDocument: company.msmeCertificateDocument || "",
         subscriptionPlan: company.subscriptionPlan || "STARTER",
         subscriptionStartDate: company.subscriptionStartDate ? new Date(company.subscriptionStartDate).toISOString() : undefined,
         subscriptionEndDate: company.subscriptionEndDate ? new Date(company.subscriptionEndDate).toISOString() : undefined,
-        maxBranches: company.maxBranches || 1,
+
         maxCenters: company.maxCenters || 1,
         maxEmployees: company.maxEmployees || 5,
         maxCandidates: company.maxCandidates || 100,
@@ -168,7 +172,7 @@ export const CompanyForm = ({ company, onSubmit, isPending, submitButtonText }: 
   }, [company, form]);
 
   const stepFields: Record<number, (keyof CompanyFormValues)[]> = {
-    1: ["companyCode", "companyName", "legalName", "companyType", "customCompanyType", "registrationNumber", "gstNumber", "panNumber", "registrationDocument", "mouDocument", "panCardDocument", "gstDocument"],
+    1: ["companyCode", "companyName", "legalName", "companyType", "customCompanyType", "registrationNumber", "gstNumber", "panNumber", "registrationDocument", "mouDocument", "panCardDocument", "gstDocument", "aadharCardDocument", "msmeCertificateDocument"],
     2: ["ownerName", "email", "phone", "alternatePhone", "website"],
     3: ["country", "state", "city", "pincode", "address"],
   };
@@ -317,21 +321,21 @@ export const CompanyForm = ({ company, onSubmit, isPending, submitButtonText }: 
                   <FormField control={form.control} name="registrationNumber" render={({ field }) => (
                     <FormItem>
                       <FormLabel>Registration Number</FormLabel>
-                      <FormControl><Input placeholder="CIN/LLPIN" {...field} /></FormControl>
+                      <FormControl><Input placeholder="CIN/LLPIN" {...field} maxLength={21} onChange={(e) => field.onChange(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
                   <FormField control={form.control} name="gstNumber" render={({ field }) => (
                     <FormItem>
                       <FormLabel>GST Number</FormLabel>
-                      <FormControl><Input placeholder="GSTIN" {...field} /></FormControl>
+                      <FormControl><Input placeholder="GSTIN" {...field} maxLength={15} onChange={(e) => field.onChange(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
                   <FormField control={form.control} name="panNumber" render={({ field }) => (
                     <FormItem>
                       <FormLabel>PAN Number</FormLabel>
-                      <FormControl><Input placeholder="PAN" {...field} /></FormControl>
+                      <FormControl><Input placeholder="PAN" {...field} maxLength={10} onChange={(e) => field.onChange(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
@@ -364,6 +368,20 @@ export const CompanyForm = ({ company, onSubmit, isPending, submitButtonText }: 
                       <FormMessage />
                     </FormItem>
                   )} />
+                  <FormField control={form.control} name="aadharCardDocument" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Aadhar Card (PDF)</FormLabel>
+                      <FormControl><FormFileUpload value={field.value || ""} onChange={field.onChange} accept="application/pdf" /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <FormField control={form.control} name="msmeCertificateDocument" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>MSME Certificate (PDF)</FormLabel>
+                      <FormControl><FormFileUpload value={field.value || ""} onChange={field.onChange} accept="application/pdf" /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
                 </div>
               </div>
             )}
@@ -389,14 +407,14 @@ export const CompanyForm = ({ company, onSubmit, isPending, submitButtonText }: 
                   <FormField control={form.control} name="phone" render={({ field }) => (
                     <FormItem>
                       <FormLabel>Mobile Number *</FormLabel>
-                      <FormControl><Input placeholder="10 digit number" {...field} /></FormControl>
+                      <FormControl><Input placeholder="10 digit number" {...field} maxLength={10} onChange={(e) => field.onChange(e.target.value.replace(/\D/g, ''))} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
                   <FormField control={form.control} name="alternatePhone" render={({ field }) => (
                     <FormItem>
                       <FormLabel>Alternate Mobile</FormLabel>
-                      <FormControl><Input placeholder="10 digit number (Optional)" {...field} /></FormControl>
+                      <FormControl><Input placeholder="10 digit number (Optional)" {...field} maxLength={10} onChange={(e) => field.onChange(e.target.value.replace(/\D/g, ''))} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />

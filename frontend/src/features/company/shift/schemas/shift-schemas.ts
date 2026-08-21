@@ -4,7 +4,7 @@ export const shiftGeneralSchema = z.object({
   name: z.string().min(3, 'Shift name must be at least 3 characters'),
   code: z.string().min(2, 'Shift code must be at least 2 characters'),
   examId: z.string().min(1, 'Exam is required'),
-  branchId: z.string().min(1, 'Branch is required'),
+
   centerId: z.string().min(1, 'Center is required'),
   stateId: z.string().min(1, 'State is required'),
   cityId: z.string().min(1, 'City is required'),

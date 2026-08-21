@@ -16,7 +16,6 @@ export interface Employee {
   phone: string;
   alternateMobile?: string | null;
   username?: string | null;
-  branchId?: string | Record<string, any>;
   department: string;
   designation: string;
   role: string;

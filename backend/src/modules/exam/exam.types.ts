@@ -56,9 +56,16 @@ export enum ExamApprovalStatus {
 
 export interface ISecuritySettings {
   faceVerification: boolean;
+  faceDetectionEnabled: boolean;
+  faceDetectionLimit: number;
+  multipleFacesEnabled: boolean;
+  multipleFacesLimit: number;
+  proctoringWarningEnabled: boolean;
+  proctoringWarningLimit: number;
   webcamMonitoring: boolean;
   screenRecording: boolean;
   screenSharingDetection: boolean;
+  tabSwitchingEnabled: boolean;
   tabSwitchLimit: number;
   browserLock: boolean;
   fullScreenMode: boolean;
@@ -107,6 +114,8 @@ export interface IExam {
 
   endTime: string;
 
+  shift?: string;
+
   duration: number;
 
   totalMarks: number;
@@ -126,6 +135,10 @@ export interface IExam {
   difficulty?: string;
   
   instructions?: string;
+  
+  shuffleSubjects?: boolean;
+
+  shuffleQuestions?: boolean;
   
   subjects?: { name: string; questions: number }[];
 
@@ -148,6 +161,12 @@ export interface IExam {
   endedAt?: Date | null;
 
   endRemarks?: string;
+  
+  isResultGenerated: boolean;
+
+  resultGeneratedAt?: Date | null;
+
+  resultGeneratedBy?: Types.ObjectId | null;
 
   isResultPublished: boolean;
 

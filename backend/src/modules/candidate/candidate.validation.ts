@@ -33,8 +33,6 @@ const postalCodeRegex = /^\d{6}$/;
 const candidateBodySchema = z.object({
   companyId: objectId,
 
-  branchId: objectId,
-
   centerId: objectId,
 
   candidateCode: z
@@ -236,7 +234,6 @@ export const hallTicketSchema = z.object({
 export const importCandidateSchema = z.object({
   body: z.object({
     companyId: objectId,
-    branchId: objectId,
     centerId: objectId,
   })
 });
@@ -267,8 +264,6 @@ export const candidateQuerySchema = z.object({
   search: z.string().optional(),
 
   companyId: objectId.optional(),
-
-  branchId: objectId.optional(),
 
   centerId: objectId.optional(),
 

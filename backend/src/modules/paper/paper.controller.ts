@@ -4,6 +4,7 @@ import paperService from "./paper.service";
 
 import { asyncHandler } from "../../utils/asyncHandler";
 import { sendResponse } from "../../utils/response";
+import Employee from "../employee/employee.model";
 
 import { HTTP_STATUS } from "../../constants/httpStatus";
 
@@ -295,18 +296,37 @@ export const removePaperQuestion = asyncHandler(async (req: Request, res: Respon
 export const getAssignedPapers = asyncHandler(async (req: Request, res: Response) => {
   let employeeId = (req as any).user?.employeeId;
   const companyId = (req as any).user?.companyId;
-  
-  if (!employeeId) {
-    const userId = (req as any).user?.userId || (req as any).user?.id;
-    const mongoose = require('mongoose');
-    const Employee = mongoose.model('Employee');
-    const employee = await Employee.findOne({ userId });
-    if (employee) {
-      employeeId = employee._id.toString();
+  const userId = (req as any).user?.userId || (req as any).user?.id;
+  const userEmail = (req as any).user?.email;
+
+  console.log(`[getAssignedPapers] userId=${userId}, employeeId=${employeeId}, email=${userEmail}`);
+
+  // Strategy 1: lookup by userId
+  if (!employeeId && userId) {
+    const emp = await Employee.findOne({ userId }).select('_id');
+    if (emp) {
+      employeeId = emp._id.toString();
+      console.log(`[getAssignedPapers] Resolved employeeId via userId: ${employeeId}`);
     }
   }
 
-  const result = await paperService.getAssignedPapersWithAutoCreate(employeeId, companyId);
+  // Strategy 2: lookup by email
+  if (!employeeId && userEmail) {
+    const emp = await Employee.findOne({ email: userEmail }).select('_id');
+    if (emp) {
+      employeeId = emp._id.toString();
+      console.log(`[getAssignedPapers] Resolved employeeId via email: ${employeeId}`);
+    }
+  }
+
+  console.log(`[getAssignedPapers] Final employeeId=${employeeId}`);
+
+  // DEEBUUG
+  const StaffAssignment = require('../staff-assignment/staffAssignment.model').default;
+  const allAss = await StaffAssignment.find({ employeeId }).lean();
+  console.log(`[getAssignedPapers] Raw StaffAssignments in DB for employeeId ${employeeId}:`, JSON.stringify(allAss, null, 2));
+
+  const result = await paperService.getAssignedPapersWithAutoCreate(employeeId, companyId, userId);
 
   return sendResponse(res, HTTP_STATUS.OK, {
     success: true,
@@ -314,6 +334,7 @@ export const getAssignedPapers = asyncHandler(async (req: Request, res: Response
     data: result,
   });
 });
+
 
 /*
 |--------------------------------------------------------------------------

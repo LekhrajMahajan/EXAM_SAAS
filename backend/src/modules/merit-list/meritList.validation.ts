@@ -28,8 +28,6 @@ export const createMeritListSchema = z.object({
 
     companyId: objectId,
 
-    branchId: objectId,
-
     examCenterId: objectId,
 
     subjectId: objectId,
@@ -135,8 +133,6 @@ export const meritListQuerySchema = z.object({
     candidateId: objectId.optional(),
 
     companyId: objectId.optional(),
-
-    branchId: objectId.optional(),
 
     examCenterId: objectId.optional(),
 

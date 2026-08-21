@@ -72,10 +72,16 @@ class TopicService extends BaseService<ITopic> {
       payload.subjectId!.toString(),
       payload.chapterId!.toString(),
       payload.topicCode!,
+      payload.examId?.toString(),
     );
 
     if (existingCode) {
-      throw new ApiError(HTTP_STATUS.CONFLICT, "Topic code already exists.");
+      // If topic with same code exists in same exam scope, it's a duplicate request — return existing silently
+      if (payload.examId && existingCode.examId?.toString() === payload.examId.toString()) {
+        return existingCode;
+      }
+      // Different exam scope but same code — generate a new unique code automatically
+      payload.topicCode = `${payload.topicCode!.substring(0, 25)}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
     }
 
     const existingName = await topicRepository.findByTopicName(
@@ -83,10 +89,15 @@ class TopicService extends BaseService<ITopic> {
       payload.subjectId!.toString(),
       payload.chapterId!.toString(),
       payload.topicName!,
+      payload.examId?.toString(),
     );
 
     if (existingName) {
-      throw new ApiError(HTTP_STATUS.CONFLICT, "Topic name already exists.");
+      // If topic with same name exists in same exam scope, return existing (idempotent — no error)
+      if (payload.examId && existingName.examId?.toString() === payload.examId.toString()) {
+        return existingName;
+      }
+      // Different exam scope — this is allowed, so proceed with creation
     }
 
     const existingNumber = await topicRepository.findByTopicNumber(
@@ -94,10 +105,12 @@ class TopicService extends BaseService<ITopic> {
       payload.subjectId!.toString(),
       payload.chapterId!.toString(),
       payload.topicNumber!,
+      payload.examId?.toString(),
     );
 
     if (existingNumber) {
-      throw new ApiError(HTTP_STATUS.CONFLICT, "Topic number already exists.");
+      // If topic number conflicts in same exam, generate a new unique number
+      payload.topicNumber = Math.floor(Date.now() / 1000) + Math.floor(Math.random() * 99999);
     }
 
     return await super.create(payload);

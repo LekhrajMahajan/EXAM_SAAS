@@ -22,6 +22,7 @@ import {
 } from "./exam.controller";
 
 import { authenticate } from "../../middleware/authenticate";
+import mongoose from "mongoose";
 import { authorize } from "../../middleware/authorize";
 import { validate } from "../../middleware/validate";
 import { checkUsageLimit } from "../../middleware/checkUsageLimit";
@@ -56,7 +57,6 @@ router.get(
   authenticate,
   authorize(UserRole.MASTER_ADMIN,
     UserRole.COMPANY_ADMIN,
-    UserRole.BRANCH_MANAGER,
     UserRole.CENTER_MANAGER,
     UserRole.EXAM_MANAGER,
   ),
@@ -92,10 +92,10 @@ router.get(
   authenticate,
   authorize(UserRole.MASTER_ADMIN,
     UserRole.COMPANY_ADMIN,
-    UserRole.BRANCH_MANAGER,
     UserRole.CENTER_MANAGER,
     UserRole.EXAM_MANAGER,
     UserRole.GOVT_AUTHORITY,
+    UserRole.PRIVATE_AUTHORITY,
   ),
   getExams,
 );
@@ -111,7 +111,6 @@ router.get(
   authenticate,
   authorize(UserRole.MASTER_ADMIN,
     UserRole.COMPANY_ADMIN,
-    UserRole.BRANCH_MANAGER,
     UserRole.CENTER_MANAGER,
     UserRole.EXAM_MANAGER,
   ),
@@ -129,7 +128,6 @@ router.get(
   authenticate,
   authorize(UserRole.MASTER_ADMIN,
     UserRole.COMPANY_ADMIN,
-    UserRole.BRANCH_MANAGER,
     UserRole.CENTER_MANAGER,
     UserRole.EXAM_MANAGER,
   ),

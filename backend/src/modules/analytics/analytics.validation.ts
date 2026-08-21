@@ -23,7 +23,6 @@ export const analyticsFilterSchema = z.object({
     startDate: z.coerce.date().optional(),
     endDate: z.coerce.date().optional(),
     companyId: objectId.optional(),
-    branchId: objectId.optional(),
     centerId: objectId.optional(),
     examId: objectId.optional(),
     subjectId: objectId.optional(),

@@ -53,7 +53,7 @@ const subscriptionSchema = new Schema<ISubscription>(
       type: Boolean,
       default: false,
     },
-    maxBranches: { type: Number },
+
     maxCenters: { type: Number },
     maxEmployees: { type: Number },
     maxCandidates: { type: Number },

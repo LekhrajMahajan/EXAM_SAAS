@@ -21,14 +21,23 @@ class TopicRepository extends BaseRepository<ITopic> {
     subjectId: string,
     chapterId: string,
     topicCode: string,
+    examId?: string,
   ) {
-    return await Topic.findOne({
+    const query: any = {
       companyId,
       subjectId,
       chapterId,
       topicCode,
       isDeleted: false,
-    });
+    };
+    // When examId is provided, STRICTLY scope to that exam only
+    // Use $exists check so topics from OTHER exams (or global) never conflict
+    if (examId) {
+      query.examId = examId;
+    } else {
+      query.examId = { $exists: false };
+    }
+    return await Topic.findOne(query);
   }
 
   /*
@@ -41,14 +50,22 @@ class TopicRepository extends BaseRepository<ITopic> {
     subjectId: string,
     chapterId: string,
     topicName: string,
+    examId?: string,
   ) {
-    return await Topic.findOne({
+    const query: any = {
       companyId,
       subjectId,
       chapterId,
       topicName,
       isDeleted: false,
-    });
+    };
+    // When examId is provided, STRICTLY scope to that exam only
+    if (examId) {
+      query.examId = examId;
+    } else {
+      query.examId = { $exists: false };
+    }
+    return await Topic.findOne(query);
   }
 
   /*
@@ -61,14 +78,22 @@ class TopicRepository extends BaseRepository<ITopic> {
     subjectId: string,
     chapterId: string,
     topicNumber: number,
+    examId?: string,
   ) {
-    return await Topic.findOne({
+    const query: any = {
       companyId,
       subjectId,
       chapterId,
       topicNumber,
       isDeleted: false,
-    });
+    };
+    // When examId is provided, STRICTLY scope to that exam only
+    if (examId) {
+      query.examId = examId;
+    } else {
+      query.examId = { $exists: false };
+    }
+    return await Topic.findOne(query);
   }
 
   /*

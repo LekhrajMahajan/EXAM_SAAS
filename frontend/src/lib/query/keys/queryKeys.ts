@@ -16,14 +16,6 @@ export const queryKeys = {
     detail: (id: string | number) => [...queryKeys.companies.details(), id] as const,
   },
   
-  branches: {
-    all: ['branches'] as const,
-    lists: () => [...queryKeys.branches.all, 'list'] as const,
-    list: (filters: string) => [...queryKeys.branches.lists(), { filters }] as const,
-    details: () => [...queryKeys.branches.all, 'detail'] as const,
-    detail: (id: string | number) => [...queryKeys.branches.details(), id] as const,
-  },
-  
   centers: {
     all: ['centers'] as const,
     lists: () => [...queryKeys.centers.all, 'list'] as const,

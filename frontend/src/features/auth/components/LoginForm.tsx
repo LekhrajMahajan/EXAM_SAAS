@@ -25,7 +25,7 @@ export const LoginForm: React.FC = () => {
         // Redirect based on role
         if (response.data.user.role === 'Master Admin' || response.data.user.role === 'MASTER_ADMIN') {
           navigate('/master-admin/dashboard')
-        } else if (response.data.user.role === 'Branch Manager' || response.data.user.role === 'BRANCH_MANAGER') {
+        } else if (response.data.user.role === 'Branch Manager') {
           navigate('/dashboard/branch-manager')
         } else {
           navigate('/dashboard')

@@ -15,11 +15,11 @@ export const DUMMY_OFFLINE_STATS: OfflineExamStats = {
 };
 
 export const DUMMY_SESSIONS: OfflineSession[] = [
-  { id: 'SES-001', sessionCode: 'SESS-2026-1020-AM', exam: 'SSC CGL 2026', subject: 'General Intelligence', center: 'Delhi Centre 01', branch: 'Delhi', date: '2026-10-20', shift: 'Morning', startTime: '10:00', endTime: '12:00', status: 'Running', totalCandidates: 420, presentCount: 398, roomCount: 8, invigilatorCount: 16 },
-  { id: 'SES-002', sessionCode: 'SESS-2026-1020-PM', exam: 'SSC CGL 2026', subject: 'Quantitative Aptitude', center: 'Delhi Centre 01', branch: 'Delhi', date: '2026-10-20', shift: 'Afternoon', startTime: '14:00', endTime: '16:00', status: 'Scheduled', totalCandidates: 418, presentCount: 0, roomCount: 8, invigilatorCount: 16 },
-  { id: 'SES-003', sessionCode: 'SESS-2026-1019-AM', exam: 'IBPS PO 2026', subject: 'Reasoning Ability', center: 'Mumbai Centre 02', branch: 'Mumbai', date: '2026-10-19', shift: 'Morning', startTime: '09:00', endTime: '11:00', status: 'Completed', totalCandidates: 360, presentCount: 341, roomCount: 7, invigilatorCount: 14 },
-  { id: 'SES-004', sessionCode: 'SESS-2026-1019-PM', exam: 'IBPS PO 2026', subject: 'English Language', center: 'Mumbai Centre 02', branch: 'Mumbai', date: '2026-10-19', shift: 'Afternoon', startTime: '14:00', endTime: '16:00', status: 'Completed', totalCandidates: 360, presentCount: 339, roomCount: 7, invigilatorCount: 14 },
-  { id: 'SES-005', sessionCode: 'SESS-2026-1021-AM', exam: 'RRB NTPC 2026', subject: 'General Awareness', center: 'Hyderabad Centre 03', branch: 'Hyderabad', date: '2026-10-21', shift: 'Morning', startTime: '10:00', endTime: '12:00', status: 'Scheduled', totalCandidates: 520, presentCount: 0, roomCount: 10, invigilatorCount: 20 },
+  { id: 'SES-001', sessionCode: 'SESS-2026-1020-AM', exam: 'SSC CGL 2026', subject: 'General Intelligence', center: 'Delhi Centre 01', date: '2026-10-20', shift: 'Morning', startTime: '10:00', endTime: '12:00', status: 'Running', totalCandidates: 420, presentCount: 398, roomCount: 8, invigilatorCount: 16 },
+  { id: 'SES-002', sessionCode: 'SESS-2026-1020-PM', exam: 'SSC CGL 2026', subject: 'Quantitative Aptitude', center: 'Delhi Centre 01', date: '2026-10-20', shift: 'Afternoon', startTime: '14:00', endTime: '16:00', status: 'Scheduled', totalCandidates: 418, presentCount: 0, roomCount: 8, invigilatorCount: 16 },
+  { id: 'SES-003', sessionCode: 'SESS-2026-1019-AM', exam: 'IBPS PO 2026', subject: 'Reasoning Ability', center: 'Mumbai Centre 02', date: '2026-10-19', shift: 'Morning', startTime: '09:00', endTime: '11:00', status: 'Completed', totalCandidates: 360, presentCount: 341, roomCount: 7, invigilatorCount: 14 },
+  { id: 'SES-004', sessionCode: 'SESS-2026-1019-PM', exam: 'IBPS PO 2026', subject: 'English Language', center: 'Mumbai Centre 02', date: '2026-10-19', shift: 'Afternoon', startTime: '14:00', endTime: '16:00', status: 'Completed', totalCandidates: 360, presentCount: 339, roomCount: 7, invigilatorCount: 14 },
+  { id: 'SES-005', sessionCode: 'SESS-2026-1021-AM', exam: 'RRB NTPC 2026', subject: 'General Awareness', center: 'Hyderabad Centre 03', date: '2026-10-21', shift: 'Morning', startTime: '10:00', endTime: '12:00', status: 'Scheduled', totalCandidates: 520, presentCount: 0, roomCount: 10, invigilatorCount: 20 },
 ];
 
 export const DUMMY_ATTENDANCE: AttendanceRecord[] = [

@@ -3,7 +3,6 @@ import crypto from "crypto";
 import nodemailer from "nodemailer";
 import centerRepository from "./center.repository";
 import companyService from "../company/company.service";
-import branchService from "../branch/branch.service";
 import authService from "../auth/auth.service";
 import User from "../auth/user.model";
 import emailService from "../email/email.service";
@@ -37,22 +36,9 @@ class CenterService extends BaseService<ICenter> {
   */
   async create(payload: Partial<ICenter>) {
     await companyService.getActiveById(payload.companyId!.toString());
-    const branch = await branchService.getActiveById(payload.branchId!.toString());
-
-    const branchCompanyId = (branch.companyId as any)._id
-      ? (branch.companyId as any)._id.toString()
-      : branch.companyId.toString();
-
-    if (branchCompanyId !== payload.companyId!.toString()) {
-      throw new ApiError(
-        HTTP_STATUS.BAD_REQUEST,
-        "Branch does not belong to the selected company.",
-      );
-    }
 
     const existingCode = await centerRepository.findByCenterCode(
       payload.companyId!.toString(),
-      payload.branchId!.toString(),
       payload.centerCode!,
     );
 
@@ -62,7 +48,6 @@ class CenterService extends BaseService<ICenter> {
 
     const existingName = await centerRepository.findByCenterName(
       payload.companyId!.toString(),
-      payload.branchId!.toString(),
       payload.centerName!,
     );
 
@@ -112,7 +97,6 @@ class CenterService extends BaseService<ICenter> {
     await CenterOnboarding.create({
       centerId: centerIdStr,
       companyId: payload.companyId,
-      branchId: payload.branchId,
       commercialAgreement: (payload as any).commercialAgreement || [],
       documents: (payload as any).documents || [],
       status: CenterSetupStatus.DRAFT,
@@ -128,7 +112,6 @@ class CenterService extends BaseService<ICenter> {
         if (!managerUser) {
           managerUser = await authService.createUser({
             companyId: center.companyId,
-            branchId: center.branchId,
             centerId: new Types.ObjectId(centerIdStr.toString()),
             firstName: payload.managerName || "Center",
             lastName: "Manager",
@@ -648,8 +631,8 @@ class CenterService extends BaseService<ICenter> {
   | Get Pending Verifications List
   |--------------------------------------------------------------------------
   */
-  async getPendingVerifications(companyId?: string, branchId?: string) {
-    const centers = await centerRepository.findPendingVerifications(companyId, branchId);
+  async getPendingVerifications(companyId?: string) {
+    const centers = await centerRepository.findPendingVerifications(companyId);
     
     // Fetch onboarding documents for each center
     const enrichedCenters = await Promise.all(
@@ -764,7 +747,6 @@ class CenterService extends BaseService<ICenter> {
     if (payload.centerCode && payload.centerCode !== center.centerCode) {
       const existingCode = await centerRepository.findByCenterCode(
         center.companyId._id.toString(),
-        center.branchId._id.toString(),
         payload.centerCode,
       );
 
@@ -776,7 +758,6 @@ class CenterService extends BaseService<ICenter> {
     if (payload.centerName && payload.centerName !== center.centerName) {
       const existingName = await centerRepository.findByCenterName(
         center.companyId._id.toString(),
-        center.branchId._id.toString(),
         payload.centerName,
       );
 

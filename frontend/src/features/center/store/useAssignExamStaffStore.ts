@@ -14,6 +14,8 @@ export interface ExamStaffAssignment {
     staffId: string;
     staffName: string;
     staffEmail?: string;
+    labId?: string;
+    labName?: string;
   }[];
   createdAt: string;
 }

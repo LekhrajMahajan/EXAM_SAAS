@@ -171,14 +171,6 @@ const fileStorageSchema = new Schema<IFileStorage>(
       index: true,
     },
 
-    branchId: {
-      type: Schema.Types.ObjectId,
-
-      ref: "Branch",
-
-      index: true,
-    },
-
     candidateId: {
       type: Schema.Types.ObjectId,
 

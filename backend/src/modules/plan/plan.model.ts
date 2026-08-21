@@ -34,7 +34,7 @@ const PlanSchema = new Schema<IPlan>(
       razorpayPlanIdYearly: { type: String },
     },
     usageLimits: {
-      maxBranches: { type: Number, default: 0 },
+
       maxCenters: { type: Number, default: 0 },
       maxEmployees: { type: Number, default: 0 },
       maxCandidates: { type: Number, default: 0 },

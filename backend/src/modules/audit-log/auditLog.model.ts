@@ -101,14 +101,6 @@ const auditLogSchema = new Schema<IAuditLog>(
       index: true,
     },
 
-    branchId: {
-      type: Schema.Types.ObjectId,
-
-      ref: "Branch",
-
-      index: true,
-    },
-
     examId: {
       type: Schema.Types.ObjectId,
 

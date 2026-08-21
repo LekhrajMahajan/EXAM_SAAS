@@ -19,7 +19,6 @@ export interface ActivityLogQuery {
     page?: number;
     limit?: number;
     companyId?: string;
-    branchId?: string;
     examId?: string;
     candidateId?: string;
     employeeId?: string;
@@ -31,6 +30,7 @@ export interface ActivityLogQuery {
     startDate?: Date;
     endDate?: Date;
     search?: string;
+    role?: string;
 }
 
 class ActivityLogRepository extends BaseRepository<IActivityLog> {
@@ -38,7 +38,6 @@ class ActivityLogRepository extends BaseRepository<IActivityLog> {
         super(ActivityLog, [
             "performedBy",
             "companyId",
-            "branchId",
             "candidateId",
             "employeeId",
             "examId"
@@ -57,6 +56,31 @@ class ActivityLogRepository extends BaseRepository<IActivityLog> {
             _id: id,
             isDeleted: true,
         });
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Find Recent
+    |--------------------------------------------------------------------------
+    */
+    async findRecent(
+        limit = 10,
+        filters: Record<string, unknown> = {}
+    ) {
+        const query: Record<string, unknown> = {
+            isDeleted: false,
+            ...filters,
+        };
+        return ActivityLog.find(query)
+            .sort({ createdAt: -1 })
+            .limit(limit)
+            .populate([
+                "performedBy",
+                "companyId",
+                "candidateId",
+                "employeeId",
+                "examId"
+            ]);
     }
 
     /*
@@ -93,26 +117,7 @@ class ActivityLogRepository extends BaseRepository<IActivityLog> {
         });
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Find Recent
-    |--------------------------------------------------------------------------
-    */
-    async findRecent(
-        limit = 10
-    ) {
-        return ActivityLog.find({
-            isDeleted: false,
-        })
-        .populate("performedBy")
-        .populate("candidateId")
-        .populate("employeeId")
-        .populate("examId")
-        .sort({
-            createdAt: -1,
-        })
-        .limit(limit);
-    }
+
 
     /*
     |--------------------------------------------------------------------------
@@ -126,7 +131,6 @@ class ActivityLogRepository extends BaseRepository<IActivityLog> {
             page = 1,
             limit = 20,
             companyId,
-            branchId,
             examId,
             candidateId,
             employeeId,
@@ -138,6 +142,7 @@ class ActivityLogRepository extends BaseRepository<IActivityLog> {
             startDate,
             endDate,
             search,
+            role,
         } = query;
 
         const filter: FilterQuery<ActivityLogDocument> = {
@@ -155,16 +160,19 @@ class ActivityLogRepository extends BaseRepository<IActivityLog> {
 
         if (companyId)
             filter.companyId = new Types.ObjectId(companyId);
-        if (branchId)
-            filter.branchId = new Types.ObjectId(branchId);
         if (examId)
             filter.examId = new Types.ObjectId(examId);
         if (candidateId)
             filter.candidateId = new Types.ObjectId(candidateId);
         if (employeeId)
             filter.employeeId = new Types.ObjectId(employeeId);
-        if (performedBy)
-            filter.performedBy = new Types.ObjectId(performedBy);
+        if (performedBy) {
+            if (Array.isArray(performedBy)) {
+                filter.performedBy = { $in: performedBy.map(id => new Types.ObjectId(id)) } as any;
+            } else {
+                filter.performedBy = new Types.ObjectId(performedBy);
+            }
+        }
         if (module)
             filter.module = module;
         if (activityType)
@@ -173,6 +181,8 @@ class ActivityLogRepository extends BaseRepository<IActivityLog> {
             filter.priority = priority;
         if (visibility)
             filter.visibility = visibility;
+        if (role)
+            filter.performedByRole = role;
 
         if (startDate || endDate) {
             filter.createdAt = {};
@@ -189,7 +199,6 @@ class ActivityLogRepository extends BaseRepository<IActivityLog> {
             await ActivityLog.find(filter)
                 .populate("performedBy")
                 .populate("companyId")
-                .populate("branchId")
                 .populate("candidateId")
                 .populate("employeeId")
                 .populate("examId")

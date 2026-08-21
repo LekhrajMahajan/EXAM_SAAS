@@ -25,8 +25,6 @@ export interface ISecurityEvent extends Document {
   userId?: Types.ObjectId;
   employeeId?: string;
   companyId?: Types.ObjectId;
-  branchId?: Types.ObjectId;
-  
   // Request & Device Info
   ipAddress?: string;
   device?: string;

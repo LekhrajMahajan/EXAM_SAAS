@@ -6,7 +6,7 @@ class CenterRepository extends BaseRepository<ICenter> {
   constructor() {
     super(
       Center,
-      ["companyId", "branchId"],
+      ["companyId"],
       ["centerCode", "centerName", "city"]
     );
   }
@@ -18,12 +18,11 @@ class CenterRepository extends BaseRepository<ICenter> {
   */
   async findByCenterCode(
     companyId: string,
-    branchId: string,
     centerCode: string,
   ) {
     return await Center.findOne({
       companyId,
-      branchId,
+
       centerCode,
       isDeleted: false,
     });
@@ -36,12 +35,11 @@ class CenterRepository extends BaseRepository<ICenter> {
   */
   async findByCenterName(
     companyId: string,
-    branchId: string,
     centerName: string,
   ) {
     return await Center.findOne({
       companyId,
-      branchId,
+
       centerName,
       isDeleted: false,
     });
@@ -51,7 +49,7 @@ class CenterRepository extends BaseRepository<ICenter> {
   | Find Pending Verifications
   |--------------------------------------------------------------------------
   */
-  async findPendingVerifications(companyId?: string, branchId?: string) {
+  async findPendingVerifications(companyId?: string) {
     const query: any = {
       isDeleted: false,
       setupStatus: "PENDING_VERIFICATION",
@@ -59,9 +57,7 @@ class CenterRepository extends BaseRepository<ICenter> {
     if (companyId && companyId.trim() !== "" && companyId !== "undefined") {
       query.companyId = companyId;
     }
-    if (branchId && branchId.trim() !== "" && branchId !== "undefined") {
-      query.branchId = branchId;
-    }
+
     return await Center.find(query)
       .select(
         "centerName centerCode email phone city state country setupStatus setupCurrentStep readinessScore complianceScore adminReviewRemarks createdAt"
