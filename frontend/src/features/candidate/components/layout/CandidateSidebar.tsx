@@ -27,7 +27,7 @@ export function CandidateSidebar() {
     { name: 'Exam Schedule', path: '/candidate/exam-schedule', icon: Calendar },
     { name: 'Mock Test', path: '/candidate/mock-test', icon: Laptop },
     { name: 'Results', path: '/candidate/results', icon: Trophy },
-    { name: 'Merit List', path: '/candidate/merit', icon: Medal },
+
     { name: 'Certificates', path: '/candidate/certificates', icon: Award },
     { name: 'Notifications', path: '/candidate/notifications', icon: Bell },
     { name: 'Support', path: '/candidate/support', icon: HelpCircle },

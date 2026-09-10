@@ -6,12 +6,12 @@ export const DynamicMetadataProvider = ({ children }: { children: React.ReactNod
 
   useEffect(() => {
     if (orgSettings?.data) {
-      const orgName = orgSettings.data.find(s => s.key === "ORG_NAME")?.value as string;
+      const appName = orgSettings.data.find(s => s.key === "APP_NAME")?.value as string;
       const faviconUrl = orgSettings.data.find(s => s.key === "LOGO_FAVICON")?.value as string;
 
       // Update document title
-      if (orgName) {
-        document.title = orgName;
+      if (appName) {
+        document.title = appName;
       } else {
         document.title = "ExamGuard Pro";
       }

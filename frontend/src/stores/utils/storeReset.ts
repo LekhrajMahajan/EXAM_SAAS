@@ -6,12 +6,16 @@ import { useCandidateStore } from '../candidate/candidate.store';
 import { useExamStore } from '../exam/exam.store';
 import { useAuthStore as useFeatureAuthStore } from '@/features/auth/store/useAuthStore';
 import { useAuthStore as useLegacyAuthStore } from '@/store/auth.store';
+import { queryClient } from '@/lib/query/client/queryClient';
 
 /**
  * Resets all non-persisted application stores to their default states.
  * Highly useful on user logout or token expiration.
  */
 export const resetAllStores = () => {
+  // Clear React Query cache immediately
+  queryClient.clear();
+  
   useGlobalAuthStore.getState().logout();
   useFeatureAuthStore.getState().clearAuth();
   useLegacyAuthStore.getState().logout();
@@ -26,4 +30,8 @@ export const resetAllStores = () => {
   localStorage.removeItem('examguard_auth_tokens');
   localStorage.removeItem('auth');
   localStorage.removeItem('auth-storage');
+  
+  // Clean up sessionStorage auth tokens and states
+  sessionStorage.removeItem('examguard_auth_tokens');
+  sessionStorage.removeItem('auth-storage');
 };

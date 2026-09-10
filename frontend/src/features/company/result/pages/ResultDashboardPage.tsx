@@ -81,7 +81,7 @@ export function ResultDashboardPage () {
         }
 
         // Fetch recent results (or all results for the table)
-        const resultsRes = await apiClient.get('/results')
+        const resultsRes = await apiClient.get('/results?limit=10000')
         if (resultsRes.data?.data) {
           setResults(resultsRes.data.data)
         }

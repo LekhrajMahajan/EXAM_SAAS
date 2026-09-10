@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { centerApi } from '../api/center.api';
 import type { CenterQueryParams } from '../types/center.types';
 import type { CenterFormValues } from '../schemas/center.schema';
@@ -128,11 +129,23 @@ export const useRejectDocument = () => {
 
 export const useCreateCenter = () => {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+
   return useMutation({
     mutationFn: (data: CenterFormValues) => centerApi.create(data),
-    onSuccess: () => {
+    onSuccess: (res: any) => {
       queryClient.invalidateQueries({ queryKey: centerKeys.lists() });
-      toast({ title: 'Success', description: 'Center created successfully', variant: 'success' });
+      if (res.status === 202) {
+        toast({ 
+          title: 'Connection Request Sent', 
+          description: res.message || 'This center already exists. A connection request has been sent to the center manager.', 
+          variant: 'default' 
+        });
+        navigate('/company/centers/admin-requests');
+      } else {
+        toast({ title: 'Success', description: 'Center created successfully', variant: 'success' });
+        navigate('/company/centers');
+      }
     },
     onError: (error: unknown) => {
       const msg = error instanceof AxiosError ? error.response?.data?.message : 'Failed to create center';

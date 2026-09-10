@@ -291,11 +291,15 @@ export const InvoiceDetailsPage = () => {
                   </div>
                   <div>
                     <span className="text-sm text-slate-500 block mb-1">GST Number</span>
-                    <span className="font-medium text-slate-800">N/A</span>
+                    <span className="font-medium text-slate-800">{invoice.companyId?.gstNumber || 'N/A'}</span>
                   </div>
                   <div>
                     <span className="text-sm text-slate-500 block mb-1">Address</span>
-                    <span className="font-medium text-slate-800">N/A</span>
+                    <span className="font-medium text-slate-800">
+                      {invoice.companyId?.address ? 
+                        `${invoice.companyId.address}, ${invoice.companyId.city || ''} ${invoice.companyId.state || ''}`.trim().replace(/,$/, '') : 
+                        'N/A'}
+                    </span>
                   </div>
                 </div>
               </CardContent>
@@ -414,7 +418,7 @@ export const InvoiceDetailsPage = () => {
                           <td className="px-4 py-3">{item.description}</td>
                           <td className="px-4 py-3 text-right">{item.quantity}</td>
                           <td className="px-4 py-3 text-right">₹{(item.unitPrice || 0).toFixed(2)}</td>
-                          <td className="px-4 py-3 text-right">₹0.00</td>
+                          <td className="px-4 py-3 text-right">₹{((item as any).tax || 0).toFixed(2)}</td>
                           <td className="px-4 py-3 text-right font-medium">₹{(item.total || 0).toFixed(2)}</td>
                         </tr>
                       )) : (

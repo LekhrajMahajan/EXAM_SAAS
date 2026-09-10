@@ -329,7 +329,7 @@ export const AssignExamStaffPage: React.FC = () => {
           </div>
           {!isReadOnly && (
             <Button
-              className='bg-primary hover:bg-primary/90 text-primary-foreground font-medium shadow-lg shadow-primary/20'
+              className='bg-transparent text-[#2D3E2C] border border-[#2D3E2C] hover:bg-[#2D3E2C] hover:text-[#E4FD97] transition-colors duration-300 font-medium shadow-sm'
               onClick={() => setIsModalOpen(true)}
             >
               <Plus className='w-4 h-4 mr-2' />
@@ -403,7 +403,7 @@ export const AssignExamStaffPage: React.FC = () => {
                         (e._id === assignment.examId || e.id === assignment.examId) &&
                         e.status === 'ACTIVE',
                     ) || (assignment as any).examId?.status === 'ACTIVE' ? (
-                      <span className='flex items-center gap-1 bg-[#2D3E2C] text-[#E4FD97] px-2 py-0.5 rounded-full text-[10px] font-semibold border border-[#2D3E2C]/20'>
+                      <span className='flex items-center justify-center bg-[#2D3E2C] text-[#E4FD97] border-0 border-transparent rounded px-2.5 py-1 text-xs font-bold'>
                         ACTIVE
                       </span>
                     ) : (

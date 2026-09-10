@@ -1,5 +1,50 @@
-{}
-TypeError: Cannot read properties of undefined (reading 'findById')
-    at ExamService.update (D:\COMPANY PORJTECS\Practice exam saas\backend\src\modules\exam\exam.service.ts:255:51)
+{
+  "stringValue": "\"{\n  subjectId: 'Unmapped',\n  subjectName: 'Unmapped',\n  questionsAttempted: 0,\n  correctAnswers: 0,\n  wrongAnswers: 0,\n  marksObtained: 0,\n  maxMarks: 0,\n  sectionalCutoff: null,\n  sectionalStatus: 'NOT_APPLICABLE'\n}\"",
+  "valueType": "Object",
+  "kind": "embedded",
+  "value": {
+    "subjectId": "Unmapped",
+    "subjectName": "Unmapped",
+    "questionsAttempted": 0,
+    "correctAnswers": 0,
+    "wrongAnswers": 0,
+    "marksObtained": 0,
+    "maxMarks": 0,
+    "sectionalCutoff": null,
+    "sectionalStatus": "NOT_APPLICABLE"
+  },
+  "path": "subjectWiseBreakdown",
+  "reason": {
+    "stringValue": "\"Unmapped\"",
+    "valueType": "string",
+    "kind": "ObjectId",
+    "value": "Unmapped",
+    "path": "subjectId",
+    "reason": {},
+    "name": "CastError",
+    "message": "Cast to ObjectId failed for value \"Unmapped\" (type string) at path \"subjectId\""
+  },
+  "name": "CastError",
+  "message": "Cast to embedded failed for value \"{\n  subjectId: 'Unmapped',\n  subjectName: 'Unmapped',\n  questionsAttempted: 0,\n  correctAnswers: 0,\n  wrongAnswers: 0,\n  marksObtained: 0,\n  maxMarks: 0,\n  sectionalCutoff: null,\n  sectionalStatus: 'NOT_APPLICABLE'\n}\" (type Object) at path \"subjectWiseBreakdown\" because of \"CastError\""
+}
+CastError: Cast to embedded failed for value "{
+  subjectId: 'Unmapped',
+  subjectName: 'Unmapped',
+  questionsAttempted: 0,
+  correctAnswers: 0,
+  wrongAnswers: 0,
+  marksObtained: 0,
+  maxMarks: 0,
+  sectionalCutoff: null,
+  sectionalStatus: 'NOT_APPLICABLE'
+}" (type Object) at path "subjectWiseBreakdown" because of "CastError"
+    at SchemaDocumentArray.cast (D:\COMPANY PORJTECS\Exam management folder\Final Exam SaaS Product\backend\node_modules\mongoose\lib\schema\documentArray.js:492:19)
+    at SchemaType.applySetters (D:\COMPANY PORJTECS\Exam management folder\Final Exam SaaS Product\backend\node_modules\mongoose\lib\schemaType.js:1373:12)
+    at castUpdateVal (D:\COMPANY PORJTECS\Exam management folder\Final Exam SaaS Product\backend\node_modules\mongoose\lib\helpers\query\castUpdate.js:637:21)
+    at walkUpdatePath (D:\COMPANY PORJTECS\Exam management folder\Final Exam SaaS Product\backend\node_modules\mongoose\lib\helpers\query\castUpdate.js:442:24)
+    at castUpdate (D:\COMPANY PORJTECS\Exam management folder\Final Exam SaaS Product\backend\node_modules\mongoose\lib\helpers\query\castUpdate.js:148:7)
+    at model.Query._castUpdate (D:\COMPANY PORJTECS\Exam management folder\Final Exam SaaS Product\backend\node_modules\mongoose\lib\query.js:5043:10)
+    at model.Query._findOneAndUpdate (D:\COMPANY PORJTECS\Exam management folder\Final Exam SaaS Product\backend\node_modules\mongoose\lib\query.js:3579:34)
+    at maybeTracedQueryExec (D:\COMPANY PORJTECS\Exam management folder\Final Exam SaaS Product\backend\node_modules\mongoose\lib\query.js:4801:83)
     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
-    at async <anonymous> (D:\COMPANY PORJTECS\Practice exam saas\backend\src\modules\exam\exam.controller.ts:109:18)
+    at async ResultService.generateResults (D:\COMPANY PORJTECS\Exam management folder\Final Exam SaaS Product\backend\src\modules\result\result.service.ts:1326:13)

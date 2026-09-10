@@ -167,7 +167,7 @@ export const PrivateImportCentersPage = () => {
           <Button
             variant='outline'
             size='sm'
-            className='hidden md:flex'
+            className='hidden md:flex bg-white text-[#2D3E2C] border border-[#2D3E2C] hover:bg-[#2D3E2C] hover:text-[#E4FD97] transition-colors'
             onClick={fetchImports}
             disabled={isLoading}
           >

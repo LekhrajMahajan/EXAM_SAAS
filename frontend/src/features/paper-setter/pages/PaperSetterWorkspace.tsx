@@ -120,7 +120,7 @@ export function PaperSetterWorkspace() {
             <Badge variant="outline" className="text-sm py-1">
               {totalAdded} / {totalRequired} Questions Added
             </Badge>
-            <div className="text-xs text-amber-500 max-w-xs text-right leading-tight font-medium">
+            <div className="text-[14px] text-red-500 max-w-sm text-right leading-tight font-medium px-3 py-1.5 border border-red-500 rounded-md bg-red-50 dark:bg-red-900/10">
               Note: Submitting this paper will permanently disconnect your account.
             </div>
             <Button

@@ -138,7 +138,7 @@ export const AssignedExamsPage: React.FC = () => {
         </Button>
         <div className="flex-1 bg-card text-primary rounded-xl p-6 shadow-xl border border-border flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-start gap-4">
-            <div className="p-3 bg-primary/10 rounded-xl border border-border text-primary mt-1">
+            <div className="p-3 bg-[#E4FD97] rounded-xl border border-[#2D3E2C]/20 text-[#2D3E2C] mt-1">
               <Building2 className="w-8 h-8" />
             </div>
             <div>
@@ -247,7 +247,7 @@ export const AssignedExamsPage: React.FC = () => {
                     {exam.examCode || 'EXAM-DRIVE'}
                   </span>
                   <div className="flex gap-2 items-center">
-                    <span className="flex items-center gap-1.5 text-xs font-semibold text-[#E4FD97] px-2 py-0.5 bg-[#2D3E2C] border border-[#2D3E2C]/20 rounded-full">
+                    <span className="flex items-center gap-1.5 text-xs font-semibold text-[#E4FD97] px-2 py-0.5 bg-[#2D3E2C] border border-[#2D3E2C]/20 rounded">
                       <CheckCircle2 className="w-3.5 h-3.5" /> {exam.status || 'Assigned & Active'}
                     </span>
                     <Button
@@ -430,7 +430,7 @@ export const AssignedExamsPage: React.FC = () => {
                     <p className="font-medium text-sm">{selectedExam.fullExamDetails.totalMarks}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Positive Marks</p>
+                    <p className="text-xs text-muted-foreground">Passing Marks</p>
                     <p className="font-medium text-sm">{selectedExam.fullExamDetails.passingMarks}</p>
                   </div>
                   <div>

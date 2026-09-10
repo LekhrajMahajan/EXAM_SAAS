@@ -14,8 +14,8 @@ export const centerApi = {
   },
 
   create: async (data: CenterFormValues | unknown) => {
-    const response = await apiClient.post<{ data: Center }>('/centers', data);
-    return response.data;
+    const response = await apiClient.post('/centers', data);
+    return { data: response.data?.data, status: response.status, message: response.data?.message };
   },
 
   sendCredentials: async (payload: { email?: string; temporaryPassword?: string; centerName?: string; managerName?: string }) => {

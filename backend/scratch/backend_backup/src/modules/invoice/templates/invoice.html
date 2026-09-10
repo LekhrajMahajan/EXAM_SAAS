@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Invoice - {{INVOICE_NUMBER}}</title>
+    <style>
+        body { font-family: 'Helvetica', 'Arial', sans-serif; margin: 0; padding: 20px; color: #000; background-color: #fff; }
+        .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px; }
+        .header h1 { margin: 0; font-size: 24px; color: #000; }
+        .header p { margin: 5px 0 0; color: #000; font-size: 14px; }
+        .invoice-details { margin-bottom: 30px; }
+        .invoice-details p { margin: 5px 0; }
+        .bill-to { margin-bottom: 30px; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 30px; }
+        th, td { border: 1px solid #000; padding: 8px; text-align: left; }
+        th { font-weight: bold; background-color: #fff; }
+        .totals { float: right; width: 300px; }
+        .totals p { margin: 5px 0; display: flex; justify-content: space-between; }
+        .totals .grand-total { font-weight: bold; font-size: 16px; border-top: 2px solid #000; padding-top: 10px; }
+        .payment-details { clear: both; margin-top: 50px; border-top: 1px solid #000; padding-top: 10px; }
+        .notes { margin-top: 20px; font-style: italic; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>{{ORG_NAME}} ({{ORG_INITIALS}})</h1>
+        <p>{{ORG_ADDRESS_LINE1}}</p>
+        <p>{{ORG_ADDRESS_LINE2}}</p>
+        <p>Email: {{ORG_EMAIL}} | Phone: {{ORG_PHONE}}</p>
+    </div>
+
+    <div class="invoice-details">
+        <p><strong>Invoice Number:</strong> {{INVOICE_NUMBER}}</p>
+        <p><strong>Invoice Date:</strong> {{INVOICE_DATE}}</p>
+        <p><strong>Due Date:</strong> {{DUE_DATE}}</p>
+        <p><strong>Payment Status:</strong> {{PAYMENT_STATUS}}</p>
+        <p><strong>Payment Mode:</strong> {{PAYMENT_MODE}}</p>
+        <p><strong>Plan Name:</strong> {{PLAN_NAME}} (Total: {{GRAND_TOTAL}})</p>
+    </div>
+
+    <div class="bill-to">
+        <h3>Bill To:</h3>
+        <p><strong>{{BILL_TO_COMPANY_NAME}}</strong></p>
+        <p>ID: {{BILL_TO_COMPANY_ID}}</p>
+        <p>{{BILL_TO_ADDRESS}}</p>
+        <p>Email: {{BILL_TO_EMAIL}} | Phone: {{BILL_TO_PHONE}}</p>
+        <p>GSTIN: {{BILL_TO_GSTIN}}</p>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Description</th>
+                <th>Qty</th>
+                <th>Unit Price</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- ITEMS_START -->
+            <tr>
+                <td>{{ITEM_DESC}}</td>
+                <td>{{ITEM_QTY}}</td>
+                <td>{{ITEM_UNIT_PRICE}}</td>
+                <td>{{ITEM_TOTAL}}</td>
+            </tr>
+            <!-- ITEMS_END -->
+        </tbody>
+    </table>
+
+    <div class="totals">
+        <p><span>Subtotal:</span> <span>{{SUBTOTAL}}</span></p>
+        <p><span>Tax:</span> <span>{{TAX}}</span></p>
+        <p><span>Discount:</span> <span>{{DISCOUNT}}</span></p>
+    </div>
+
+    <div class="payment-details">
+        <h3>Payment Details</h3>
+        <p><strong>Bank Name:</strong> {{BANK_NAME}}</p>
+        <p><strong>Account Number:</strong> {{ACCOUNT_NUMBER}}</p>
+        <p><strong>IFSC:</strong> {{IFSC}}</p>
+        <p><strong>UPI:</strong> {{UPI}}</p>
+    </div>
+
+    <div class="notes">
+        <p>{{NOTES}}</p>
+    </div>
+</body>
+</html>

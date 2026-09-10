@@ -57,8 +57,8 @@ export const DashboardStatsCards = () => {
       color: "red" 
     },
     { 
-      title: "Today's Revenue", 
-      value: overview?.data?.todaysRevenue || 0, 
+      title: "Total Revenue", 
+      value: overview?.data?.totalRevenue || 0, 
       prefix: "₹",
       icon: IndianRupee, 
       color: "green" 

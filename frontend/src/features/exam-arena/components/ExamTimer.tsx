@@ -8,39 +8,10 @@ interface ExamTimerProps {
 
 export function ExamTimer ({ durationSeconds, onTimeUp }: ExamTimerProps) {
   const safeDuration = Number.isNaN(Number(durationSeconds)) ? 0 : Number(durationSeconds)
-  const [timeLeft, setTimeLeft] = useState(safeDuration)
-  const endTimeRef = useRef<number>(0)
-  const onTimeUpRef = useRef(onTimeUp)
 
-  useEffect(() => {
-    onTimeUpRef.current = onTimeUp
-  }, [onTimeUp])
-
-  useEffect(() => {
-    if (endTimeRef.current === 0) {
-      endTimeRef.current = Date.now() + safeDuration * 1000
-    }
-
-    const timer = setInterval(() => {
-      const remainingMs = endTimeRef.current - Date.now()
-      const remainingSeconds = Math.max(0, Math.floor(remainingMs / 1000))
-
-      setTimeLeft(remainingSeconds)
-
-      if (remainingSeconds <= 0) {
-        clearInterval(timer)
-        if (onTimeUpRef.current) {
-          onTimeUpRef.current()
-        }
-      }
-    }, 1000)
-
-    return () => clearInterval(timer)
-  }, [safeDuration])
-
-  const hours = Math.floor(timeLeft / 3600)
-  const minutes = Math.floor((timeLeft % 3600) / 60)
-  const seconds = timeLeft % 60
+  const hours = Math.floor(safeDuration / 3600)
+  const minutes = Math.floor((safeDuration % 3600) / 60)
+  const seconds = safeDuration % 60
 
   const displayTime = `${hours.toString().padStart(2, '0')}:${minutes
     .toString()

@@ -15,6 +15,7 @@ interface ShiftFormProps {
 
 export const ShiftForm: React.FC<ShiftFormProps> = ({ initialData }) => {
   const navigate = useNavigate();
+  const [lateEntryAllowed, setLateEntryAllowed] = React.useState<boolean>(initialData?.schedule?.lateEntryAllowed ?? false);
   // using basic controlled inputs for placeholder instead of full RHF to keep it simple for UI
 
   return (
@@ -96,7 +97,7 @@ export const ShiftForm: React.FC<ShiftFormProps> = ({ initialData }) => {
           </div>
         </div>
         <div className="mt-6 flex items-center gap-4">
-          <Switch id="lateEntry" defaultChecked={initialData?.schedule.lateEntryAllowed} />
+          <Switch id="lateEntry" checked={lateEntryAllowed} onCheckedChange={setLateEntryAllowed} />
           <Label htmlFor="lateEntry" className="font-normal">Allow late entry?</Label>
         </div>
       </div>

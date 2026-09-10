@@ -32,8 +32,10 @@ export const LoginPage = () => {
   const { data: orgSettings } = usePublicSettings();
   const loginLogo = orgSettings?.data?.find(s => s.key === "LOGO_LOGIN")?.value;
   const primaryLogo = orgSettings?.data?.find(s => s.key === "LOGO_PRIMARY")?.value;
-  const shortName = orgSettings?.data?.find(s => s.key === "ORG_SHORT_NAME")?.value || "EP";
-  const orgName = orgSettings?.data?.find(s => s.key === "ORG_NAME")?.value || "ExamGuard Pro";
+  const shortName = orgSettings?.data?.find(s => s.key === "APP_NAME")?.value?.toString().substring(0, 2).toUpperCase() || "EP";
+  const appName = orgSettings?.data?.find(s => s.key === "APP_NAME")?.value || "ExamGuard Pro";
+  const loginEnabled = orgSettings?.data?.find(s => s.key === "LOGIN_ENABLED")?.value !== false;
+  const registrationEnabled = orgSettings?.data?.find(s => s.key === "REGISTRATION_ENABLED")?.value !== false;
 
   const { register, handleSubmit, formState: { errors }, setValue } = useReactHookForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -104,10 +106,7 @@ export const LoginPage = () => {
         subscriptionEndDate: profileRes.subscriptionEndDate,
         planFeatures: profileRes.planFeatures,
         forcePasswordChange: profileRes.forcePasswordChange,
-        branchId: profileRes.branchId,
         centerId: profileRes.centerId,
-        branchSetupStatus: profileRes.branchSetupStatus,
-        branchSetupCurrentStep: profileRes.branchSetupCurrentStep,
         centerSetupStatus: profileRes.centerSetupStatus,
         centerSetupCurrentStep: profileRes.centerSetupCurrentStep,
       });
@@ -167,7 +166,7 @@ export const LoginPage = () => {
           {loginLogo || primaryLogo ? (
             <img 
               src={(loginLogo || primaryLogo) as string} 
-              alt={orgName as string} 
+              alt={appName as string} 
               className="mx-auto h-16 w-auto object-contain mb-4" 
             />
           ) : (
@@ -184,6 +183,12 @@ export const LoginPage = () => {
         {errorMsg && (
           <Alert variant="destructive">
             <AlertDescription>{errorMsg}</AlertDescription>
+          </Alert>
+        )}
+
+        {!loginEnabled && (
+          <Alert variant="destructive">
+            <AlertDescription>Login is currently disabled by the administrator.</AlertDescription>
           </Alert>
         )}
 
@@ -250,7 +255,7 @@ export const LoginPage = () => {
             <Button 
               type="submit" 
               className="w-full flex justify-center py-2.5" 
-              disabled={loginMutation.isPending}
+              disabled={loginMutation.isPending || !loginEnabled}
             >
               {loginMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Sign in
@@ -266,12 +271,14 @@ export const LoginPage = () => {
             </Link>
           </div>
           
-          <div className="text-center text-sm mt-6">
-            <span className="text-muted-foreground">If you haven&apos;t registered, register here. </span>
-            <Link to="/auth/register-company" className="text-primary font-medium hover:underline">
-              Register Company
-            </Link>
-          </div>
+          {registrationEnabled && (
+            <div className="text-center text-sm mt-6">
+              <span className="text-muted-foreground">If you haven&apos;t registered, register here. </span>
+              <Link to="/auth/register-company" className="text-primary font-medium hover:underline">
+                Register Company
+              </Link>
+            </div>
+          )}
         </form>
       </div>
     </div>

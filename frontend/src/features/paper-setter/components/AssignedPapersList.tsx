@@ -86,7 +86,7 @@ function PaperSetCard({ paper, topics }: { paper: AssignedPaper; topics: Topic[]
             <div className="text-sm font-medium whitespace-nowrap">
               {totalAdded} / {totalRequired || paper.totalQuestions} Questions Added
             </div>
-            <div className="flex-1 text-right text-xs text-amber-500 font-medium px-2">
+            <div className="ml-auto text-[14px] text-red-500 font-medium px-3 py-1.5 border border-red-500 rounded-md bg-red-50 dark:bg-red-900/10">
               Note: Submitting this paper will permanently disconnect your account and end your access.
             </div>
             <Button size="sm" disabled={!isDraft || !isComplete} onClick={() => setIsSubmitDialogOpen(true)}>

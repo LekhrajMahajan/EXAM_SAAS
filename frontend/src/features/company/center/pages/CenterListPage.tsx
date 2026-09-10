@@ -44,18 +44,17 @@ export const CenterListPage = () => {
 
   const handleExport = () => {
     if (!filteredCenters || filteredCenters.length === 0) return;
-    const headers = 'Center Code,Center Name,Branch,City,State,Rooms,Systems,Status,Approval Status\n';
+    const headers = 'Center Code,Center Name,City,State,Rooms,Systems,Status,Approval Status\n';
     const rows = filteredCenters.map(c => {
       const code = c.centerCode || '';
       const name = `"${(c.centerName || '').replace(/"/g, '""')}"`;
-      const branchLabel = typeof c.branch === 'object' && c.branch ? ((c.branch as Record<string, unknown>).name || (c.branch as Record<string, unknown>).branchCode) : (c.branch || (c as unknown as Record<string, unknown>).branchName || '');
       const city = c.city || '';
       const state = c.state || '';
       const rooms = c.capacity?.maxRooms ?? (c as unknown as Record<string, unknown>).totalLabs ?? 0;
       const systems = c.capacity?.maxSystems ?? (c as unknown as Record<string, unknown>).totalSystems ?? 0;
       const status = c.status || ((c as unknown as Record<string, unknown>).setupStatus === 'ACTIVE' ? 'Active' : 'Inactive');
       const approval = c.approvalStatus || ((c as unknown as Record<string, unknown>).setupStatus === 'ACTIVE' ? 'Approved' : 'Pending');
-      return `${code},${name},${branchLabel},${city},${state},${rooms},${systems},${status},${approval}`;
+      return `${code},${name},${city},${state},${rooms},${systems},${status},${approval}`;
     }).join('\n');
     
     const blob = new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' });

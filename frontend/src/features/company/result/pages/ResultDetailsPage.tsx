@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { PageHeader } from '@/shared/components/layout/page-header';
 import { useParams, Link } from 'react-router-dom';
 import { ResultAnswersView } from '../components/ResultAnswersView';
+import { ResultBreakdownView } from '../components/ResultBreakdownView';
 import { Button } from '@/shared/components/ui/button';
-import { ArrowLeft, Loader2, User, Target, FileText } from 'lucide-react';
+import { ArrowLeft, Loader2, User, Target, FileText, CheckCircle, XCircle } from 'lucide-react';
 import { apiClient } from '@/core/api/http/axios-client';
 import { toast } from 'react-hot-toast';
 import { Card, CardHeader } from '@/shared/components/ui/card';
@@ -107,8 +108,8 @@ export function ResultDetailsPage() {
         </CardHeader>
       </Card>
 
-      {/* Middle Row: Two Boxes */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Middle Row: Four Boxes */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Box 1: Candidate Info */}
         <Card className="bg-white dark:bg-[#16191F] border border-slate-200 dark:border-slate-800 shadow-sm">
           <CardHeader className="py-5">
@@ -145,7 +146,51 @@ export function ResultDetailsPage() {
             </div>
           </CardHeader>
         </Card>
+
+        {/* Box 3: Total Correct */}
+        <Card className="bg-white dark:bg-[#16191F] border border-slate-200 dark:border-slate-800 shadow-sm">
+          <CardHeader className="py-5">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 bg-emerald-500/10 rounded-full flex items-center justify-center border border-emerald-500/20">
+                <CheckCircle className="w-6 h-6 text-emerald-500" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Correct ({result.marks?.correctAnswers ?? result.correctAnswers ?? 0} Qs)</p>
+                <div className="flex items-baseline gap-2 mt-0.5">
+                  <h3 className="font-bold text-slate-900 dark:text-white text-3xl">+{result.marks?.correctMarks ?? result.correctMarks ?? 0}</h3>
+                  <span className="text-base text-slate-500 dark:text-slate-400 font-medium">Marks</span>
+                </div>
+              </div>
+            </div>
+          </CardHeader>
+        </Card>
+
+        {/* Box 4: Total Wrong */}
+        <Card className="bg-white dark:bg-[#16191F] border border-slate-200 dark:border-slate-800 shadow-sm">
+          <CardHeader className="py-5">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 bg-red-500/10 rounded-full flex items-center justify-center border border-red-500/20">
+                <XCircle className="w-6 h-6 text-red-500" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Wrong ({result.marks?.wrongAnswers ?? result.wrongAnswers ?? 0} Qs)</p>
+                <div className="flex items-baseline gap-2 mt-0.5">
+                  <h3 className="font-bold text-slate-900 dark:text-white text-3xl">-{result.marks?.negativeMarks ?? result.negativeMarks ?? 0}</h3>
+                  <span className="text-base text-slate-500 dark:text-slate-400 font-medium">Marks</span>
+                </div>
+              </div>
+            </div>
+          </CardHeader>
+        </Card>
       </div>
+
+      {/* Score Breakdown (Subject & Part) */}
+      <ResultBreakdownView 
+        subjectWiseBreakdown={result.subjectWiseBreakdown}
+        partWiseBreakdown={result.partWiseBreakdown}
+        sectionalCutoffApplied={result.sectionalCutoffApplied}
+        partWiseCutoffApplied={result.partWiseCutoffApplied}
+      />
 
       <div className="mt-8">
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Question Analysis</h3>

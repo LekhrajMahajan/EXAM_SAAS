@@ -4,7 +4,7 @@ import { apiClient } from '@/core/api/http/axios-client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card'
 import { Button } from '@/shared/components/ui/button'
 import { Checkbox } from '@/shared/components/ui/checkbox'
-import { Loader2, AlertCircle, Clock, CheckCircle2, Camera } from 'lucide-react'
+import { Loader2, AlertCircle, Clock, CheckCircle2, Camera, LayoutGrid } from 'lucide-react'
 import * as faceapi from '@vladmandic/face-api'
 import { useTheme } from '@/providers/theme-context'
 
@@ -41,6 +41,12 @@ export function ExamInstructionsPage () {
   const [examData, setExamData] = useState<Record<string, unknown> | null>(null)
   const [candidateInfo, setCandidateInfo] = useState<CandidateInfo | null>(null)
   const [examMeta, setExamMeta] = useState<ExamMeta | null>(null)
+
+  // Part-wise state
+  const [partWiseEnabled, setPartWiseEnabled] = useState(false)
+  const [availableParts, setAvailableParts] = useState<Array<{ partName: string; subjects: string[] }>>([])
+  const [selectedPart, setSelectedPart] = useState<string | null>(null)
+  const [savingPartOrder, setSavingPartOrder] = useState(false)
 
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null)
   const [isFaceCaptureMode, setIsFaceCaptureMode] = useState(false)
@@ -107,7 +113,18 @@ export function ExamInstructionsPage () {
           params: { questionNo: 1, examId, sessionId },
         })
 
-        setExamData(response.data.data)
+        const responseData = response.data.data
+        setExamData(responseData)
+
+        // Set up Part-wise data if enabled
+        if (responseData.partWiseCutoffEnabled && responseData.parts?.length > 0) {
+          setPartWiseEnabled(true)
+          const partsList = responseData.parts.map((p: any) => ({
+            partName: p.partName,
+            subjects: p.subjectIds || [],
+          }))
+          setAvailableParts(partsList)
+        }
 
         // Load face-api models
         const MODEL_URL = 'https://cdn.jsdelivr.net/gh/vladmandic/face-api/model/'
@@ -197,6 +214,9 @@ export function ExamInstructionsPage () {
         snapshotImg.onerror = reject
       })
 
+      // Allow UI to flush state updates before heavy blocking operation
+      await new Promise(resolve => setTimeout(resolve, 100))
+      
       const liveDetections = await faceapi
         .detectAllFaces(snapshotImg, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.3 }))
         .withFaceLandmarks()
@@ -219,6 +239,9 @@ export function ExamInstructionsPage () {
           imgElement.onload = resolve
           imgElement.onerror = reject
         })
+
+        // Allow UI to update before second heavy operation
+        await new Promise(resolve => setTimeout(resolve, 100))
 
         const originalDetection = await faceapi
           .detectSingleFace(imgElement, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.3 }))
@@ -302,10 +325,39 @@ export function ExamInstructionsPage () {
     setFaceCaptureStatus('Starting camera...')
   }
 
-  const handleStartExamClick = () => {
+  const handleStartExamClick = async () => {
     if (!capturedImage) {
       alert('Please verify your identity first.')
       return
+    }
+    // If part-wise exam, require part selection
+    if (partWiseEnabled && !selectedPart) {
+      alert('Please select which Part you want to start with.')
+      return
+    }
+
+    if (partWiseEnabled && selectedPart) {
+      // Save part order to backend and localStorage
+      try {
+        setSavingPartOrder(true)
+        const examId = examMeta?._id
+        const sessionId = localStorage.getItem('candidate_session_id') || ''
+        // Build the full ordered list: selected part first, then remaining parts in original order
+        const orderedParts = [
+          selectedPart,
+          ...availableParts.map(p => p.partName).filter(n => n !== selectedPart)
+        ]
+        localStorage.setItem('candidate_part_order', JSON.stringify(orderedParts))
+        await apiClient.post('/candidate-exam/set-part-order', {
+          examId,
+          sessionId,
+          partOrder: orderedParts,
+        })
+      } catch (e) {
+        console.error('Failed to save part order', e)
+      } finally {
+        setSavingPartOrder(false)
+      }
     }
     navigate('/exam-arena')
   }
@@ -320,9 +372,19 @@ export function ExamInstructionsPage () {
 
   useEffect(() => {
     if (timeRemaining === 0 && capturedImage && allAgreed) {
+      if (partWiseEnabled) {
+        if (!selectedPart) return // Wait for the user to select a part
+        
+        // Save selection before auto-navigating
+        const orderedParts = [
+          selectedPart,
+          ...availableParts.map(p => p.partName).filter(n => n !== selectedPart)
+        ]
+        localStorage.setItem('candidate_part_order', JSON.stringify(orderedParts))
+      }
       navigate('/exam-arena')
     }
-  }, [timeRemaining, capturedImage, allAgreed, navigate])
+  }, [timeRemaining, capturedImage, allAgreed, partWiseEnabled, selectedPart, availableParts, navigate])
 
   if (loading) {
     return (
@@ -479,6 +541,51 @@ export function ExamInstructionsPage () {
                     Do not refresh the page or press the back button during the exam.
                   </label>
                 </div>
+                {/* Part-wise Selection Section - moved inside the guidelines card */}
+                {partWiseEnabled && capturedImage && (
+                  <div className="mt-6 pt-6 border-t border-border">
+                    <h3 className="text-base font-bold text-indigo-700 flex items-center gap-2 mb-1">
+                      <LayoutGrid className="h-4 w-4" />
+                      Choose Starting Part
+                    </h3>
+                    <p className="text-xs text-muted-foreground mb-4">
+                      Select which part you want to attempt first. You cannot change this after starting.
+                    </p>
+                    
+                    <div className="space-y-3">
+                      {availableParts.map((part) => (
+                        <button
+                          key={part.partName}
+                          onClick={() => setSelectedPart(part.partName)}
+                          className={`w-full text-left p-3 rounded-lg border-2 transition-all ${
+                            selectedPart === part.partName
+                              ? 'border-indigo-500 bg-indigo-50 shadow-sm'
+                              : 'border-slate-200 hover:border-indigo-300 hover:bg-slate-50'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                              selectedPart === part.partName ? 'border-indigo-500 bg-indigo-500' : 'border-slate-300'
+                            }`}>
+                              {selectedPart === part.partName && (
+                                <div className="w-2 h-2 rounded-full bg-white" />
+                              )}
+                            </div>
+                            <div>
+                              <p className="font-semibold text-sm text-slate-800">{part.partName}</p>
+                              {part.subjects.length > 0 && (
+                                <p className="text-xs text-slate-500">{part.subjects.join(', ')}</p>
+                              )}
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                      {!selectedPart && (
+                        <p className="text-xs text-amber-600 font-medium text-center pt-1">⚠ Please select a part to continue</p>
+                      )}
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -608,13 +715,17 @@ export function ExamInstructionsPage () {
               </CardContent>
             </Card>
 
+
+
             <Button
               onClick={handleStartExamClick}
-              disabled={(timeRemaining !== null && timeRemaining > 0) || !capturedImage || !allAgreed}
+              disabled={(timeRemaining !== null && timeRemaining > 0) || !capturedImage || !allAgreed || (partWiseEnabled && !selectedPart) || savingPartOrder}
               size='lg'
               className='w-full text-base h-12 font-bold shadow-md transition-all mt-auto'
             >
-              {timeRemaining !== null && timeRemaining > 0
+              {savingPartOrder
+                ? 'Saving...'
+                : timeRemaining !== null && timeRemaining > 0
                 ? `Starts in ${formatTime(timeRemaining)}`
                 : 'I am ready to begin'}
             </Button>

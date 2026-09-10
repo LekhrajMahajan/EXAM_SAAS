@@ -34,6 +34,7 @@ export interface DashboardOverview {
   expiredSubscriptions: number;
   todaysRevenue: number;
   monthlyRevenue: number;
+  totalRevenue: number;
   openSupportTickets: number;
 }
 

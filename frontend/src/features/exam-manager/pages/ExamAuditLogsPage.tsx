@@ -213,7 +213,11 @@ export const ExamAuditLogsPage = () => {
       accessorKey: 'priority',
       cell: ({ row }) => {
         const priorityText = row.priority ? row.priority.charAt(0).toUpperCase() + row.priority.slice(1).toLowerCase() : 'Unknown';
-        return <Badge variant={PRIORITY_VARIANT[row.priority] ?? 'outline'}>{priorityText}</Badge>;
+        return (
+          <span className='flex items-center justify-center w-fit bg-[#2D3E2C] text-[#E4FD97] border-0 border-transparent rounded px-2.5 py-1 text-xs font-bold hover:bg-[#2D3E2C]/90'>
+            {priorityText}
+          </span>
+        );
       },
     },
     {

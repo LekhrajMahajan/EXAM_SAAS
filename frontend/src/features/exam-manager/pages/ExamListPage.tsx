@@ -340,7 +340,7 @@ export const ExamListPage = () => {
                     <p className="font-medium text-sm">{selectedExam.totalMarks}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Positive Marks</p>
+                    <p className="text-xs text-muted-foreground">Passing Marks</p>
                     <p className="font-medium text-sm">{selectedExam.passingMarks}</p>
                   </div>
                   <div>
@@ -350,34 +350,151 @@ export const ExamListPage = () => {
                 </div>
               </div>
 
+              {/* ── Qualifying Criteria ── */}
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 border-b pb-1">Qualifying Criteria</p>
+                <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Cutoff Type</p>
+                    <p className="font-medium text-sm">{selectedExam?.cutoffType || 'MARKS'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Overall Qualifying %</p>
+                    <p className="font-medium text-sm">{selectedExam?.overallQualifyingPercent ?? '-'}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full ${selectedExam?.sectionalCutoffEnabled ? 'bg-[#2D3E2C]' : 'bg-slate-300'}`} />
+                    <span className="text-sm">Sectional Cutoffs: <strong>{selectedExam?.sectionalCutoffEnabled ? 'On' : 'Off'}</strong></span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full ${selectedExam?.sectionalTimeLimitEnabled ? 'bg-[#2D3E2C]' : 'bg-slate-300'}`} />
+                    <span className="text-sm">Sectional Time Limits: <strong>{selectedExam?.sectionalTimeLimitEnabled ? 'On' : 'Off'}</strong></span>
+                  </div>
+                </div>
+
+                {selectedExam?.partWiseCutoffEnabled && selectedExam?.parts && selectedExam.parts.length > 0 && (
+                  <div className="mt-4">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 border-b pb-1">Part Wise Cutoffs</p>
+                    <div className="rounded-md border border-slate-200 dark:border-slate-800">
+                      <Table>
+                        <TableHeader className="bg-slate-50 dark:bg-slate-800/50">
+                          <TableRow>
+                            <TableHead className="py-2">Part Name</TableHead>
+                            <TableHead className="py-2">Type</TableHead>
+                            <TableHead className="py-2 text-right">Cutoff Value</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {selectedExam.parts.map((p, idx) => (
+                            <TableRow key={idx}>
+                              <TableCell className="py-2">{p.partName}</TableCell>
+                              <TableCell className="py-2">{p.cutoffType}</TableCell>
+                              <TableCell className="py-2 text-right">{p.cutoffValue}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                )}
+
+                {selectedExam?.categoryWiseCutoff && selectedExam.categoryWiseCutoff.length > 0 && (
+                  <div className="mt-4">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 border-b pb-1">Category Wise Cutoffs</p>
+                    <div className="rounded-md border border-slate-200 dark:border-slate-800">
+                      <Table>
+                        <TableHeader className="bg-slate-50 dark:bg-slate-800/50">
+                          <TableRow>
+                            <TableHead className="py-2">Category</TableHead>
+                            <TableHead className="py-2 text-right">Cutoff Percent (%)</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {selectedExam.categoryWiseCutoff.map((c, idx) => (
+                            <TableRow key={idx}>
+                              <TableCell className="py-2">{c.category}</TableCell>
+                              <TableCell className="py-2 text-right">{c.cutoffPercent}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* ── Multi-Stage & Advanced Settings ── */}
+              {selectedExam?.isMultiStage && (
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 border-b pb-1">Multi-Stage Settings</p>
+                  <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Stage Type</p>
+                      <p className="font-medium text-sm">{selectedExam?.stageType === 'QUALIFYING_ONLY' ? 'Qualifying Only' : 'Score Carried Forward'}</p>
+                    </div>
+                    {selectedExam?.stageType === 'SCORE_CARRIED_FORWARD' && (
+                      <div>
+                        <p className="text-xs text-muted-foreground">Stage Weightage</p>
+                        <p className="font-medium text-sm">{selectedExam?.stageWeightagePercent}%</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* ── Tie Break Rules ── */}
+              {selectedExam?.tieBreakRules && selectedExam.tieBreakRules.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 border-b pb-1">Tie Break Rules</p>
+                  <ol className="list-decimal list-inside space-y-1">
+                    {selectedExam.tieBreakRules.map((rule) => {
+                       const labels: Record<string, string> = {
+                         HIGHER_MARKS: 'Higher overall marks',
+                         HIGHER_PERCENTAGE: 'Higher percentage',
+                         MORE_CORRECT: 'More correct answers',
+                         LOWER_NEGATIVE: 'Lower negative marks',
+                         OLDER_AGE: 'Older candidate by age',
+                         YOUNGER_AGE: 'Younger candidate by age',
+                         APPLICATION_NUMBER: 'Earlier application number (alphanumeric)'
+                       };
+                       return (
+                         <li key={rule.order} className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                           {labels[rule.ruleType] || rule.ruleType}
+                         </li>
+                       );
+                    })}
+                  </ol>
+                </div>
+              )}
+
               {/* ── Shuffle Options ── */}
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 border-b pb-1">Shuffle Options</p>
                 <div className="grid grid-cols-2 gap-x-6 gap-y-3">
                   <div className="flex items-center gap-2">
-                    <span className={`w-2 h-2 rounded-full ${selectedExam.shuffleSubjects ? 'bg-[#2D3E2C]' : 'bg-slate-300'}`} />
-                    <span className="text-sm">Shuffle Subjects: <strong>{selectedExam.shuffleSubjects ? 'On' : 'Off'}</strong></span>
+                    <span className={`w-2 h-2 rounded-full ${selectedExam?.shuffleSubjects ? 'bg-[#2D3E2C]' : 'bg-slate-300'}`} />
+                    <span className="text-sm">Shuffle Subjects: <strong>{selectedExam?.shuffleSubjects ? 'On' : 'Off'}</strong></span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className={`w-2 h-2 rounded-full ${selectedExam.shuffleQuestions ? 'bg-[#2D3E2C]' : 'bg-slate-300'}`} />
-                    <span className="text-sm">Shuffle Questions: <strong>{selectedExam.shuffleQuestions ? 'On' : 'Off'}</strong></span>
+                    <span className={`w-2 h-2 rounded-full ${selectedExam?.shuffleQuestions ? 'bg-[#2D3E2C]' : 'bg-slate-300'}`} />
+                    <span className="text-sm">Shuffle Questions: <strong>{selectedExam?.shuffleQuestions ? 'On' : 'Off'}</strong></span>
                   </div>
                 </div>
               </div>
 
               {/* ── Proctoring & Anti-Cheat ── */}
-              {selectedExam.securitySettings && (
+              {selectedExam?.securitySettings && (
                 (() => {
                   const activeSettings = [
-                    { label: 'Face Monitoring', enabled: selectedExam.securitySettings!.faceDetectionEnabled, value: selectedExam.securitySettings!.faceDetectionLimit, unit: 'sec' },
-                    { label: 'Multiple / Wrong Faces', enabled: selectedExam.securitySettings!.multipleFacesEnabled, value: selectedExam.securitySettings!.multipleFacesLimit, unit: 'sec' },
-                    { label: 'Proctoring Warning Limit', enabled: selectedExam.securitySettings!.proctoringWarningEnabled, value: selectedExam.securitySettings!.proctoringWarningLimit, unit: 'warnings' },
-                    { label: 'Tab Switching Prevention', enabled: selectedExam.securitySettings!.tabSwitchingEnabled, value: null, unit: '' },
-                    { label: 'Browser Lock', enabled: selectedExam.securitySettings!.browserLock, value: null, unit: '' },
-                    { label: 'Full Screen Mode', enabled: selectedExam.securitySettings!.fullScreenMode, value: null, unit: '' },
-                    { label: 'Copy/Paste Allowed', enabled: selectedExam.securitySettings!.copyPasteAllowed, value: null, unit: '' },
-                    { label: 'Right Click Disabled', enabled: selectedExam.securitySettings!.rightClickDisabled, value: null, unit: '' },
-                    { label: 'Developer Tools Blocked', enabled: selectedExam.securitySettings!.developerToolsBlocked, value: null, unit: '' },
+                    { label: 'Face Monitoring', enabled: selectedExam.securitySettings?.faceDetectionEnabled, value: selectedExam.securitySettings?.faceDetectionLimit, unit: 'sec' },
+                    { label: 'Multiple / Wrong Faces', enabled: selectedExam.securitySettings?.multipleFacesEnabled, value: selectedExam.securitySettings?.multipleFacesLimit, unit: 'sec' },
+                    { label: 'Proctoring Warning Limit', enabled: selectedExam.securitySettings?.proctoringWarningEnabled, value: selectedExam.securitySettings?.proctoringWarningLimit, unit: 'warnings' },
+                    { label: 'Tab Switching Prevention', enabled: selectedExam.securitySettings?.tabSwitchingEnabled, value: null, unit: '' },
+                    { label: 'Browser Lock', enabled: selectedExam.securitySettings?.browserLock, value: null, unit: '' },
+                    { label: 'Full Screen Mode', enabled: selectedExam.securitySettings?.fullScreenMode, value: null, unit: '' },
+                    { label: 'Copy/Paste Allowed', enabled: selectedExam.securitySettings?.copyPasteAllowed, value: null, unit: '' },
+                    { label: 'Right Click Disabled', enabled: selectedExam.securitySettings?.rightClickDisabled, value: null, unit: '' },
+                    { label: 'Developer Tools Blocked', enabled: selectedExam.securitySettings?.developerToolsBlocked, value: null, unit: '' },
                   ].filter(item => item.enabled === true);
 
                   if (activeSettings.length === 0) return null;
@@ -416,7 +533,7 @@ export const ExamListPage = () => {
               )}
 
               {/* ── Subjects ── */}
-              {selectedExam.subjects && selectedExam.subjects.length > 0 && (
+              {selectedExam?.subjects && selectedExam.subjects.length > 0 && (
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 border-b pb-1">Exam Paper Subjects</p>
                   <div className="rounded-md border border-slate-200 dark:border-slate-800">
@@ -425,6 +542,9 @@ export const ExamListPage = () => {
                         <TableRow>
                           <TableHead>Subject Name</TableHead>
                           <TableHead className="text-right">Questions</TableHead>
+                          <TableHead className="text-right">Marks/Q</TableHead>
+                          {selectedExam?.sectionalCutoffEnabled && <TableHead className="text-right">Cutoff</TableHead>}
+                          {selectedExam?.sectionalTimeLimitEnabled && <TableHead className="text-right">Time (min)</TableHead>}
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -432,6 +552,9 @@ export const ExamListPage = () => {
                           <TableRow key={idx}>
                             <TableCell>{sub.name}</TableCell>
                             <TableCell className="text-right">{sub.questions}</TableCell>
+                            <TableCell className="text-right">{sub.marksPerQuestion ?? 1}</TableCell>
+                            {selectedExam?.sectionalCutoffEnabled && <TableCell className="text-right">{sub.sectionalCutoff ?? '-'}</TableCell>}
+                            {selectedExam?.sectionalTimeLimitEnabled && <TableCell className="text-right">{sub.timeAllottedMinutes ?? '-'}</TableCell>}
                           </TableRow>
                         ))}
                       </TableBody>

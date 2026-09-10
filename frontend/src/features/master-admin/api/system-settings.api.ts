@@ -32,10 +32,6 @@ export const systemSettingsApi = {
     return response.data;
   },
 
-  getSystemInfo: async (): Promise<{ data: any; success: boolean }> => {
-    const response = await api.get('/system-settings/system-info');
-    return response.data;
-  },
 
   getExamSettings: async (): Promise<{ data: SystemSetting[]; success: boolean }> => {
     const response = await api.get('/system-settings/category/EXAM');
@@ -67,21 +63,6 @@ export const systemSettingsApi = {
     return response.data;
   },
 
-  uploadOrganizationLogo: async (key: string, file: File): Promise<{ data: { url: string }; success: boolean }> => {
-    const formData = new FormData();
-    formData.append('file', file);
-    const response = await api.post(`/system-settings/organization/logo/${key}`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    return response.data;
-  },
-
-  deleteOrganizationLogo: async (key: string): Promise<{ success: boolean; message: string }> => {
-    const response = await api.delete(`/system-settings/organization/logo/${key}`);
-    return response.data;
-  },
 
   getSecuritySettings: async (): Promise<{ data: SystemSetting[]; success: boolean }> => {
     const response = await api.get('/system-settings/category/SECURITY');

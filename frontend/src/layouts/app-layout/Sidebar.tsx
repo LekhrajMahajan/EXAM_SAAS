@@ -78,9 +78,12 @@ export const Sidebar = () => {
   const [searchQuery, setSearchQuery] = useState('')
 
   const fetchNav = useCallback(async () => {
-    const activeToken =
-      token || localStorage.getItem('token') || localStorage.getItem('examguard_auth_tokens')
-    if (!isAuthenticated || !activeToken || !user?.id) {
+    const isAuthPage = location.pathname.includes('/auth') || location.pathname === '/'
+    const tokenDataStr = sessionStorage.getItem('examguard_auth_tokens') || localStorage.getItem('examguard_auth_tokens')
+    const hasToken = token || tokenDataStr
+    const hasCandidateSession = location.pathname.includes('/exam/') || location.pathname.includes('/system-check')
+    
+    if (!isAuthenticated || !hasToken || !user?.id || isAuthPage || hasCandidateSession) {
       return
     }
     try {
@@ -145,17 +148,33 @@ export const Sidebar = () => {
   const hasSub = !!profile?.subscriptionEndDate
   const isOnboarded = !!profile?.onboardingCompleted
 
+  const isExpired = profile?.subscriptionEndDate && new Date(profile.subscriptionEndDate) < new Date()
+  const isPaymentPending = profile?.paymentStatus === 'PENDING' || profile?.paymentStatus === 'FAILED'
+  const isSubscriptionRestricted = normalizedUserRole === 'Company Admin' && (isExpired || isPaymentPending)
+
   const isCenterManager = roleStr === 'CENTER_MANAGER'
   const isCenterActive = profile?.centerSetupStatus === 'ACTIVE'
 
-  const activeMenu: SidebarMenuItem[] =
-    isCenterManager && !isCenterActive
-      ? [] // Hide sidebar menus if center is not yet ACTIVE
-      : (profile?.companyId || normalizedUserRole === 'Company Admin' || normalizedUserRole === 'Master Admin') &&
-        dynamicMenu &&
-        dynamicMenu.length > 0
-          ? dynamicMenu
-          : SIDEBAR_MENU
+  let baseActiveMenu: SidebarMenuItem[] = []
+  if (isCenterManager && !isCenterActive) {
+    baseActiveMenu = []
+  } else if (
+    (profile?.companyId || normalizedUserRole === 'Company Admin' || normalizedUserRole === 'Master Admin') &&
+    dynamicMenu &&
+    dynamicMenu.length > 0
+  ) {
+    baseActiveMenu = dynamicMenu
+  } else {
+    baseActiveMenu = SIDEBAR_MENU
+  }
+
+  // If subscription is expired or payment pending, ONLY show Dashboard and Subscription links
+  const activeMenu: SidebarMenuItem[] = isSubscriptionRestricted
+    ? baseActiveMenu.filter(item => {
+        const titleLower = item.title.toLowerCase()
+        return titleLower.includes('dashboard') || titleLower.includes('subscription') || titleLower.includes('billing')
+      })
+    : baseActiveMenu
 
   // Search filter matching by Title, Module, or Keyword
   const filteredMenu = useMemo(() => {
@@ -183,10 +202,10 @@ export const Sidebar = () => {
     return filterRecursive(activeMenu)
   }, [activeMenu, searchQuery])
 
-  const orgName =
-    (orgSettings?.data?.find((s) => s.key === 'ORG_NAME')?.value as string) || 'ExamGuard Pro'
-  const orgShortName =
-    (orgSettings?.data?.find((s) => s.key === 'ORG_SHORT_NAME')?.value as string) || 'EP'
+  const appName =
+    (orgSettings?.data?.find((s) => s.key === 'APP_NAME')?.value as string) || 'ExamGuard Pro'
+  const appShortName =
+    (orgSettings?.data?.find((s) => s.key === 'APP_NAME')?.value as string) || 'EP'
   const primaryLogo = orgSettings?.data?.find((s) => s.key === 'LOGO_PRIMARY')?.value as string
   const darkLogo = orgSettings?.data?.find((s) => s.key === 'LOGO_DARK')?.value as string
   const lightLogo = orgSettings?.data?.find((s) => s.key === 'LOGO_LIGHT')?.value as string
@@ -282,14 +301,14 @@ export const Sidebar = () => {
                   className='flex items-center gap-2 overflow-hidden whitespace-nowrap'
                 >
                   {logoUrl ? (
-                    <img src={logoUrl} alt={orgName} className='h-8 w-8 object-contain rounded-lg' />
+                    <img src={logoUrl} alt={appName} className='h-8 w-8 object-contain rounded-lg' />
                   ) : (
                     <div className='h-8 w-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold'>
-                      {orgShortName.substring(0, 2).toUpperCase()}
+                      {appShortName.substring(0, 2).toUpperCase()}
                     </div>
                   )}
-                  <span className='font-bold text-lg truncate' title={orgName}>
-                    {orgName}
+                  <span className='font-bold text-lg truncate' title={appName}>
+                    {appName}
                   </span>
                 </motion.div>
               )}
@@ -299,12 +318,12 @@ export const Sidebar = () => {
               (logoUrl ? (
                 <img
                   src={logoUrl}
-                  alt={orgName}
+                  alt={appName}
                   className='mx-auto h-8 w-8 object-contain rounded-lg'
                 />
               ) : (
                 <div className='mx-auto h-8 w-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold'>
-                  {orgShortName.substring(0, 2).toUpperCase()}
+                  {appShortName.substring(0, 2).toUpperCase()}
                 </div>
               ))}
           </div>
@@ -332,6 +351,50 @@ export const Sidebar = () => {
               {renderMenuSection(filteredMenu, 'Main Navigation')}
             </TooltipProvider>
           </div>
+
+          {(user?.role === 'Company Admin' || user?.role === 'COMPANY_ADMIN') && profile?.subscriptionEndDate && (
+            <div className='p-3 border-t border-slate-100 dark:border-slate-800 shrink-0'>
+              {!isSidebarCollapsed ? (
+                <div className='flex flex-col space-y-1.5 px-2'>
+                  <span className='text-[10px] font-semibold text-muted-foreground uppercase tracking-wider'>Subscription</span>
+                  {(() => {
+                    const endDate = new Date(profile.subscriptionEndDate!);
+                    const diffDays = Math.ceil((endDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                    const isExpiring = diffDays <= 7 && diffDays > 0;
+                    const isExpired = diffDays <= 0;
+                    
+                    return (
+                      <div className={`p-2 rounded-md flex items-center justify-between text-xs font-medium border ${
+                        isExpired 
+                          ? 'bg-rose-50 border-rose-100 text-rose-700 dark:bg-rose-900/20 dark:border-rose-900/30 dark:text-rose-400' 
+                          : isExpiring 
+                            ? 'bg-amber-50 border-amber-100 text-amber-700 dark:bg-amber-900/20 dark:border-amber-900/30 dark:text-amber-400'
+                            : 'bg-primary/5 border-primary/10 text-primary dark:bg-primary/10 dark:text-primary-foreground'
+                      }`}>
+                        <div className="flex items-center gap-1.5">
+                          <Clock className="w-3.5 h-3.5" />
+                          <span>{isExpired ? 'Expired' : `${diffDays} days left`}</span>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              ) : (
+                <TooltipProvider delayDuration={0}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex justify-center py-2">
+                        <Clock className="w-5 h-5 text-primary" />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">
+                      {Math.max(0, Math.ceil((new Date(profile.subscriptionEndDate!).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)))} Days Left
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+            </div>
+          )}
 
           <div className='p-3 border-t shrink-0'>
             <TooltipProvider delayDuration={0}>
@@ -362,9 +425,9 @@ export const Sidebar = () => {
         <SheetContent side='left' className='p-0 w-72 flex flex-col h-full'>
           <div className='flex h-16 items-center px-6 border-b shrink-0'>
             <div className='h-8 w-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold mr-2'>
-              {orgShortName.substring(0, 2).toUpperCase()}
+              {appShortName.substring(0, 2).toUpperCase()}
             </div>
-            <span className='font-bold text-lg'>{orgName}</span>
+            <span className='font-bold text-lg'>{appName}</span>
           </div>
           <div className='p-3 border-b shrink-0'>
             <div className='relative'>

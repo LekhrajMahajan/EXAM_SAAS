@@ -49,7 +49,7 @@ export const CompanyApprovalPage = () => {
       header: "Company",
       cell: ({ row }) => (
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded bg-slate-100 border flex items-center justify-center shrink-0 font-medium">
+          <div className="w-10 h-10 rounded bg-[#E4FD97] text-[#2D3E2C] border border-[#2D3E2C]/20 flex items-center justify-center shrink-0 font-bold">
             {row.companyName.charAt(0).toUpperCase()}
           </div>
           <div>
@@ -96,7 +96,7 @@ export const CompanyApprovalPage = () => {
         let color = "bg-slate-100 text-slate-700";
         if (row.approvalStatus === "PENDING") color = "bg-orange-100 text-orange-700";
         if (row.approvalStatus === "UNDER_REVIEW") color = "bg-blue-100 text-blue-700";
-        if (row.approvalStatus === "APPROVED") color = "bg-green-100 text-green-700";
+        if (row.approvalStatus === "APPROVED") color = "bg-[#2D3E2C] text-[#E4FD97]";
         if (row.approvalStatus === "REJECTED") color = "bg-red-100 text-red-700";
         
         return <Badge variant="outline" className={`${color} border-none`}>{row.approvalStatus || "PENDING"}</Badge>;

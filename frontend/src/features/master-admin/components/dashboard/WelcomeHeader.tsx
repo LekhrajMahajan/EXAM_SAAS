@@ -1,21 +1,9 @@
 import { useUserStore } from "@/stores/user/user.store";
 import { useAuthStore } from "@/features/auth/store/useAuthStore";
-import { useMemo, useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/shared/components/ui/dialog';
-import { Button } from '@/shared/components/ui/button';
-import { Input } from '@/shared/components/ui/input';
-import { Edit2, Save, X } from 'lucide-react';
-import { profileApi } from "@/features/master-admin/api/profile.api";
+import { useMemo } from "react";
 
 export const WelcomeHeader = () => {
   const profile = useUserStore((state) => state.profile);
-  const setProfile = useUserStore((state) => state.setProfile);
   const { user } = useAuthStore();
   
   const getDisplayName = () => {
@@ -32,37 +20,6 @@ export const WelcomeHeader = () => {
   
   const name = getDisplayName();
   const role = profile?.roleId?.replace('_', ' ') || user?.role || "User";
-  const phone = (profile as any)?.phone || "";
-
-  const [isEditing, setIsEditing] = useState(false);
-  const [editName, setEditName] = useState("");
-  const [editPhone, setEditPhone] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
-
-  const handleEditClick = () => {
-    setEditName(name !== "User" ? name : "");
-    setEditPhone(phone);
-    setIsEditing(true);
-  };
-
-  const handleSaveProfile = async () => {
-    try {
-      setIsSaving(true);
-      const nameParts = editName.trim().split(" ");
-      const firstName = nameParts[0] || "";
-      const lastName = nameParts.slice(1).join(" ") || " ";
-      
-      await profileApi.updateProfile({ firstName, lastName, phone: editPhone });
-      if (profile) {
-        setProfile({ ...profile, firstName, lastName, phone: editPhone } as any);
-      }
-      setIsEditing(false);
-    } catch (error) {
-      console.error("Failed to update profile", error);
-    } finally {
-      setIsSaving(false);
-    }
-  };
   
   const { currentDate, lastLoginDate } = useMemo(() => {
     const now = new Date();
@@ -75,12 +32,23 @@ export const WelcomeHeader = () => {
       month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true
     });
     
-    const lastLogin = new Date(now.getTime() - 86400000);
+    let lastLoginStr = "Just now";
+    // Prefer previousLoginAt if available, else lastLoginAt, else lastLogin
+    const u = user as any;
+    const userLastLogin = u?.previousLoginAt || u?.lastLoginAt || u?.lastLogin;
+    if (userLastLogin) {
+      const lastLogin = new Date(userLastLogin);
+      // Only show it if it's not exactly the current time (within 1 minute)
+      if (Math.abs(now.getTime() - lastLogin.getTime()) > 60000) {
+        lastLoginStr = loginFormatter.format(lastLogin);
+      }
+    }
+    
     return {
       currentDate: formatter.format(now).replace(' at ', ' at '),
-      lastLoginDate: loginFormatter.format(lastLogin)
+      lastLoginDate: lastLoginStr
     };
-  }, []);
+  }, [user]);
 
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[#2D3E2C] p-6 rounded-xl border border-[#2D3E2C]">
@@ -99,82 +67,6 @@ export const WelcomeHeader = () => {
             Last login: {lastLoginDate}
           </p>
         </div>
-
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button variant="outline" className="bg-transparent text-secondary border-secondary/50 hover:bg-secondary hover:text-[#2D3E2C]">
-              View Profile
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px] bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
-            <DialogHeader className="flex flex-row items-center justify-between">
-              <DialogTitle className="text-slate-900 dark:text-slate-100">User Profile Details</DialogTitle>
-              {!isEditing && (
-                <Button variant="ghost" size="sm" onClick={handleEditClick} className="h-8 px-2 text-slate-500 hover:text-slate-900 dark:hover:text-slate-100">
-                  <Edit2 className="w-4 h-4 mr-2" />
-                  Edit
-                </Button>
-              )}
-            </DialogHeader>
-            <div className="grid gap-4 py-4 text-slate-800 dark:text-slate-200">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <span className="font-semibold col-span-1">Name</span>
-                <div className="col-span-3">
-                  {isEditing ? (
-                    <Input value={editName} onChange={(e) => setEditName(e.target.value)} className="h-8" />
-                  ) : (
-                    <span>{name}</span>
-                  )}
-                </div>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <span className="font-semibold col-span-1">Email</span>
-                <span className="col-span-3">{(profile as any)?.email || user?.email || "N/A"}</span>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <span className="font-semibold col-span-1">Role</span>
-                <span className="col-span-3 capitalize">{role.toLowerCase()}</span>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <span className="font-semibold col-span-1">Status</span>
-                <span className="col-span-3">
-                  <span className="px-3 py-1 bg-[#2D3E2C] text-secondary rounded-full text-xs font-bold border border-[#2D3E2C] shadow-sm">
-                    Active
-                  </span>
-                </span>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <span className="font-semibold col-span-1">Phone</span>
-                <div className="col-span-3">
-                  {isEditing ? (
-                    <Input 
-                      value={editPhone} 
-                      onChange={(e) => {
-                        const value = e.target.value.replace(/\D/g, '').slice(0, 10);
-                        setEditPhone(value);
-                      }} 
-                      maxLength={10}
-                      className="h-8" 
-                      placeholder="Add phone number" 
-                    />
-                  ) : (
-                    <span>{phone || "Not provided"}</span>
-                  )}
-                </div>
-              </div>
-            </div>
-            {isEditing && (
-              <div className="flex justify-end gap-2 mt-4">
-                <Button variant="outline" size="sm" onClick={() => setIsEditing(false)}>
-                  Cancel
-                </Button>
-                <Button size="sm" className="bg-[#2D3E2C] text-secondary hover:bg-[#1a2419]" onClick={handleSaveProfile} disabled={isSaving}>
-                  {isSaving ? "Saving..." : "Save Changes"}
-                </Button>
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
       </div>
     </div>
   );

@@ -200,7 +200,7 @@ export const CompanyForm = ({ company, onSubmit, isPending, submitButtonText }: 
     }
     const finalValues = { ...values };
     if (finalValues.companyType === "Other") {
-      finalValues.companyType = finalValues.customCompanyType;
+      finalValues.companyType = finalValues.customCompanyType || "";
     }
     delete finalValues.customCompanyType;
     onSubmit(finalValues as CompanyFormValues);
@@ -286,14 +286,14 @@ export const CompanyForm = ({ company, onSubmit, isPending, submitButtonText }: 
                   )} />
                   <FormField control={form.control} name="legalName" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Legal Name</FormLabel>
+                      <FormLabel>Legal Name *</FormLabel>
                       <FormControl><Input placeholder="Acme Corporation Ltd." {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
                   <FormField control={form.control} name="companyType" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Company Type</FormLabel>
+                      <FormLabel>Company Type *</FormLabel>
                       <Select onValueChange={(val) => {
                         field.onChange(val);
                         if (val !== "Other") form.setValue("customCompanyType", "");
@@ -320,21 +320,21 @@ export const CompanyForm = ({ company, onSubmit, isPending, submitButtonText }: 
                   )}
                   <FormField control={form.control} name="registrationNumber" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Registration Number</FormLabel>
+                      <FormLabel>Registration Number *</FormLabel>
                       <FormControl><Input placeholder="CIN/LLPIN" {...field} maxLength={21} onChange={(e) => field.onChange(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
                   <FormField control={form.control} name="gstNumber" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>GST Number</FormLabel>
+                      <FormLabel>GST Number *</FormLabel>
                       <FormControl><Input placeholder="GSTIN" {...field} maxLength={15} onChange={(e) => field.onChange(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
                   <FormField control={form.control} name="panNumber" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>PAN Number</FormLabel>
+                      <FormLabel>PAN Number *</FormLabel>
                       <FormControl><Input placeholder="PAN" {...field} maxLength={10} onChange={(e) => field.onChange(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))} /></FormControl>
                       <FormMessage />
                     </FormItem>
@@ -342,42 +342,42 @@ export const CompanyForm = ({ company, onSubmit, isPending, submitButtonText }: 
 
                   <FormField control={form.control} name="registrationDocument" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Company register Document</FormLabel>
+                      <FormLabel>Company register Document *</FormLabel>
                       <FormControl><FormFileUpload value={field.value || ""} onChange={field.onChange} accept="application/pdf" /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
                   <FormField control={form.control} name="mouDocument" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>MOU Document (PDF)</FormLabel>
+                      <FormLabel>MOU Document (PDF) *</FormLabel>
                       <FormControl><FormFileUpload value={field.value || ""} onChange={field.onChange} accept="application/pdf" /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
                   <FormField control={form.control} name="panCardDocument" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>PAN Card Document (PDF)</FormLabel>
+                      <FormLabel>PAN Card Document (PDF) *</FormLabel>
                       <FormControl><FormFileUpload value={field.value || ""} onChange={field.onChange} accept="application/pdf" /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
                   <FormField control={form.control} name="gstDocument" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>GST Document (PDF)</FormLabel>
+                      <FormLabel>GST Document (PDF) *</FormLabel>
                       <FormControl><FormFileUpload value={field.value || ""} onChange={field.onChange} accept="application/pdf" /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
                   <FormField control={form.control} name="aadharCardDocument" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Aadhar Card (PDF)</FormLabel>
+                      <FormLabel>Aadhar Card (PDF) *</FormLabel>
                       <FormControl><FormFileUpload value={field.value || ""} onChange={field.onChange} accept="application/pdf" /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
                   <FormField control={form.control} name="msmeCertificateDocument" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>MSME Certificate (PDF)</FormLabel>
+                      <FormLabel>MSME Certificate (PDF) *</FormLabel>
                       <FormControl><FormFileUpload value={field.value || ""} onChange={field.onChange} accept="application/pdf" /></FormControl>
                       <FormMessage />
                     </FormItem>
@@ -435,35 +435,35 @@ export const CompanyForm = ({ company, onSubmit, isPending, submitButtonText }: 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField control={form.control} name="country" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Country</FormLabel>
+                      <FormLabel>Country *</FormLabel>
                       <FormControl><Input placeholder="India" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
                   <FormField control={form.control} name="state" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>State</FormLabel>
+                      <FormLabel>State *</FormLabel>
                       <FormControl><Input placeholder="State" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
                   <FormField control={form.control} name="city" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>City</FormLabel>
+                      <FormLabel>City *</FormLabel>
                       <FormControl><Input placeholder="City" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
                   <FormField control={form.control} name="pincode" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Pin Code</FormLabel>
+                      <FormLabel>Pin Code *</FormLabel>
                       <FormControl><Input placeholder="Zip / Pin Code" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
                   <FormField control={form.control} name="address" render={({ field }) => (
                     <FormItem className="md:col-span-2">
-                      <FormLabel>Address Line</FormLabel>
+                      <FormLabel>Address Line *</FormLabel>
                       <FormControl><Input placeholder="Full street address" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>

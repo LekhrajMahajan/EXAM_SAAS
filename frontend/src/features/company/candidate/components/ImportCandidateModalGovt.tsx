@@ -10,7 +10,7 @@ import {
 import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
 import { Label } from '@/shared/components/ui/label'
-import { UploadCloud, Loader2, AlertCircle, CheckCircle2, XCircle } from 'lucide-react'
+import { UploadCloud, Loader2, AlertCircle, CheckCircle2, XCircle, Download } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/shared/components/ui/alert'
 import {
   Select,
@@ -135,7 +135,7 @@ export function ImportCandidateModalGovt ({ onSuccess }: { onSuccess?: () => voi
       <DialogTrigger asChild>
         <Button
           size='sm'
-          className='bg-background text-[#2D3E2C] dark:text-slate-200 border border-[#2D3E2C] hover:bg-[#2D3E2C] hover:text-white'
+          className='bg-white text-[#2D3E2C] border border-[#2D3E2C] hover:bg-[#2D3E2C] hover:text-[#E4FD97] transition-colors'
         >
           <UploadCloud className='w-4 h-4 mr-2' />
           Import Candidate
@@ -143,7 +143,17 @@ export function ImportCandidateModalGovt ({ onSuccess }: { onSuccess?: () => voi
       </DialogTrigger>
       <DialogContent className='sm:max-w-lg'>
         <DialogHeader>
-          <DialogTitle>Import Candidates via ZIP</DialogTitle>
+          <div className="flex flex-wrap items-center justify-between gap-2 pr-6">
+            <DialogTitle>Import Candidates via ZIP</DialogTitle>
+            <a 
+              href="/Import_Candidates_Blank_Template.xlsx" 
+              download="Import_Candidates_Blank_Template.xlsx"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-md shadow-sm transition-colors"
+            >
+              <Download className="w-3 h-3" />
+              Download Template
+            </a>
+          </div>
         </DialogHeader>
 
         <div className='grid gap-4 py-4 overflow-hidden'>

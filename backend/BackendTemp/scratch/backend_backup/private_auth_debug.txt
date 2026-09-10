@@ -1,0 +1,193 @@
+{
+  "msg": "Fetching private auth exams",
+  "userId": "6a855ae7f18eb3639e9a0f12",
+  "employeeId": "6a855ae7f18eb3639e9a0f13",
+  "assignmentsCount": 5,
+  "assignments": [
+    {
+      "_id": "6a859a864b5d738039380985",
+      "examId": "6a83092aaf7fd1ce4d1f94e5",
+      "createdAt": "2026-08-19T11:59:02.302Z"
+    },
+    {
+      "_id": "6a8599764b5d7380393808b5",
+      "examId": "6a83092aaf7fd1ce4d1f94e5",
+      "createdAt": "2026-08-19T11:54:30.923Z"
+    },
+    {
+      "_id": "6a8598444b5d738039380793",
+      "examId": "6a83092aaf7fd1ce4d1f94e5",
+      "createdAt": "2026-08-19T11:49:24.538Z"
+    },
+    {
+      "_id": "6a85978e4b5d7380393806f9",
+      "examId": "6a83092aaf7fd1ce4d1f94e5",
+      "createdAt": "2026-08-19T11:46:22.395Z"
+    },
+    {
+      "_id": "6a855ae8f18eb3639e9a0f1b",
+      "examId": "6a83092aaf7fd1ce4d1f94e5",
+      "createdAt": "2026-08-19T07:27:36.119Z"
+    }
+  ],
+  "latestExamId": "6a83092aaf7fd1ce4d1f94e5"
+}\n{
+  "msg": "Fetching private auth exams",
+  "userId": "6a855ae7f18eb3639e9a0f12",
+  "employeeId": "6a855ae7f18eb3639e9a0f13",
+  "assignmentsCount": 5,
+  "assignments": [
+    {
+      "_id": "6a859a864b5d738039380985",
+      "examId": "6a83092aaf7fd1ce4d1f94e5",
+      "createdAt": "2026-08-19T11:59:02.302Z"
+    },
+    {
+      "_id": "6a8599764b5d7380393808b5",
+      "examId": "6a83092aaf7fd1ce4d1f94e5",
+      "createdAt": "2026-08-19T11:54:30.923Z"
+    },
+    {
+      "_id": "6a8598444b5d738039380793",
+      "examId": "6a83092aaf7fd1ce4d1f94e5",
+      "createdAt": "2026-08-19T11:49:24.538Z"
+    },
+    {
+      "_id": "6a85978e4b5d7380393806f9",
+      "examId": "6a83092aaf7fd1ce4d1f94e5",
+      "createdAt": "2026-08-19T11:46:22.395Z"
+    },
+    {
+      "_id": "6a855ae8f18eb3639e9a0f1b",
+      "examId": "6a83092aaf7fd1ce4d1f94e5",
+      "createdAt": "2026-08-19T07:27:36.119Z"
+    }
+  ],
+  "latestExamId": "6a83092aaf7fd1ce4d1f94e5"
+}\n{
+  "msg": "Fetching private auth exams",
+  "userId": "6a855ae7f18eb3639e9a0f12",
+  "employeeId": "6a855ae7f18eb3639e9a0f13",
+  "assignmentsCount": 5,
+  "assignments": [
+    {
+      "_id": "6a859a864b5d738039380985",
+      "examId": "6a83092aaf7fd1ce4d1f94e5",
+      "createdAt": "2026-08-19T11:59:02.302Z"
+    },
+    {
+      "_id": "6a8599764b5d7380393808b5",
+      "examId": "6a83092aaf7fd1ce4d1f94e5",
+      "createdAt": "2026-08-19T11:54:30.923Z"
+    },
+    {
+      "_id": "6a8598444b5d738039380793",
+      "examId": "6a83092aaf7fd1ce4d1f94e5",
+      "createdAt": "2026-08-19T11:49:24.538Z"
+    },
+    {
+      "_id": "6a85978e4b5d7380393806f9",
+      "examId": "6a83092aaf7fd1ce4d1f94e5",
+      "createdAt": "2026-08-19T11:46:22.395Z"
+    },
+    {
+      "_id": "6a855ae8f18eb3639e9a0f1b",
+      "examId": "6a83092aaf7fd1ce4d1f94e5",
+      "createdAt": "2026-08-19T07:27:36.119Z"
+    }
+  ],
+  "latestExamId": "6a83092aaf7fd1ce4d1f94e5"
+}\n{
+  "msg": "Fetching private auth exams",
+  "userId": "6a855ae7f18eb3639e9a0f12",
+  "employeeId": "6a855ae7f18eb3639e9a0f13",
+  "assignmentsCount": 5,
+  "assignments": [
+    {
+      "_id": "6a859a864b5d738039380985",
+      "examId": "6a83092aaf7fd1ce4d1f94e5",
+      "createdAt": "2026-08-19T11:59:02.302Z"
+    },
+    {
+      "_id": "6a8599764b5d7380393808b5",
+      "examId": "6a83092aaf7fd1ce4d1f94e5",
+      "createdAt": "2026-08-19T11:54:30.923Z"
+    },
+    {
+      "_id": "6a8598444b5d738039380793",
+      "examId": "6a83092aaf7fd1ce4d1f94e5",
+      "createdAt": "2026-08-19T11:49:24.538Z"
+    },
+    {
+      "_id": "6a85978e4b5d7380393806f9",
+      "examId": "6a83092aaf7fd1ce4d1f94e5",
+      "createdAt": "2026-08-19T11:46:22.395Z"
+    },
+    {
+      "_id": "6a855ae8f18eb3639e9a0f1b",
+      "examId": "6a83092aaf7fd1ce4d1f94e5",
+      "createdAt": "2026-08-19T07:27:36.119Z"
+    }
+  ],
+  "latestExamId": "6a83092aaf7fd1ce4d1f94e5"
+}\n{
+  "msg": "Fetching private auth exams",
+  "userId": "6a855ae7f18eb3639e9a0f12",
+  "employeeId": "6a855ae7f18eb3639e9a0f13",
+  "assignmentsCount": 5,
+  "assignments": [
+    {
+      "_id": "6a859a864b5d738039380985",
+      "examId": "6a83092aaf7fd1ce4d1f94e5",
+      "createdAt": "2026-08-19T11:59:02.302Z"
+    },
+    {
+      "_id": "6a8599764b5d7380393808b5",
+      "examId": "6a83092aaf7fd1ce4d1f94e5",
+      "createdAt": "2026-08-19T11:54:30.923Z"
+    },
+    {
+      "_id": "6a8598444b5d738039380793",
+      "examId": "6a83092aaf7fd1ce4d1f94e5",
+      "createdAt": "2026-08-19T11:49:24.538Z"
+    },
+    {
+      "_id": "6a85978e4b5d7380393806f9",
+      "examId": "6a83092aaf7fd1ce4d1f94e5",
+      "createdAt": "2026-08-19T11:46:22.395Z"
+    },
+    {
+      "_id": "6a855ae8f18eb3639e9a0f1b",
+      "examId": "6a83092aaf7fd1ce4d1f94e5",
+      "createdAt": "2026-08-19T07:27:36.119Z"
+    }
+  ],
+  "latestExamId": "6a83092aaf7fd1ce4d1f94e5"
+}\n{
+  "msg": "Fetching private auth exams",
+  "userId": "6a85a2ce7bb0bd0a9aa5b683",
+  "employeeId": "6a85a2ce7bb0bd0a9aa5b684",
+  "assignmentsCount": 1,
+  "assignments": [
+    {
+      "_id": "6a85a2ce7bb0bd0a9aa5b68c",
+      "examId": "6a83092aaf7fd1ce4d1f94e5",
+      "createdAt": "2026-08-19T12:34:22.773Z"
+    }
+  ],
+  "latestExamId": "6a83092aaf7fd1ce4d1f94e5"
+}
+{
+  "msg": "Fetching private auth exams",
+  "userId": "6a85a2ce7bb0bd0a9aa5b683",
+  "employeeId": "6a85a2ce7bb0bd0a9aa5b684",
+  "assignmentsCount": 1,
+  "assignments": [
+    {
+      "_id": "6a85a2ce7bb0bd0a9aa5b68c",
+      "examId": "6a83092aaf7fd1ce4d1f94e5",
+      "createdAt": "2026-08-19T12:34:22.773Z"
+    }
+  ],
+  "latestExamId": "6a83092aaf7fd1ce4d1f94e5"
+}

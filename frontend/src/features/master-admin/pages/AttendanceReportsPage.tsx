@@ -278,7 +278,7 @@ export const AttendanceReportsPage = () => {
                   datasets: [
                     {
                       label: 'Attendance',
-                      data: [120, 150, 180, 190, 210, 250, 300],
+                      data: summary?.data?.attendanceTrend || [0, 0, 0, 0, 0, 0, summary?.data?.present || 0],
                       borderColor: isDark ? '#E4FD97' : '#2D3E2C',
                       backgroundColor: isDark ? 'rgba(228, 253, 151, 0.1)' : 'rgba(45, 62, 44, 0.1)',
                       fill: true,

@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useChangePassword } from "../../hooks/profile.hooks";
-import { toast } from "react-hot-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Loader2, ShieldCheck, ShieldAlert, Eye, EyeOff } from "lucide-react";
 
 const passwordSchema = z.object({
@@ -22,6 +22,7 @@ const passwordSchema = z.object({
 type PasswordFormValues = z.infer<typeof passwordSchema>;
 
 export const PasswordManagement: React.FC = () => {
+  const { toast } = useToast();
   const changePassword = useChangePassword();
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
@@ -54,11 +55,18 @@ export const PasswordManagement: React.FC = () => {
       newPassword: data.newPassword
     }, {
       onSuccess: () => {
-        toast.success("Password changed successfully");
+        toast({
+          title: "Success",
+          description: "Password changed successfully",
+        });
         reset();
       },
       onError: (error: any) => {
-        toast.error(error?.response?.data?.message || "Failed to change password");
+        toast({
+          title: "Error",
+          description: error?.response?.data?.message || "Failed to change password",
+          variant: "destructive"
+        });
       }
     });
   };

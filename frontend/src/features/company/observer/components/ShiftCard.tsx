@@ -27,7 +27,7 @@ export function ShiftCard({ shift }: { shift: ShiftInfo }) {
               <div className="text-xs text-slate-500 uppercase tracking-wider font-bold mt-0.5">{shift.type}</div>
             </div>
           </div>
-          <Switch checked={shift.isActive} />
+          <Switch checked={shift.isActive} onCheckedChange={() => {}} />
         </div>
 
         <div className="flex items-center gap-2 mb-4 bg-slate-100/50 p-3 rounded-lg border border-slate-100">

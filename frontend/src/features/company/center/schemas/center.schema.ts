@@ -16,9 +16,9 @@ export const centerSchema = z.object({
   headMobile: z.string().min(10, 'Invalid mobile number'),
   emergencyContact: z.string().optional(),
   
-  maxCandidates: z.coerce.number().min(1, 'Capacity must be at least 1'),
-  maxRooms: z.coerce.number().min(1, 'Rooms must be at least 1'),
-  maxSystems: z.coerce.number().min(1, 'Systems must be at least 1'),
+  maxCandidates: z.coerce.number().min(1, 'Capacity must be at least 1').optional().default(100),
+  maxRooms: z.coerce.number().min(1, 'Rooms must be at least 1').optional().default(5),
+  maxSystems: z.coerce.number().min(1, 'Systems must be at least 1').optional().default(100),
   
   status: z.enum(['Active', 'Inactive']).default('Active'),
 });

@@ -18,95 +18,54 @@ class ExamService extends BaseService<IExam> {
     super(examRepository, "Exam");
   }
 
+  
   /*
   |--------------------------------------------------------------------------
-  | Compute Display Status (Dynamic)
+  | Subject Validation (Internal Helper)
   |--------------------------------------------------------------------------
-  | Determines the real-time display status based on exam timing.
   */
+  private async validateExamSubjects(payload: Partial<IExam>) {
+    if (!payload.subjects || !Array.isArray(payload.subjects)) return;
 
-  static computeDisplayStatus(exam: any): string {
-    // If result is published → RESULT_PUBLISHED
-    if (exam.isResultPublished) return "RESULT_PUBLISHED";
-    // If result is generated but not published → PENDING_PUBLISH_RESULT
-    if (exam.isResultGenerated) return "PENDING_PUBLISH_RESULT";
+    const seenSubjectIdentifiers = new Set<string>();
 
-    // If already in a terminal state, return as-is
-    const terminalStatuses = ["COMPLETED", "CANCELLED", "ARCHIVED", "EXAM_ENDED", "RESULT_PUBLISHED", "PENDING_PUBLISH_RESULT", "PENDING_RESULT_GENERATE"];
-    if (terminalStatuses.includes(exam.status)) {
-      if (exam.status === "EXAM_ENDED" || exam.status === "COMPLETED") return "PENDING_RESULT_GENERATE";
-      return exam.status;
-    }
+    for (const [index, s] of payload.subjects.entries()) {
+      if (!s.subjectId && !s.name) {
+        throw new ApiError(HTTP_STATUS.BAD_REQUEST, `Subject name or ID is missing for subject at index ${index}.`);
+      }
+      
+      const identifier = s.subjectId ? String(s.subjectId) : s.name.trim().toLowerCase();
+      if (seenSubjectIdentifiers.has(identifier)) {
+        throw new ApiError(HTTP_STATUS.BAD_REQUEST, `Duplicate subject (${s.name || s.subjectId}) found in exam configuration.`);
+      }
+      seenSubjectIdentifiers.add(identifier);
 
-    // For ACTIVE or EXAM_STARTED exams, compute based on time
-    if (exam.status === "ACTIVE" || exam.status === "EXAM_STARTED") {
-      try {
-        const now = new Date();
-        
-        if (exam.examDate && exam.startTime) {
-          const [startH, startM] = (exam.startTime || "").split(":").map(Number);
-          if (!isNaN(startH) && !isNaN(startM)) {
-            // Force evaluation in IST
-            const istDateString = new Date(exam.examDate).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
-            const startIsoString = `${istDateString}T${String(startH).padStart(2, '0')}:${String(startM).padStart(2, '0')}:00+05:30`;
-            const startDateTime = new Date(startIsoString);
+      let subjectDisplayName = s.name;
 
-            // Parse endTime (HH:MM)
-            const [endH, endM] = (exam.endTime || "").split(":").map(Number);
-            if (!isNaN(endH) && !isNaN(endM)) {
-              const endIsoString = `${istDateString}T${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}:00+05:30`;
-              const endDateTime = new Date(endIsoString);
-              
-              if (endDateTime < startDateTime) {
-                endDateTime.setDate(endDateTime.getDate() + 1);
-              }
-
-              if (now >= endDateTime) return "PENDING_RESULT_GENERATE";
-              if (now >= startDateTime) return "EXAM_STARTED";
-            } else {
-              // Fallback: use startTime + duration
-              if (exam.duration) {
-                const endDateTime = new Date(startDateTime.getTime() + exam.duration * 60000);
-                if (now >= endDateTime) return "PENDING_RESULT_GENERATE";
-                if (now >= startDateTime) return "EXAM_STARTED";
-              }
-            }
-          }
+      if (s.subjectId) {
+        // Verify the subject exists in the same company
+        const SubjectModel = require("mongoose").model("Subject");
+        const validSubject = await SubjectModel.findOne({ _id: s.subjectId, companyId: payload.companyId });
+        if (!validSubject) {
+          throw new ApiError(HTTP_STATUS.BAD_REQUEST, `Subject ID ${s.subjectId} is invalid or does not belong to the selected company.`);
         }
-      } catch {
-        // If time parsing fails, return DB status
+        subjectDisplayName = validSubject.subjectName || validSubject.name || s.name || s.subjectId;
+      }
+
+      if (s.questions === undefined || s.questions === null || Number(s.questions) <= 0) {
+        throw new ApiError(HTTP_STATUS.BAD_REQUEST, `Number of questions must be a positive number for subject ${subjectDisplayName}.`);
+      }
+
+      if (s.marksPerQuestion === undefined || s.marksPerQuestion === null || Number(s.marksPerQuestion) < 0) {
+        throw new ApiError(HTTP_STATUS.BAD_REQUEST, `Marks per question must be a non-negative number for subject ${subjectDisplayName}.`);
+      }
+
+      if (s.negativeMarksPerQuestion !== undefined && s.negativeMarksPerQuestion !== null && Number(s.negativeMarksPerQuestion) < 0) {
+        throw new ApiError(HTTP_STATUS.BAD_REQUEST, `Negative marks per question must be a non-negative number for subject ${subjectDisplayName}.`);
       }
     }
-
-    return exam.status;
   }
 
-  /*
-  |--------------------------------------------------------------------------
-  | Get All (Override to enrich with displayStatus)
-  |--------------------------------------------------------------------------
-  */
-
-  async getAll(filters: any, populateFields?: string[]) {
-    const result = await super.getAll(filters, populateFields);
-
-    // Enrich each exam with computed displayStatus
-    const enrichExams = (exams: any[]) => {
-      return exams.map((exam: any) => {
-        const examObj = exam.toObject ? exam.toObject() : { ...exam };
-        examObj.displayStatus = ExamService.computeDisplayStatus(examObj);
-        return examObj;
-      });
-    };
-
-    if (result.exams) {
-      result.exams = enrichExams(result.exams);
-    } else if (result.data) {
-      result.data = enrichExams(result.data);
-    }
-
-    return result;
-  }
   /*
   |--------------------------------------------------------------------------
   | Create Exam
@@ -114,6 +73,8 @@ class ExamService extends BaseService<IExam> {
   */
 
   async create(payload: Partial<IExam>) {
+    await this.validateExamSubjects(payload);
+
     await companyService.getActiveById(payload.companyId!.toString());
     
     if (payload.subjectId) {
@@ -208,6 +169,11 @@ class ExamService extends BaseService<IExam> {
 
   async update(id: string, payload: Partial<IExam>) {
     const exam = await super.getById(id);
+    if (!payload.companyId) {
+      payload.companyId = (exam.companyId as any)._id?.toString() ?? exam.companyId.toString();
+    }
+    await this.validateExamSubjects(payload);
+
 
     if (exam.approvalStatus === ExamApprovalStatus.PUBLISHED && exam.examCode !== "STAFFSELF" && exam.examCode !== "STAFFSELE" && exam.examCode !== "RESERVEBA") {
       throw new ApiError(
@@ -509,12 +475,22 @@ class ExamService extends BaseService<IExam> {
       throw new ApiError(HTTP_STATUS.BAD_REQUEST, "Only active/started exams can be ended unless force ended.");
     }
 
-    return await examRepository.update(id, {
+    const updatedExam = await examRepository.update(id, {
       status: ExamStatus.EXAM_ENDED,
       endedBy: payload.endedBy as any,
       endRemarks: payload.endRemarks,
       endedAt: new Date(),
     });
+
+    // Generate center payments automatically
+    try {
+      const centerPaymentsService = require("../center-payments/centerPayments.service").default;
+      await centerPaymentsService.generatePaymentsForExam(id, exam.companyId.toString());
+    } catch (e) {
+      console.error("Failed to generate center payments:", e);
+    }
+
+    return updatedExam;
   }
 
   /*

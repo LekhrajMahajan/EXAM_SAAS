@@ -6,12 +6,6 @@ export class ResultsService extends BaseApiService<any> {
   }
 }
 
-export class MeritService extends BaseApiService<any> {
-  constructor() {
-    super('/merit');
-  }
-}
-
 export class CertificatesService extends BaseApiService<any> {
   constructor() {
     super('/certificates');

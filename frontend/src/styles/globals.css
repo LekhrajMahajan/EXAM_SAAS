@@ -295,3 +295,14 @@
 .dark .plan-icon-btn:hover {
   color: var(--color-secondary) !important;
 }
+
+/* ─── Native Time / Date Picker — Force Light Theme Popup ─────────────── */
+/* The browser's native time picker popup inherits color-scheme.
+   Force it to light so the dropdown always matches the light UI. */
+input[type="time"],
+input[type="date"],
+input[type="datetime-local"],
+input[type="month"] {
+  color-scheme: light;
+}
+

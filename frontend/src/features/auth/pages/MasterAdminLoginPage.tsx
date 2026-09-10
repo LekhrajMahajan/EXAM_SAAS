@@ -33,7 +33,7 @@ export const MasterAdminLoginPage = () => {
   const loginLogo = orgSettings?.data?.find(s => s.key === "LOGO_LOGIN")?.value;
   const primaryLogo = orgSettings?.data?.find(s => s.key === "LOGO_PRIMARY")?.value;
   const shortName = orgSettings?.data?.find(s => s.key === "ORG_SHORT_NAME")?.value || "EP";
-  const orgName = orgSettings?.data?.find(s => s.key === "ORG_NAME")?.value || "ExamGuard Pro";
+  const appName = orgSettings?.data?.find(s => s.key === "APP_NAME")?.value || "ExamGuard Pro";
 
   const { register, handleSubmit, formState: { errors }, setValue } = useReactHookForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -84,10 +84,7 @@ export const MasterAdminLoginPage = () => {
         subscriptionEndDate: profileRes.subscriptionEndDate,
         planFeatures: profileRes.planFeatures,
         forcePasswordChange: profileRes.forcePasswordChange,
-        branchId: profileRes.branchId,
         centerId: profileRes.centerId,
-        branchSetupStatus: profileRes.branchSetupStatus,
-        branchSetupCurrentStep: profileRes.branchSetupCurrentStep,
         centerSetupStatus: profileRes.centerSetupStatus,
         centerSetupCurrentStep: profileRes.centerSetupCurrentStep,
       });
@@ -124,11 +121,7 @@ export const MasterAdminLoginPage = () => {
       <div className="w-full max-w-md space-y-8 bg-background p-8 rounded-xl shadow-lg border">
         <div className="text-center">
           {loginLogo || primaryLogo ? (
-            <img 
-              src={(loginLogo || primaryLogo) as string} 
-              alt={orgName as string} 
-              className="mx-auto h-16 w-auto object-contain mb-4" 
-            />
+            <img src={(loginLogo || primaryLogo) as string} alt={appName as string} className="mx-auto h-16 w-auto object-contain mb-4" />
           ) : (
             <div className="mx-auto h-12 w-12 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold text-xl mb-4">
               {(shortName as string).substring(0, 2).toUpperCase()}

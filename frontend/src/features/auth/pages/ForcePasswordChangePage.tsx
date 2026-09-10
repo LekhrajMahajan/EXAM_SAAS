@@ -56,7 +56,10 @@ export const ForcePasswordChangePage = () => {
     onSuccess: () => {
       toast.success('Password changed successfully');
       
-      // Update local forcePasswordChange state to false
+      // Update local forcePasswordChange state
+      // Bug Fixes
+      // - **Password Change Feedback:** Resolved an issue where changing the Master Admin password appeared to not work. The underlying backend process was fully functional, but the frontend was missing global `<Toaster />` components (for both `shadcn` and `react-hot-toast`) in `App.tsx`. Added these components so the user now receives proper visual feedback (success or error toasts) when attempting to change their password, and throughout the rest of the application.
+      // - **Removed Branch Identifier:** Addressed a TypeScript error (`'branchId' does not exist in type 'UserProfile'`) in both standard and Master Admin login pages. Since branches are not utilized within the application architecture, references to `branchId` were completely removed.
       useUserStore.setState((state) => ({
         profile: state.profile ? { ...state.profile, forcePasswordChange: false } : null
       }));

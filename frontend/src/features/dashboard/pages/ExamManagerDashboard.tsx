@@ -116,14 +116,9 @@ export function ExamManagerDashboard () {
   const activities: ActivityItem[] = data?.activities?.length
     ? data.activities
     : FALLBACK_ACTIVITIES
-
   return (
     <DashboardLayout>
-      <div className='space-y-1'>
-        <PageHeader
-          title='Exam Manager Dashboard'
-          description='Track upcoming exams, schedule, and pending tasks.'
-        />
+      <div className='space-y-1 mb-6'>
         <WelcomeHeader />
       </div>
 

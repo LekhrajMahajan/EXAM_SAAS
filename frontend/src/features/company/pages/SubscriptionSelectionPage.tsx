@@ -127,12 +127,35 @@ export const SubscriptionSelectionPage = () => {
       />
 
       {currentPlanCode && (
-        <div className="bg-primary/10 border border-primary/20 p-4 rounded-md text-primary">
-          <p className="font-medium">Current Active Plan: {currentPlanCode}</p>
-          <p className="text-sm">You can upgrade your plan or continue to the dashboard.</p>
-          <Button variant="link" className="px-0 mt-2" onClick={() => navigate('/company/dashboard')}>
-            Go to Dashboard &rarr;
-          </Button>
+        <div className="bg-[#2D3E2C] text-white border border-[#2D3E2C]/20 p-6 rounded-xl shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-black mb-1">
+              Active Plan: <span className="text-[#E4FD97]">{currentPlanCode}</span>
+            </h2>
+            <p className="text-white/80 text-sm">
+              You can upgrade your plan or continue to the dashboard.
+            </p>
+          </div>
+          
+          <div className="flex flex-col items-start md:items-end gap-3 md:flex-row md:items-center">
+            {profile?.subscriptionEndDate && (
+              <div className="bg-white/10 px-4 py-2 rounded-lg border border-white/20 text-left md:text-right">
+                <p className="text-xs text-white/70 uppercase tracking-wider font-semibold mb-0.5">Time Remaining</p>
+                <p className="text-xl font-bold text-[#E4FD97]">
+                  {(() => {
+                    const diffDays = Math.ceil((new Date(profile.subscriptionEndDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                    return diffDays > 0 ? `${diffDays} Days` : 'Expired';
+                  })()}
+                </p>
+              </div>
+            )}
+            <Button 
+              className="bg-[#E4FD97] text-[#2D3E2C] hover:bg-[#E4FD97]/90 font-bold px-6 h-auto py-3" 
+              onClick={() => navigate('/company/dashboard')}
+            >
+              Go to Dashboard &rarr;
+            </Button>
+          </div>
         </div>
       )}
 

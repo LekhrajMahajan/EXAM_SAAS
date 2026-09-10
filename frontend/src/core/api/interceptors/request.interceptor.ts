@@ -5,7 +5,7 @@ import { useAuthStore } from '@/features/auth/store/useAuthStore';
 
 const getFallbackAuthToken = (): string | null => {
   try {
-    const authStorage = localStorage.getItem('auth-storage');
+    const authStorage = sessionStorage.getItem('auth-storage') || localStorage.getItem('auth-storage');
     if (authStorage) {
       const parsed = JSON.parse(authStorage);
       if (parsed?.state?.token) {
@@ -30,6 +30,7 @@ export const requestInterceptor = (config: InternalAxiosRequestConfig): Internal
     tokenStorage.getAccessToken() ||
     useAuthStore.getState().token ||
     getFallbackAuthToken() ||
+    sessionStorage.getItem('examguard_auth_tokens') ||
     localStorage.getItem('token') ||
     localStorage.getItem('examguard_auth_tokens');
   if (token) {

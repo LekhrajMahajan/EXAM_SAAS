@@ -6,7 +6,7 @@ interface StatisticsGridProps {
 
 export const StatisticsGrid = ({ children }: StatisticsGridProps) => {
   return (
-    <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 mb-8">
+    <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 mb-8">
       {children}
     </div>
   );

@@ -216,7 +216,7 @@ export const CenterTable = ({ centers }: CenterTableProps) => {
           <TableRow className="hover:bg-transparent border-border">
             <TableHead className="text-muted-foreground font-semibold text-xs uppercase tracking-wider py-3">Center Code</TableHead>
             <TableHead className="text-muted-foreground font-semibold text-xs uppercase tracking-wider py-3">Center Name</TableHead>
-            <TableHead className="text-muted-foreground font-semibold text-xs uppercase tracking-wider py-3">Branch</TableHead>
+
             <TableHead className="text-muted-foreground font-semibold text-xs uppercase tracking-wider py-3">Location</TableHead>
             <TableHead className="text-muted-foreground font-semibold text-xs uppercase tracking-wider py-3">Capacity</TableHead>
             <TableHead className="text-muted-foreground font-semibold text-xs uppercase tracking-wider py-3">Status</TableHead>
@@ -228,9 +228,7 @@ export const CenterTable = ({ centers }: CenterTableProps) => {
           {centers.map((center, idx) => {
             const centerObj = center as unknown as Record<string, unknown>;
             const centerId = center.id || center._id || `center-${idx}`;
-            const branchLabel = typeof center.branch === 'object' && center.branch
-              ? (center.branch as Record<string, unknown>).name || (center.branch as Record<string, unknown>).branchName || 'Branch'
-              : center.branch || centerObj.branchName || 'Main Hub';
+
             const rooms = centerObj.totalLabs ?? center.capacity?.maxRooms ?? 1;
             const systems = centerObj.totalSystems ?? center.capacity?.maxSystems ?? (typeof center.capacity === 'number' ? center.capacity : null) ?? 20;
             const statusVal = center.status || (centerObj.setupStatus === 'ACTIVE' ? 'Active' : 'Inactive');
@@ -247,7 +245,7 @@ export const CenterTable = ({ centers }: CenterTableProps) => {
               <TableRow key={centerId} className="hover:bg-muted/50 border-b transition-colors">
                 <TableCell className="font-semibold text-foreground py-3.5">{center.centerCode || 'N/A'}</TableCell>
                 <TableCell className="text-foreground font-medium py-3.5">{center.centerName || 'Unnamed Center'}</TableCell>
-                <TableCell className="text-muted-foreground py-3.5">{String(branchLabel)}</TableCell>
+
                 <TableCell className="py-3.5">
                   <div className="text-sm font-medium text-foreground">
                     {center.city || 'N/A'}

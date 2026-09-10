@@ -30,17 +30,14 @@ import {
   Download,
   Filter as FilterIcon,
   Clock,
-  Users,
   Database,
   AlertCircle,
-  Calendar,
 } from 'lucide-react'
 import type { TableColumn, StatusVariant, TimelineItem } from '@/shared/types'
 import { FilterDrawer, QuickFilters } from '@/shared/components/filters/FilterComponents'
 import {
   useActivityLogs,
   useActivityDashboard,
-  useActivityStatistics,
   useRecentActivityLogs,
 } from '../hooks/activity-log.hooks'
 import type { ActivityLog, ActivityPriority } from '../types/activity-log.types'
@@ -91,7 +88,7 @@ export const ActivityLogsPage = () => {
 
   // Queries
   const { data: dashboardData } = useActivityDashboard({}, REFETCH_INTERVAL)
-  const { data: statsData } = useActivityStatistics({}, REFETCH_INTERVAL)
+  // const { data: _statsData } = useActivityStatistics({}, REFETCH_INTERVAL)
 
   const queryFilters = {
     page: pageIndex + 1,
@@ -102,7 +99,7 @@ export const ActivityLogsPage = () => {
   }
 
   const { data: logsResponse, isLoading, isError } = useActivityLogs(queryFilters, REFETCH_INTERVAL)
-  const { data: recentLogs } = useRecentActivityLogs(15, REFETCH_INTERVAL)
+  const { data: recentLogs } = useRecentActivityLogs(15, {}, REFETCH_INTERVAL)
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -190,12 +187,7 @@ export const ActivityLogsPage = () => {
       accessorKey: 'activityType',
       cell: ({ row }) => <span className='font-semibold text-slate-700'>{row.activityType}</span>,
     },
-    {
-      id: 'entity',
-      header: 'Entity',
-      accessorKey: 'entityName',
-      cell: ({ row }) => <span className='text-sm'>{row.entityName || 'N/A'}</span>,
-    },
+
     {
       id: 'performedBy',
       header: 'Performed By',
@@ -285,7 +277,7 @@ export const ActivityLogsPage = () => {
         <div className='flex gap-2'>
           <Button
             variant='outline'
-            className='gap-2 qa-button'
+            className='gap-2 qa-button bg-transparent text-[#2D3E2C] border border-[#2D3E2C] hover:bg-[#2D3E2C] hover:text-secondary transition-colors'
             onClick={exportToCSV}
             disabled={!logsResponse?.data?.length}
           >
@@ -397,7 +389,7 @@ export const ActivityLogsPage = () => {
                     <Input
                       type='text'
                       placeholder='Search Activity ID, User, Module...'
-                      className={`pl-9 ${isDark ? 'bg-slate-900 border-slate-800 text-slate-200 placeholder-slate-500' : 'bg-slate-50'}`}
+                      className={`pl-9 ${isDark ? 'bg-slate-900 border-slate-800 text-slate-200' : 'bg-slate-50'}`}
                       value={searchInput}
                       onChange={(e) => setSearchInput(e.target.value)}
                     />
@@ -540,23 +532,25 @@ export const ActivityLogsPage = () => {
               </div>
 
               <div className='grid grid-cols-2 gap-4 border-t pt-4 activity-detail-border'>
-                <div>
-                  <Label className='text-sm font-semibold text-slate-800 mb-2 block activity-detail-desc-label'>
-                    Entity Details
-                  </Label>
-                  <div className='space-y-2'>
-                    <div className='flex justify-between text-sm'>
-                      <span className='text-slate-500 activity-detail-label'>Name:</span>
-                      <span className='font-medium activity-detail-value'>{selectedActivity.entityName || 'N/A'}</span>
-                    </div>
-                    <div className='flex justify-between text-sm'>
-                      <span className='text-slate-500 activity-detail-label'>ID:</span>
-                      <span className='font-medium font-mono activity-detail-value'>
-                        {selectedActivity.entityId || 'N/A'}
-                      </span>
+                { (selectedActivity.entityName || selectedActivity.entityId) && (
+                  <div>
+                    <Label className='text-sm font-semibold text-slate-800 mb-2 block activity-detail-desc-label'>
+                      Entity Details
+                    </Label>
+                    <div className='space-y-2'>
+                      <div className='flex justify-between text-sm'>
+                        <span className='text-slate-500 activity-detail-label'>Name:</span>
+                        <span className='font-medium activity-detail-value'>{selectedActivity.entityName || 'N/A'}</span>
+                      </div>
+                      <div className='flex justify-between text-sm'>
+                        <span className='text-slate-500 activity-detail-label'>ID:</span>
+                        <span className='font-medium font-mono activity-detail-value'>
+                          {selectedActivity.entityId || 'N/A'}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
                 <div>
                   <Label className='text-sm font-semibold text-slate-800 mb-2 block activity-detail-desc-label'>
                     Performed By
@@ -624,7 +618,7 @@ export const ActivityLogsPage = () => {
             <Label>Start Date</Label>
             <Input
               type='date'
-              className='dark:[color-scheme:dark] [&::-webkit-calendar-picker-indicator]:dark:invert [&::-webkit-calendar-picker-indicator]:dark:opacity-70'
+              className='dark:scheme-dark [&::-webkit-calendar-picker-indicator]:dark:invert [&::-webkit-calendar-picker-indicator]:dark:opacity-70'
               value={filters.startDate || ''}
               onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
             />
@@ -633,7 +627,7 @@ export const ActivityLogsPage = () => {
             <Label>End Date</Label>
             <Input
               type='date'
-              className='dark:[color-scheme:dark] [&::-webkit-calendar-picker-indicator]:dark:invert [&::-webkit-calendar-picker-indicator]:dark:opacity-70'
+              className='dark:scheme-dark [&::-webkit-calendar-picker-indicator]:dark:invert [&::-webkit-calendar-picker-indicator]:dark:opacity-70'
               value={filters.endDate || ''}
               onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
             />

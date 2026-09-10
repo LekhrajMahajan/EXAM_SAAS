@@ -15,6 +15,10 @@ export interface Exam {
   examMode?: string;
   examDate: string;
   shift?: string;
+  examGroupId?: string | null;
+  hasMultipleShifts?: boolean;
+  normalizationEnabled?: boolean;
+  normalizationMethod?: 'PERCENTILE' | 'MEAN_EQUATING';
   startTime: string;
   endTime: string;
   duration: number;
@@ -27,7 +31,21 @@ export interface Exam {
   examCategory?: string;
   shuffleSubjects?: boolean;
   shuffleQuestions?: boolean;
-  subjects?: { name: string; questions: number }[];
+  subjects?: { name: string; questions: number; marksPerQuestion?: number; negativeMarksPerQuestion?: number; sectionalCutoff?: number; timeAllottedMinutes?: number }[];
+  cutoffType?: 'MARKS' | 'PERCENTAGE';
+  overallQualifyingPercent?: number;
+  sectionalCutoffEnabled?: boolean;
+  sectionalTimeLimitEnabled?: boolean;
+  partWiseCutoffEnabled?: boolean;
+  parts?: { partName: string; subjectIds: string[]; cutoffType: 'MARKS' | 'PERCENTAGE'; cutoffValue: number }[];
+  categoryWiseCutoff?: { category: string; cutoffPercent: number }[];
+  rankType?: 'COMBINED' | 'CATEGORY_WISE';
+  tieBreakRules?: { order: number; ruleType: 'HIGHER_MARKS' | 'HIGHER_PERCENTAGE' | 'MORE_CORRECT' | 'LOWER_NEGATIVE' | 'OLDER_AGE' | 'YOUNGER_AGE' | 'APPLICATION_NUMBER' }[];
+  isMultiStage?: boolean;
+  stageType?: 'QUALIFYING_ONLY' | 'SCORE_CARRIED_FORWARD';
+  stageWeightagePercent?: number;
+  linkedNextExamId?: string;
+  resultDeclarationDate?: string;
   securitySettings?: {
     faceVerification?: boolean;
     faceDetectionEnabled?: boolean;
@@ -55,6 +73,7 @@ export interface Exam {
   status: string;
   displayStatus?: string;
   approvalStatus: string;
+  isResultGenerated?: boolean;
   createdAt: string;
 }
 

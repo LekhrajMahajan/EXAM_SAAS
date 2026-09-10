@@ -4,3 +4,4 @@ export * from './CompanyDashboardPage';
 export * from './CompanyProfilePage';
 export * from './CompanySettingsPage';
 export * from './CompanyOnboardingPage';
+export * from './SubscriptionUsagePage';

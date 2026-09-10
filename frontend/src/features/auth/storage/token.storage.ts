@@ -5,7 +5,7 @@ const TOKEN_KEY = 'examguard_auth_tokens';
 export const tokenStorage = {
   getTokens: (): AuthTokens | null => {
     try {
-      const stored = localStorage.getItem(TOKEN_KEY);
+      const stored = sessionStorage.getItem(TOKEN_KEY);
       return stored ? JSON.parse(stored) : null;
     } catch {
       return null;
@@ -13,11 +13,11 @@ export const tokenStorage = {
   },
 
   setTokens: (tokens: AuthTokens): void => {
-    localStorage.setItem(TOKEN_KEY, JSON.stringify(tokens));
+    sessionStorage.setItem(TOKEN_KEY, JSON.stringify(tokens));
   },
 
   clearTokens: (): void => {
-    localStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(TOKEN_KEY);
   },
 
   getAccessToken: (): string | null => {

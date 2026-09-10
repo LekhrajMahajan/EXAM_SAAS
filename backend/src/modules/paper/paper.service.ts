@@ -330,10 +330,11 @@ class PaperService extends BaseService<IPaper> {
 
     // Validation against Exam limits
     let targetLimit = paper.totalQuestions;
+    let subjectReq: any = null;
     if (paper.examId && payload.subjectName) {
       const exam = await Exam.findById(paper.examId);
       if (exam) {
-        const subjectReq = exam.subjects?.find(s => s.name === payload.subjectName);
+        subjectReq = exam.subjects?.find(s => s.name === payload.subjectName);
         if (subjectReq) {
           targetLimit = subjectReq.questions;
         }
@@ -377,8 +378,8 @@ class PaperService extends BaseService<IPaper> {
         sectionCode: payload.subjectName || "DEFAULT", // Using subject name as section for now
         questionOrder: existingSubjectQuestions.length + 1,
         displayOrder: existingSubjectQuestions.length + 1,
-        marks: payload.marks || 1,
-        negativeMarks: payload.negativeMarks || 0,
+        marks: subjectReq?.marksPerQuestion ?? payload.marks ?? 1,
+        negativeMarks: subjectReq?.negativeMarksPerQuestion ?? payload.negativeMarks ?? 0,
         createdBy: paper.assignedTo,
       });
       await paperQuestion.save();
@@ -394,10 +395,11 @@ class PaperService extends BaseService<IPaper> {
     
     // Validate Exam limits
     let targetLimit = paper.totalQuestions;
+    let subjectReq: any = null;
     if (paper.examId && payload.subjectName) {
       const exam = await Exam.findById(paper.examId);
       if (exam) {
-        const subjectReq = exam.subjects?.find(s => s.name === payload.subjectName);
+        subjectReq = exam.subjects?.find(s => s.name === payload.subjectName);
         if (subjectReq) {
           targetLimit = subjectReq.questions;
         }
@@ -465,8 +467,8 @@ class PaperService extends BaseService<IPaper> {
           sectionCode: payload.subjectName || "DEFAULT",
           questionOrder: qOrder,
           displayOrder: qOrder,
-          marks: qPayload.marks || 1,
-          negativeMarks: qPayload.negativeMarks || 0,
+          marks: subjectReq?.marksPerQuestion ?? qPayload.marks ?? 1,
+          negativeMarks: subjectReq?.negativeMarksPerQuestion ?? qPayload.negativeMarks ?? 0,
           createdBy: paper.assignedTo,
         });
         await paperQuestion.save();
@@ -492,7 +494,7 @@ class PaperService extends BaseService<IPaper> {
     const question = await Question.findOneAndUpdate(
       { _id: questionId, companyId: paper.companyId },
       { $set: payload },
-      { new: true }
+      { returnDocument: 'after' }
     );
 
     if (!question) throw new ApiError(HTTP_STATUS.NOT_FOUND, "Question not found.");

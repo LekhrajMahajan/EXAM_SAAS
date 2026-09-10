@@ -49,4 +49,5 @@ export interface ProfileResponseData {
   centerSetupCurrentStep?: number;
   // Backend returns extended user data here
   permissions?: string[];
+  lastLogin?: string | Date;
 }

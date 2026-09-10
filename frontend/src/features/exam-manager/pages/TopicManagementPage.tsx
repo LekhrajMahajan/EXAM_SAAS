@@ -848,7 +848,7 @@ export const TopicManagementPage = () => {
                       {exam.examName || exam.examTitle}
                     </h2>
                     {exam && (
-                      <ExamStatusBadge exam={exam} className="text-[10px] py-0 h-5" />
+                      <ExamStatusBadge exam={exam} />
                     )}
                   </div>
                   {exam.description && (

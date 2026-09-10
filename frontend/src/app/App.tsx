@@ -7,6 +7,8 @@ import { AuthProvider } from '@/features/auth/providers/AuthProvider'
 import { ConfirmProvider } from '@/providers/ConfirmProvider'
 import { DynamicMetadataProvider } from '@/providers/DynamicMetadataProvider'
 import { router } from '@/routes/router'
+import { Toaster as ShadcnToaster } from '@/shared/components/ui/toaster'
+import { Toaster as HotToaster } from 'react-hot-toast'
 
 export const App = () => {
   return (
@@ -16,6 +18,8 @@ export const App = () => {
           <ConfirmProvider>
             <DynamicMetadataProvider>
               <RouterProvider router={router} />
+              <ShadcnToaster />
+              <HotToaster position="top-right" />
             </DynamicMetadataProvider>
           </ConfirmProvider>
         </AuthProvider>

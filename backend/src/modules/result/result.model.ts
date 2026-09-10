@@ -132,6 +132,12 @@ const resultSchema = new Schema<IResult>(
       default: 0,
     },
 
+    correctMarks: {
+      type: Number,
+      default: 0,
+    },
+
+
     negativeMarks: {
       type: Number,
       default: 0,
@@ -146,6 +152,98 @@ const resultSchema = new Schema<IResult>(
     percentage: {
       type: Number,
       default: 0,
+    },
+
+    subjectWiseBreakdown: [
+      {
+        subjectId: { type: Schema.Types.ObjectId, ref: "Subject" },
+        subjectName: { type: String },
+        totalQuestions: { type: Number, default: 0 },
+        questionsAttempted: { type: Number, default: 0 },
+        unansweredQuestions: { type: Number, default: 0 },
+        correctAnswers: { type: Number, default: 0 },
+        wrongAnswers: { type: Number, default: 0 },
+        correctMarks: { type: Number, default: 0 },
+        negativeMarks: { type: Number, default: 0 },
+        marksObtained: { type: Number, default: 0 },
+        maxMarks: { type: Number, default: 0 },
+        sectionalCutoff: { type: Number, default: null },
+        sectionalStatus: {
+          type: String,
+          enum: ["QUALIFIED", "NOT_QUALIFIED", "NOT_APPLICABLE"],
+          default: "NOT_APPLICABLE",
+        },
+      },
+    ],
+    
+    partWiseBreakdown: [
+      {
+        partName: { type: String },
+        subjectIds: [{ type: String }],
+        marksObtained: { type: Number, default: 0 },
+        maxMarks: { type: Number, default: 0 },
+        cutoffType: { type: String, enum: ["MARKS", "PERCENTAGE"] },
+        cutoffValue: { type: Number },
+        partStatus: {
+          type: String,
+          enum: ["QUALIFIED", "NOT_QUALIFIED", "NOT_APPLICABLE"],
+          default: "NOT_APPLICABLE",
+        },
+      },
+    ],
+
+    category: {
+      type: String,
+      default: null,
+    },
+
+    gender: {
+      type: String,
+      default: null,
+    },
+
+    sectionalCutoffApplied: {
+      type: Boolean,
+      default: false,
+    },
+
+    partWiseCutoffApplied: {
+      type: Boolean,
+      default: false,
+    },
+
+    overallCutoffStatus: {
+      type: String,
+      enum: ["QUALIFIED", "NOT_QUALIFIED", "NOT_APPLICABLE"],
+      default: "NOT_APPLICABLE",
+    },
+
+    categoryCutoffStatus: {
+      type: String,
+      enum: ["QUALIFIED", "NOT_QUALIFIED", "NOT_APPLICABLE"],
+      default: "NOT_APPLICABLE",
+    },
+
+    sectionalCutoffStatus: {
+      type: String,
+      enum: ["QUALIFIED", "NOT_QUALIFIED", "NOT_APPLICABLE"],
+      default: "NOT_APPLICABLE",
+    },
+
+    groupCutoffStatus: {
+      type: String,
+      enum: ["QUALIFIED", "NOT_QUALIFIED", "NOT_APPLICABLE"],
+      default: "NOT_APPLICABLE",
+    },
+
+    categoryWiseCutoff: {
+      type: [
+        {
+          category: { type: String },
+          cutoffPercent: { type: Number },
+        },
+      ],
+      default: [],
     },
 
     rank: {

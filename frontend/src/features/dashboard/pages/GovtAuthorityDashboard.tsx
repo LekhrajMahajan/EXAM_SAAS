@@ -60,10 +60,7 @@ export function GovtAuthorityDashboard() {
 
   return (
     <DashboardLayout>
-      <PageHeader 
-        title={isPrivate ? "Private Authority Dashboard" : "Government Authority Dashboard"} 
-        description={isPrivate ? "Manage and monitor your assigned examination center." : "Platform compliance, transparency, and national exam analytics."} 
-      />
+
 
       <WelcomeBanner unreadCount={unreadCount} />
 

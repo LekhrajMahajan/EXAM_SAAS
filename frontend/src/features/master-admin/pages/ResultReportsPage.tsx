@@ -10,7 +10,9 @@ import {
   BarChart,
   ClipboardList,
   RefreshCw,
-  Loader2
+  Loader2,
+  Clock,
+  TrendingUp,
 } from "lucide-react";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
@@ -189,56 +191,48 @@ export const ResultReportsPage = () => {
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          title="Total Results"
-          value={summary?.totalResults || 0}
-          icon={ClipboardList}
-          accent="slate"
-        />
-        <StatCard
-          title="Passed Candidates"
-          value={summary?.passCandidates || 0}
-          icon={CheckCircle}
-          accent="green"
-        />
-        <StatCard
-          title="Failed Candidates"
-          value={summary?.failCandidates || 0}
-          icon={XCircle}
-          accent="red"
-        />
-        <StatCard
-          title="Merit Lists Generated"
-          value={summary?.meritListsGenerated || 0}
-          icon={Award}
-          accent="lime"
-        />
-        <StatCard
-          title="Published Results"
-          value={summary?.publishedResults || 0}
+          title='Total Results'
+          value={summary?.data?.totalResults || 0}
           icon={FileText}
-          accent="slate"
+          accent='blue'
         />
         <StatCard
-          title="Pending Approval"
-          value={summary?.pendingApproval || 0}
-          icon={Star}
-          accent="amber"
-        />
-        <StatCard
-          title="Approved Results"
-          value={summary?.approvedResults || 0}
+          title='Passed Candidates'
+          value={summary?.data?.passCandidates || 0}
           icon={CheckCircle}
-          accent="green"
+          accent='green'
         />
         <StatCard
-          title="Overall Pass %"
-          value={`${summary?.overallPassPercentage || 0}%`}
-          icon={BarChart}
-          accent="slate"
+          title='Failed Candidates'
+          value={summary?.data?.failCandidates || 0}
+          icon={XCircle}
+          accent='red'
+        />
+        <StatCard
+          title='Merit Lists Generated'
+          value={summary?.data?.meritListsGenerated || 0}
+          icon={Award}
+          accent='lime'
+        />
+        <StatCard
+          title='Pending Approval'
+          value={summary?.data?.pendingApproval || 0}
+          icon={Clock}
+          accent='amber'
+        />
+        <StatCard
+          title='Published Results'
+          value={summary?.data?.publishedResults || 0}
+          icon={CheckCircle}
+          accent='green'
+        />
+        <StatCard
+          title='Overall Pass %'
+          value={`${summary?.data?.overallPassPercentage || 0}%`}
+          icon={TrendingUp}
+          accent='blue'
         />
       </div>
-
-
 
       {/* Main Content */}
       <Card>

@@ -88,11 +88,57 @@ export interface IResult {
 
   marksObtained: number;
 
+  correctMarks: number;
+
   negativeMarks: number;
 
   passingMarks: number;
 
   percentage: number;
+
+  subjectWiseBreakdown?: {
+    subjectId: Types.ObjectId;
+    subjectName?: string;
+    totalQuestions: number;
+    questionsAttempted: number;
+    unansweredQuestions: number;
+    correctAnswers: number;
+    wrongAnswers: number;
+    correctMarks: number;
+    negativeMarks: number;
+    marksObtained: number;
+    maxMarks: number;
+    sectionalCutoff?: number | null;
+    sectionalStatus: "QUALIFIED" | "NOT_QUALIFIED" | "NOT_APPLICABLE";
+  }[];
+
+  partWiseBreakdown?: {
+    partName: string;
+    subjectIds: string[];
+    marksObtained: number;
+    maxMarks: number;
+    cutoffType: "MARKS" | "PERCENTAGE";
+    cutoffValue: number;
+    partStatus: "QUALIFIED" | "NOT_QUALIFIED" | "NOT_APPLICABLE";
+  }[];
+
+  category?: string | null;
+
+  gender?: string | null;
+
+  sectionalCutoffApplied?: boolean;
+
+  partWiseCutoffApplied?: boolean;
+
+  overallCutoffStatus?: "QUALIFIED" | "NOT_QUALIFIED" | "NOT_APPLICABLE";
+
+  categoryCutoffStatus?: "QUALIFIED" | "NOT_QUALIFIED" | "NOT_APPLICABLE";
+
+  sectionalCutoffStatus?: "QUALIFIED" | "NOT_QUALIFIED" | "NOT_APPLICABLE";
+
+  groupCutoffStatus?: "QUALIFIED" | "NOT_QUALIFIED" | "NOT_APPLICABLE";
+
+  categoryWiseCutoff?: { category: string; cutoffPercent: number }[];
 
   rank?: number;
 

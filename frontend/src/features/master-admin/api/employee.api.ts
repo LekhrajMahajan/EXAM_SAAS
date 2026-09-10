@@ -116,9 +116,24 @@ export const employeeApi = {
     id: string,
     params?: PaginationParams & any,
   ): Promise<PaginatedResponse<any>> => {
-    const { data } = await api.get<PaginatedResponse<any>>(`${BASE_PATH}/${id}/login-history`, {
+    const { data } = await api.get<any>(`${BASE_PATH}/${id}/login-history`, {
       params,
     })
+    
+    if (data.data && data.data.data) {
+      return {
+        success: data.success,
+        data: data.data.data,
+        pagination: {
+          page: data.data.page,
+          limit: data.data.limit,
+          total: data.data.total,
+          totalPages: data.data.totalPages,
+          hasNextPage: data.data.page < data.data.totalPages,
+          hasPrevPage: data.data.page > 1,
+        },
+      }
+    }
     return data
   },
 
@@ -126,9 +141,24 @@ export const employeeApi = {
     id: string,
     params?: PaginationParams & any,
   ): Promise<PaginatedResponse<any>> => {
-    const { data } = await api.get<PaginatedResponse<any>>(`${BASE_PATH}/${id}/activity`, {
+    const { data } = await api.get<any>(`${BASE_PATH}/${id}/activity`, {
       params,
     })
+    
+    if (data.data && data.data.data) {
+      return {
+        success: data.success,
+        data: data.data.data,
+        pagination: {
+          page: data.data.page,
+          limit: data.data.limit,
+          total: data.data.total,
+          totalPages: data.data.totalPages,
+          hasNextPage: data.data.page < data.data.totalPages,
+          hasPrevPage: data.data.page > 1,
+        },
+      }
+    }
     return data
   },
 }

@@ -10,7 +10,7 @@ import {
 import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
 import { Label } from '@/shared/components/ui/label'
-import { UploadCloud, Loader2, AlertCircle, FileSpreadsheet } from 'lucide-react'
+import { UploadCloud, Loader2, AlertCircle, FileSpreadsheet, Download } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/shared/components/ui/alert'
 import {
   Select,
@@ -181,14 +181,24 @@ export function ImportCenterModalPrivate({ onSuccess }: { onSuccess?: (importId:
       }}
     >
       <DialogTrigger asChild>
-        <Button size='sm' className='bg-background text-[#2D3E2C] dark:text-slate-200 border border-[#2D3E2C] hover:bg-[#2D3E2C] hover:text-white'>
+        <Button size='sm' className='bg-white text-[#2D3E2C] border border-[#2D3E2C] hover:bg-[#2D3E2C] hover:text-[#E4FD97] transition-colors'>
           <UploadCloud className='w-4 h-4 mr-2' />
           Import Center
         </Button>
       </DialogTrigger>
       <DialogContent className='sm:max-w-md bg-card border-border text-card-foreground'>
         <DialogHeader>
-          <DialogTitle>Import Centers via Excel</DialogTitle>
+          <div className="flex flex-wrap items-center justify-between gap-2 pr-6">
+            <DialogTitle>Import Centers via Excel</DialogTitle>
+            <a 
+              href="/Import_Centers_Blank_Template.xlsx" 
+              download="Import_Centers_Blank_Template.xlsx"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-md shadow-sm transition-colors"
+            >
+              <Download className="w-3 h-3" />
+              Download Template
+            </a>
+          </div>
         </DialogHeader>
 
         <div className='grid gap-4 py-4 overflow-hidden'>

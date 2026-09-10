@@ -23,7 +23,7 @@ import {
   bulkApproveResults,
   dashboard,
   statistics,
-  meritList,
+
   topper,
   passPercentage,
   softDeleteResult,
@@ -46,7 +46,7 @@ import {
   generateResultSchema,
   bulkPublishResultSchema,
   statisticsSchema,
-  meritListSchema,
+
   topperSchema,
   passPercentageSchema,
 } from "./result.validation";
@@ -172,9 +172,9 @@ router.get(
     UserRole.MASTER_ADMIN,
   ),
 
-  validateRequest(meritListSchema),
 
-  meritList,
+
+
 );
 
 router.get(

@@ -7,7 +7,7 @@ export interface MasterAdminStatCardProps {
   prefix?: string
   suffix?: string
   icon: React.ElementType
-  accent?: 'green' | 'lime' | 'red' | 'amber' | 'slate'
+  accent?: 'green' | 'lime' | 'red' | 'amber' | 'slate' | 'blue'
   description?: string
 }
 
@@ -17,6 +17,7 @@ const ACCENT_MAP = {
   slate: { border: 'border-slate-200', num: 'text-slate-900' },
   amber: { border: 'border-amber-200', num: 'text-amber-600' },
   red: { border: 'border-red-200', num: 'text-red-600' },
+  blue: { border: 'border-blue-200', num: 'text-blue-600' },
 }
 
 // Simple counter animation hook

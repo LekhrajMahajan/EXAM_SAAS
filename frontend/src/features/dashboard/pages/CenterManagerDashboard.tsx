@@ -1,7 +1,10 @@
 import React, { useMemo, useEffect, useState } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
+import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import { useRoleDashboard } from '../hooks/dashboard.hooks';
 import { centerApi } from '@/features/company/center/api/center.api';
+import { apiClient } from '@/core/api/http/axios-client';
+import { toast } from 'react-hot-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Button } from '@/shared/components/ui/button';
 import {
@@ -15,43 +18,105 @@ import {
   Smartphone,
   DoorOpen,
   AlertTriangle,
-  ArrowRight,
   Sparkles,
   Activity,
   Bell,
   CheckCircle2,
-  Info,
   Clock,
   Upload,
   UserPlus,
   CheckSquare,
+  BookOpen,
 } from 'lucide-react';
 
 export function CenterManagerDashboard() {
   const navigate = useNavigate();
+  const { user } = useAuthStore();
   const { data, isLoading } = useRoleDashboard();
   const [onboardingData, setOnboardingData] = useState<any>(null);
   const [isOnboardingLoading, setIsOnboardingLoading] = useState(true);
 
+  const [upiId, setUpiId] = useState('');
+  const [paymentMode, setPaymentMode] = useState<'UPI' | 'BANK'>('UPI');
+  const [bankDetails, setBankDetails] = useState({
+    accountNumber: '',
+    ifscCode: '',
+    bankName: '',
+    accountHolderName: ''
+  });
+  const [savedPaymentDetails, setSavedPaymentDetails] = useState<any>(null);
+  const [isSavingUpi, setIsSavingUpi] = useState(false);
+
   useEffect(() => {
-    const fetchOnboarding = async () => {
+    const fetchOnboardingAndUpi = async () => {
       try {
-        const res = await centerApi.getOnboardingStatus();
+        const [res, upiRes] = await Promise.all([
+          centerApi.getOnboardingStatus(),
+          apiClient.get('/centers/me').catch(() => null)
+        ]);
         setOnboardingData(res.data);
+        if (upiRes?.data?.data?.paymentDetails) {
+          const pd = upiRes.data.data.paymentDetails;
+          setPaymentMode(pd.mode || 'UPI');
+          if (pd.upiId) setUpiId(pd.upiId);
+          setBankDetails({
+            accountNumber: pd.accountNumber || '',
+            ifscCode: pd.ifscCode || '',
+            bankName: pd.bankName || '',
+            accountHolderName: pd.accountHolderName || ''
+          });
+          setSavedPaymentDetails(pd);
+        } else if (upiRes?.data?.data?.upiId) {
+          setUpiId(upiRes.data.data.upiId);
+          setPaymentMode('UPI');
+          setSavedPaymentDetails({ mode: 'UPI', upiId: upiRes.data.data.upiId });
+        }
       } catch (err) {
-        console.error("Failed to fetch onboarding status", err);
+        console.error("Failed to fetch dashboard data", err);
       } finally {
         setIsOnboardingLoading(false);
       }
     };
-    fetchOnboarding();
+    fetchOnboardingAndUpi();
   }, []);
 
-  const stats = data?.stats || [];
-  const quickActions = data?.quickActions || [];
-  const activities = data?.activities || [];
-  const notifications = data?.notifications || [];
-  const unreadCount = data?.unreadCount || 0;
+  const handleSavePaymentDetails = async () => {
+    let payload: any = { mode: paymentMode };
+    if (paymentMode === 'UPI') {
+      if (!upiId.trim()) {
+        toast.error("Please enter a UPI ID");
+        return;
+      }
+      const upiRegex = /^[a-zA-Z0-9.\-_]{2,256}@[a-zA-Z]{2,64}$/;
+      if (!upiRegex.test(upiId.trim())) {
+        toast.error("Please enter a valid UPI ID (e.g. name@bank)");
+        return;
+      }
+      payload.upiId = upiId.trim();
+    } else {
+      if (!bankDetails.accountNumber || !bankDetails.ifscCode || !bankDetails.bankName || !bankDetails.accountHolderName) {
+        toast.error("Please fill all bank details");
+        return;
+      }
+      payload = { ...payload, ...bankDetails };
+    }
+
+    try {
+      setIsSavingUpi(true);
+      await apiClient.patch('/centers/me/payment-details', { paymentDetails: payload });
+      setSavedPaymentDetails(payload);
+      toast.success("Payment details saved successfully");
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to save payment details");
+      console.error("Failed to save payment details", err);
+    } finally {
+      setIsSavingUpi(false);
+    }
+  };
+
+  const stats: any[] = (data as any)?.stats || [];
+  const quickActions: any[] = (data as any)?.quickActions || [];
+  const activeExamsList: any[] = (data as any)?.activeExamsList || [];
 
   const currentDate = useMemo(() => {
     return new Date().toLocaleDateString('en-US', {
@@ -63,10 +128,26 @@ export function CenterManagerDashboard() {
   }, []);
 
   const lastLoginDate = useMemo(() => {
-    const d = new Date();
-    d.setDate(d.getDate() - 1); // Mock last login as 1 day ago for visual consistency
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-  }, []);
+    // Prefer previousLoginAt if available, else lastLoginAt
+    const userLastLogin = (user as any)?.previousLoginAt || user?.lastLoginAt;
+    let lastLogin = "Just now";
+    
+    if (userLastLogin) {
+      const loginDate = new Date(userLastLogin);
+      const now = new Date();
+      if (Math.abs(now.getTime() - loginDate.getTime()) > 60000) {
+        lastLogin = loginDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+      }
+    }
+    return lastLogin;
+  }, [user]);
+
+  const userName = useMemo(() => {
+    if ((user as any)?.firstName || (user as any)?.lastName) {
+      return `${(user as any).firstName || ''} ${(user as any).lastName || ''}`.trim();
+    }
+    return user?.name || "Center Manager";
+  }, [user]);
 
   const getIconComponent = (iconName: string) => {
     switch (iconName) {
@@ -83,7 +164,7 @@ export function CenterManagerDashboard() {
     }
   };
 
-  const statsCards = stats.map((stat: any) => ({
+  const statsCards: any[] = stats.map((stat: any) => ({
     title: stat.label,
     value: stat.value,
     icon: getIconComponent(stat.iconName),
@@ -102,28 +183,91 @@ export function CenterManagerDashboard() {
     return <Navigate to="/center/onboarding-wizard" replace />;
   }
 
-  const hasAnyData = activities.length > 0 || notifications.length > 0;
-
   return (
-    <div className="p-6 space-y-6 min-h-screen bg-slate-50 dark:bg-slate-950 animate-in fade-in duration-300">
+    <div className="p-6 space-y-6 min-h-screen bg-background animate-in fade-in duration-300">
       {/* HEADER BANNER (Master Admin Style - Olive #2D3E2C & Light Green #E4FD97) */}
-      <div className="bg-[#2D3E2C] text-[#E4FD97] rounded-2xl p-6 shadow-xl border border-[#E4FD97]/20 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="space-y-1.5">
-          <h1 className="text-2xl font-black tracking-tight text-white flex items-center gap-2.5">
-            Welcome back, Center Manager!
-          </h1>
-          <p className="text-sm text-[#E4FD97]/90 font-medium max-w-xl">
-            Role: <span className="font-extrabold underline text-white">Center Manager</span> | Overseeing assigned exam sessions, staff readiness & classroom laboratory infrastructure.
-          </p>
+      <div className="bg-[#2D3E2C] text-[#E4FD97] rounded-2xl p-6 shadow-xl border border-[#E4FD97]/20 flex flex-col md:flex-row md:items-start justify-between gap-4">
+        <div className="space-y-4 w-full max-w-xl">
+          <div className="space-y-1.5">
+            <h1 className="text-2xl font-black tracking-tight text-white flex items-center gap-2.5">
+              Welcome back, {userName}!
+            </h1>
+            <p className="text-sm text-[#E4FD97]/90 font-medium max-w-xl">
+              Role: <span className="font-extrabold underline text-white">Center Manager</span> | Overseeing assigned exam sessions, staff readiness & classroom laboratory infrastructure.
+            </p>
+          </div>
+          
+          <div className="flex flex-col gap-2 max-w-lg mt-4 bg-white/10 p-4 rounded-lg border border-[#E4FD97]/20">
+            {savedPaymentDetails ? (
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-semibold text-white">
+                  {savedPaymentDetails.mode === 'UPI' ? (
+                    <p>UPI: {savedPaymentDetails.upiId}</p>
+                  ) : (
+                    <div>
+                      <p>Bank: {savedPaymentDetails.bankName}</p>
+                      <p className="text-xs text-[#E4FD97]">A/C: {savedPaymentDetails.accountNumber} ({savedPaymentDetails.ifscCode})</p>
+                    </div>
+                  )}
+                </div>
+                <Button 
+                  size="sm" 
+                  onClick={() => setSavedPaymentDetails(null)}
+                  className="bg-transparent border border-[#E4FD97] text-[#E4FD97] hover:bg-[#E4FD97] hover:text-[#2D3E2C] font-bold h-8 shrink-0 ml-4"
+                >
+                  Edit
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex gap-2">
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => setPaymentMode('UPI')}
+                    className={paymentMode === 'UPI' ? "bg-[#E4FD97] border-transparent text-[#2D3E2C] hover:bg-white font-bold" : "text-white border-white/30 bg-transparent hover:bg-white/10 hover:text-white font-medium"}
+                  >UPI</Button>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => setPaymentMode('BANK')}
+                    className={paymentMode === 'BANK' ? "bg-[#E4FD97] border-transparent text-[#2D3E2C] hover:bg-white font-bold" : "text-white border-white/30 bg-transparent hover:bg-white/10 hover:text-white font-medium"}
+                  >Bank Transfer</Button>
+                </div>
+                
+                {paymentMode === 'UPI' ? (
+                  <input 
+                    type="text" 
+                    placeholder="Enter Payment UPI ID (e.g. name@bank)" 
+                    value={upiId}
+                    onChange={(e) => setUpiId(e.target.value)}
+                    className="w-full bg-black/20 border border-white/20 rounded text-white placeholder-white/50 text-sm focus:outline-none focus:border-[#E4FD97] px-3 py-2"
+                  />
+                ) : (
+                  <div className="grid grid-cols-2 gap-2">
+                    <input type="text" placeholder="Account Holder Name" value={bankDetails.accountHolderName} onChange={e => setBankDetails({...bankDetails, accountHolderName: e.target.value})} className="bg-black/20 border border-white/20 rounded text-white placeholder-white/50 text-sm focus:outline-none focus:border-[#E4FD97] px-3 py-2" />
+                    <input type="text" placeholder="Bank Name" value={bankDetails.bankName} onChange={e => setBankDetails({...bankDetails, bankName: e.target.value})} className="bg-black/20 border border-white/20 rounded text-white placeholder-white/50 text-sm focus:outline-none focus:border-[#E4FD97] px-3 py-2" />
+                    <input type="text" placeholder="Account Number" value={bankDetails.accountNumber} onChange={e => setBankDetails({...bankDetails, accountNumber: e.target.value})} className="bg-black/20 border border-white/20 rounded text-white placeholder-white/50 text-sm focus:outline-none focus:border-[#E4FD97] px-3 py-2" />
+                    <input type="text" placeholder="IFSC Code" value={bankDetails.ifscCode} onChange={e => setBankDetails({...bankDetails, ifscCode: e.target.value})} className="bg-black/20 border border-white/20 rounded text-white placeholder-white/50 text-sm focus:outline-none focus:border-[#E4FD97] px-3 py-2" />
+                  </div>
+                )}
+                
+                <div className="flex justify-end pt-2">
+                  <Button 
+                    size="sm" 
+                    onClick={handleSavePaymentDetails}
+                    disabled={isSavingUpi}
+                    className="bg-[#E4FD97] text-[#2D3E2C] hover:bg-white font-bold"
+                  >
+                    {isSavingUpi ? 'Saving...' : 'Save Details'}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
+        
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 shrink-0">
-          <Button 
-            variant="outline" 
-            className="text-white border-[#E4FD97]/30 hover:bg-[#E4FD97] hover:text-[#2D3E2C] hover:border-[#E4FD97] transition-all duration-300 shadow-[0_0_15px_rgba(228,253,151,0)] hover:shadow-[0_0_15px_rgba(228,253,151,0.4)] hover:-translate-y-0.5 font-semibold tracking-wide bg-white/5" 
-            onClick={() => navigate('/dashboard/center-manager/profile')}
-          >
-            View Profile
-          </Button>
           <div className="text-left md:text-right shrink-0 bg-slate-900/40 md:bg-transparent p-3 md:p-0 rounded-xl border border-slate-700/50 md:border-0">
             <p className="text-sm font-extrabold text-white">
               {currentDate}
@@ -132,11 +276,18 @@ export function CenterManagerDashboard() {
               Last login: {lastLoginDate}
             </p>
           </div>
+          <Button 
+            variant="outline" 
+            className="text-white border-[#E4FD97]/30 hover:bg-[#E4FD97] hover:text-[#2D3E2C] hover:border-[#E4FD97] transition-all duration-300 shadow-[0_0_15px_rgba(228,253,151,0)] hover:shadow-[0_0_15px_rgba(228,253,151,0.4)] hover:-translate-y-0.5 font-semibold tracking-wide bg-white/5" 
+            onClick={() => navigate('/dashboard/center-manager/profile')}
+          >
+            View Profile
+          </Button>
         </div>
       </div>
 
       {/* QUICK ACTIONS WIDGET */}
-      {quickActions.length > 0 && (
+      {quickActions && Array.isArray(quickActions) && quickActions.length > 0 ? (
         <Card className="border border-slate-200 dark:border-slate-800 shadow-sm">
           <CardHeader className="pb-3">
             <CardTitle className="text-lg font-bold text-primary flex items-center gap-2">
@@ -162,11 +313,11 @@ export function CenterManagerDashboard() {
             </div>
           </CardContent>
         </Card>
-      )}
+      ) : null}
 
       {/* DYNAMIC STATS CARDS GRID */}
       <div className="grid gap-4 grid-cols-2 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4">
-        {statsCards.map((stat: any, i: number) => (
+        {statsCards && Array.isArray(statsCards) ? statsCards.map((stat: any, i: number) => (
           <Card
             key={i}
             className={`border ${stat.border} hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 bg-card`}
@@ -190,70 +341,59 @@ export function CenterManagerDashboard() {
               </div>
             </CardContent>
           </Card>
-        ))}
+        )) : null}
       </div>
 
-      {/* RECENT ACTIVITIES & SYSTEM NOTIFICATIONS */}
-      <div className="grid grid-cols-1 gap-6">
-        {/* Recent Activities */}
-        <Card className="border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between bg-white dark:bg-slate-900/90">
-          <CardHeader className="border-b border-slate-200 dark:border-slate-800 py-4 px-5 flex flex-row items-center justify-between">
-            <CardTitle className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <Activity className="w-5 h-5 text-[#2D3E2C] dark:text-[#E4FD97]" />
-              Recent Center Operations & Logs
-            </CardTitle>
-            <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-mono">
-              Live Sync
-            </span>
-          </CardHeader>
-
-          <CardContent className="p-5 divide-y divide-slate-100 dark:divide-slate-800/80 space-y-4">
-            {!hasAnyData ? (
-              <div className="py-10 text-center flex flex-col items-center justify-center space-y-3">
-                <div className="p-3 bg-slate-100 dark:bg-slate-800/80 rounded-full text-slate-400">
-                  <Info className="w-6 h-6 text-[#E4FD97]" />
-                </div>
-                <p className="text-sm font-bold text-slate-800 dark:text-slate-200">No Center Activity Recorded Yet</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md leading-relaxed">
-                  Operational logs and live audit entries will automatically populate here as soon as you register exam staff members, verify biometric entry, or when an exam session starts.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {activities.map((activity: any, idx: number) => {
-                  const ActIcon = getIconComponent(activity.iconName);
-                  return (
-                    <div key={idx} className="flex items-start gap-4 pt-1">
-                      <div className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 flex items-center justify-center shrink-0 mt-0.5">
-                        <ActIcon className="w-4 h-4" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-extrabold text-slate-900 dark:text-white">
-                          {activity.title}
-                        </p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed font-medium">
-                          {activity.description}
-                        </p>
-                        <span className="text-[10px] font-bold text-slate-400 mt-1 block">{activity.timestamp}</span>
-                      </div>
+      {/* ACTIVE EXAMS SECTION */}
+      <div className="mt-8">
+        <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Active Exams</h2>
+        {activeExamsList && Array.isArray(activeExamsList) && activeExamsList.length > 0 ? (
+          <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+            {activeExamsList.map((exam: any) => (
+              <Card key={exam.id} className="border border-slate-200 dark:border-slate-800 bg-card hover:shadow-md transition-all duration-200">
+                <CardContent className="p-5">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="w-10 h-10 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center shrink-0 text-indigo-600 dark:text-indigo-400">
+                      <BookOpen className="w-5 h-5" />
                     </div>
-                  );
-                })}
-              </div>
-            )}
-          </CardContent>
-
-          <div className="p-3 bg-slate-50 dark:bg-slate-950/60 border-t border-slate-200 dark:border-slate-800 text-center rounded-b-lg">
-            <Button
-              variant='outline'
-              className='w-full border-primary/20 hover:bg-primary/5 text-primary'
-              onClick={() => navigate('/dashboard/center-manager/audit-logs')}
-            >
-              View Full Audit Logs <ArrowRight className='w-4 h-4 ml-2' />
-            </Button>
+                    <div className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-xs font-bold px-2 py-1 rounded">
+                      {exam.candidateCount} Candidates
+                    </div>
+                  </div>
+                  <h3 className="font-bold text-slate-900 dark:text-white text-base mb-1 truncate" title={exam.examName}>
+                    {exam.examName}
+                  </h3>
+                  <div className="space-y-1 mt-3">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                      <CalendarCheck className="w-3.5 h-3.5" />
+                      {new Date(exam.examDate).toLocaleDateString('en-IN', {
+                        day: '2-digit', month: 'short', year: 'numeric'
+                      })}
+                    </p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5" />
+                      {exam.shiftName} ({exam.startTime} - {exam.endTime})
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
-        </Card>
+        ) : (
+          <Card className="border border-slate-200 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900/90">
+            <CardContent className="p-10 text-center flex flex-col items-center justify-center space-y-3">
+              <div className="p-3 bg-slate-100 dark:bg-slate-800/80 rounded-full text-slate-400">
+                <BookOpen className="w-6 h-6 text-[#E4FD97]" />
+              </div>
+              <p className="text-sm font-bold text-slate-800 dark:text-slate-200">No Active Exams Currently</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md leading-relaxed">
+                There are no active exams scheduled for your center at this moment. You will see assigned exams appear here when they are scheduled.
+              </p>
+            </CardContent>
+          </Card>
+        )}
       </div>
+
     </div>
   );
 }

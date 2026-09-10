@@ -158,10 +158,9 @@ export const SecurityPage = () => {
             Threat Detection
           </Button>
           <Badge
-            variant='outline'
-            className={`px-4 py-2 ${isDark ? 'bg-[#E4FD97]/10 border-[#E4FD97]/30 text-[#E4FD97]' : 'bg-[#2D3E2C]/8 border-[#2D3E2C]/30 text-[#2D3E2C]'}`}
+            className="px-4 py-2 bg-[#2D3E2C] text-[#E4FD97] hover:bg-[#2D3E2C]/90 border-transparent"
           >
-            <Activity className={`w-4 h-4 mr-2 animate-pulse ${isDark ? 'text-[#E4FD97]' : 'text-[#2D3E2C]'}`} />
+            <Activity className="w-4 h-4 mr-2 animate-pulse text-[#E4FD97]" />
             Live Monitoring Active
           </Badge>
         </div>

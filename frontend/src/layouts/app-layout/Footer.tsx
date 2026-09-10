@@ -4,7 +4,7 @@ import { usePublicSettings } from "@/features/master-admin/hooks/system-settings
 export const Footer = () => {
   const { data: orgSettings } = usePublicSettings();
   
-  const orgName = (orgSettings?.data?.find(s => s.key === "ORG_NAME")?.value as string) || "ExamGuard Pro";
+  const appName = (orgSettings?.data?.find(s => s.key === "APP_NAME")?.value as string) || "ExamGuard Pro";
   const supportEmail = orgSettings?.data?.find(s => s.key === "ORG_SUPPORT_EMAIL")?.value as string | undefined;
   const facebook = orgSettings?.data?.find(s => s.key === "SOCIAL_FACEBOOK")?.value as string | undefined;
   const twitter = orgSettings?.data?.find(s => s.key === "SOCIAL_TWITTER")?.value as string | undefined;
@@ -15,7 +15,7 @@ export const Footer = () => {
   return (
     <footer className="border-t bg-background px-6 py-4">
       <div className="flex flex-col md:flex-row items-center justify-between text-sm text-muted-foreground gap-4">
-        <p>&copy; {new Date().getFullYear()} {orgName}. All rights reserved.</p>
+        <p>&copy; {new Date().getFullYear()} {appName}. All rights reserved.</p>
         
         <div className="flex items-center space-x-4">
           {!!supportEmail && (

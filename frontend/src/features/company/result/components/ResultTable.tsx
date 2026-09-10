@@ -11,6 +11,7 @@ import {
   AccordionContent,
 } from '@/shared/components/ui/accordion'
 import { ExamStatusBadge } from '@/shared/components/badges/ExamStatusBadge'
+import { Avatar, AvatarFallback, AvatarImage } from '@/shared/components/ui/avatar'
 
 interface ResultTableProps {
   results: CandidateResult[]
@@ -67,7 +68,7 @@ export function ResultTable ({ results }: ResultTableProps) {
       <Accordion
         type='multiple'
         className='w-full'
-        defaultValue={groupedResults.map((_, i) => `item-${i}`)}
+        defaultValue={['item-0']}
       >
         {groupedResults.map((group, index) => (
           <AccordionItem value={`item-${index}`} key={group.examName} className='border-b-0'>
@@ -117,7 +118,15 @@ export function ResultTable ({ results }: ResultTableProps) {
                           <div className='font-mono text-foreground'>{res.applicationNumber}</div>
                         </td>
                         <td className='px-6 py-4 whitespace-nowrap'>
-                          <div className='font-semibold text-foreground'>{res.candidateName}</div>
+                          <div className='flex items-center gap-3'>
+                            <Avatar className="h-8 w-8 rounded-full border border-border">
+                              <AvatarImage src={res.photo} alt={res.candidateName} className="object-cover" />
+                              <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
+                                {res.candidateName.substring(0, 2).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className='font-semibold text-foreground'>{res.candidateName}</div>
+                          </div>
                         </td>
                         <td className='px-6 py-4 whitespace-nowrap'>
                           <div className='font-bold text-foreground'>

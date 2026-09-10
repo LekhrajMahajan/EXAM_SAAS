@@ -98,7 +98,11 @@ export const ProfileOverview: React.FC<ProfileOverviewProps> = ({ user, isLoadin
               </div>
               <div className="space-y-1">
                 <p className="text-sm font-medium text-muted-foreground">{item.label}</p>
-                <p className="text-sm font-semibold text-foreground">{item.value}</p>
+                <p className={`text-sm font-semibold ${
+                  item.label === 'Role' ? 'text-red-500' : 
+                  item.label === 'Last Login' ? 'text-green-500' : 
+                  'text-foreground'
+                }`}>{item.value}</p>
               </div>
             </div>
           ))}

@@ -66,6 +66,10 @@ const examBaseSchema = z.object({
   centerId: objectId.optional(),
   shiftId: objectId.optional(),
   shift: z.string().trim().optional(),
+  examGroupId: z.string().trim().optional().nullable(),
+  hasMultipleShifts: z.boolean().optional().default(false),
+  normalizationEnabled: z.boolean().optional().default(false),
+  normalizationMethod: z.enum(["PERCENTILE", "MEAN_EQUATING"]).optional().default("PERCENTILE"),
   subjectId: objectId.optional(),
   paperId: objectId.optional(),
 
@@ -94,6 +98,53 @@ const examBaseSchema = z.object({
 
   negativeMarks: z.number().min(0).optional().default(0),
 
+  cutoffType: z.enum(["MARKS", "PERCENTAGE"]).optional().default("MARKS"),
+
+  overallQualifyingPercent: z.number().min(0).max(100).optional().nullable(),
+
+  sectionalCutoffEnabled: z.boolean().optional().default(false),
+
+  sectionalTimeLimitEnabled: z.boolean().optional().default(false),
+
+  partWiseCutoffEnabled: z.boolean().optional().default(false),
+
+  parts: z.array(z.object({
+    partName: z.string().min(1, "Part name is required"),
+    subjectIds: z.array(z.string()).min(1, "At least one subject is required in a part"),
+    cutoffType: z.enum(["MARKS", "PERCENTAGE"]).default("MARKS"),
+    cutoffValue: z.number().min(0, "Cutoff value must be at least 0"),
+  })).optional(),
+
+  categoryWiseCutoff: z.array(z.object({
+    category: z.string().min(1),
+    cutoffPercent: z.number().min(0).max(100)
+  })).optional(),
+
+  rankType: z.enum(["COMBINED", "CATEGORY_WISE"]).optional().default("COMBINED"),
+
+  tieBreakRules: z.array(z.object({
+    order: z.number().int().min(1),
+    ruleType: z.enum([
+      "HIGHER_MARKS",
+      "HIGHER_PERCENTAGE",
+      "MORE_CORRECT",
+      "LOWER_NEGATIVE",
+      "OLDER_AGE",
+      "YOUNGER_AGE",
+      "APPLICATION_NUMBER",
+    ])
+  })).optional(),
+
+  isMultiStage: z.boolean().optional().default(false),
+
+  stageType: z.enum(["QUALIFYING_ONLY", "SCORE_CARRIED_FORWARD"]).optional().default("SCORE_CARRIED_FORWARD"),
+
+  stageWeightagePercent: z.number().min(0).max(100).optional().default(100),
+
+  linkedNextExamId: objectId.optional().nullable(),
+
+  resultDeclarationDate: z.coerce.date().optional().nullable(),
+
   examType: z.string().trim().optional(),
 
   examCategory: z.string().trim().optional(),
@@ -107,8 +158,13 @@ const examBaseSchema = z.object({
   instructions: z.string().trim().optional(),
 
   subjects: z.array(z.object({
+    subjectId: objectId.optional(),
     name: z.string().min(1),
     questions: z.number().int().min(1),
+    marksPerQuestion: z.number().min(0),
+    negativeMarksPerQuestion: z.number().min(0).optional(),
+    sectionalCutoff: z.number().min(0).optional().nullable(),
+    timeAllottedMinutes: z.number().min(1).optional().nullable(),
   })).optional(),
 
   shuffleSubjects: z.boolean().default(false).optional(),
@@ -141,6 +197,77 @@ export const createExamSchema = z.object({
         message: "Passing marks cannot be greater than total marks.",
       });
     }
+
+    if (data.sectionalTimeLimitEnabled) {
+      if (!data.subjects || data.subjects.length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["subjects"],
+          message: "Subjects are required when sectional time limit is enabled.",
+        });
+      } else {
+        let totalAllocatedTime = 0;
+        data.subjects.forEach((subject, index) => {
+          if (!subject.timeAllottedMinutes || subject.timeAllottedMinutes <= 0) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              path: ["subjects", index, "timeAllottedMinutes"],
+              message: "Time allotted is required and must be greater than 0.",
+            });
+          } else {
+            totalAllocatedTime += subject.timeAllottedMinutes;
+          }
+        });
+
+        if (totalAllocatedTime !== data.duration) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["sectionalTimeLimitEnabled"], // Or on duration
+            message: `Sum of subject time allocations (${totalAllocatedTime} min) does not match exam duration (${data.duration} min)`,
+          });
+        }
+      }
+    }
+
+    if (data.partWiseCutoffEnabled) {
+      if (!data.parts || data.parts.length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["parts"],
+          message: "At least one part is required when part-wise cutoff is enabled.",
+        });
+      } else {
+        const seenSubjects = new Set<string>();
+        for (let i = 0; i < data.parts.length; i++) {
+          const part = data.parts[i];
+          for (let j = 0; j < part.subjectIds.length; j++) {
+            const subjectId = String(part.subjectIds[j]);
+            if (seenSubjects.has(subjectId)) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["parts", i, "subjectIds", j],
+                message: `Duplicate subject found across parts. A subject can only belong to one part.`,
+              });
+            }
+            seenSubjects.add(subjectId);
+          }
+        }
+      }
+    }
+
+    if (data.subjects && data.subjects.length > 0 && data.totalMarks !== undefined) {
+      let calculatedTotal = 0;
+      data.subjects.forEach(subject => {
+        calculatedTotal += (subject.questions || 0) * (subject.marksPerQuestion || 0);
+      });
+      if (calculatedTotal !== data.totalMarks) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["totalMarks"],
+          message: `Total marks (${data.totalMarks}) does not match the sum of subject marks (${calculatedTotal}).`,
+        });
+      }
+    }
   })
 });
 
@@ -152,7 +279,94 @@ export const createExamSchema = z.object({
 
 export const updateExamSchema = z.object({
   params: z.object({ id: objectId }),
-  body: examBaseSchema.partial().strict()
+  body: examBaseSchema.partial().strict().superRefine((data, ctx) => {
+    if (data.startTime && data.endTime && data.startTime >= data.endTime) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["endTime"],
+        message: "End time must be after start time.",
+      });
+    }
+
+    if (data.passingMarks !== undefined && data.totalMarks !== undefined && data.passingMarks > data.totalMarks) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["passingMarks"],
+        message: "Passing marks cannot be greater than total marks.",
+      });
+    }
+
+    if (data.sectionalTimeLimitEnabled) {
+      if (!data.subjects || data.subjects.length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["subjects"],
+          message: "Subjects are required when sectional time limit is enabled.",
+        });
+      } else if (data.duration !== undefined) {
+        let totalAllocatedTime = 0;
+        data.subjects.forEach((subject, index) => {
+          if (!subject.timeAllottedMinutes || subject.timeAllottedMinutes <= 0) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              path: ["subjects", index, "timeAllottedMinutes"],
+              message: "Time allotted is required and must be greater than 0.",
+            });
+          } else {
+            totalAllocatedTime += subject.timeAllottedMinutes;
+          }
+        });
+
+        if (totalAllocatedTime !== data.duration && data.duration !== undefined) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["sectionalTimeLimitEnabled"],
+            message: `Sum of subject time allocations (${totalAllocatedTime} min) does not match exam duration (${data.duration} min)`,
+          });
+        }
+      }
+    }
+
+    if (data.partWiseCutoffEnabled) {
+      if (!data.parts || data.parts.length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["parts"],
+          message: "At least one part is required when part-wise cutoff is enabled.",
+        });
+      } else {
+        const seenSubjects = new Set<string>();
+        for (let i = 0; i < data.parts.length; i++) {
+          const part = data.parts[i];
+          for (let j = 0; j < part.subjectIds.length; j++) {
+            const subjectId = String(part.subjectIds[j]);
+            if (seenSubjects.has(subjectId)) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["parts", i, "subjectIds", j],
+                message: `Duplicate subject found across parts. A subject can only belong to one part.`,
+              });
+            }
+            seenSubjects.add(subjectId);
+          }
+        }
+      }
+    }
+
+    if (data.subjects && data.subjects.length > 0 && data.totalMarks !== undefined) {
+      let calculatedTotal = 0;
+      data.subjects.forEach(subject => {
+        calculatedTotal += (subject.questions || 0) * (subject.marksPerQuestion || 0);
+      });
+      if (calculatedTotal !== data.totalMarks) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["totalMarks"],
+          message: `Total marks (${data.totalMarks}) does not match the sum of subject marks (${calculatedTotal}).`,
+        });
+      }
+    }
+  })
 });
 
 /*

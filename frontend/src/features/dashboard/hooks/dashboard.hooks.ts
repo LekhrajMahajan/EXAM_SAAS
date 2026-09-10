@@ -1,13 +1,16 @@
 import { useQuery } from '@tanstack/react-query';
 import { dashboardApi } from '../api/dashboard.api';
 
+import { useUserStore } from '@/stores/user/user.store';
+
 /**
  * Primary hook — works for ALL roles.
  * Calls GET /dashboard/role-stats which is dynamically scoped by JWT role.
  */
 export const useRoleDashboard = () => {
+  const roleId = useUserStore(state => state.profile?.roleId);
   return useQuery({
-    queryKey: ['dashboard', 'role-stats'],
+    queryKey: ['dashboard', 'role-stats', roleId],
     queryFn: dashboardApi.getRoleDashboardStats,
     staleTime: 3 * 60 * 1000, // 3 minutes
   });

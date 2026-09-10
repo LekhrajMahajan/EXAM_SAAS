@@ -6,6 +6,7 @@ export interface CandidateResult {
   id: string;
   applicationNumber: string;
   candidateName: string;
+  photo?: string;
   exam: string;
   examObj?: any;
   subject: string;

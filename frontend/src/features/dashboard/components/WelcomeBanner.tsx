@@ -1,4 +1,4 @@
-
+import React, { useMemo } from 'react';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import { useUserStore } from '@/stores/user/user.store';
 import { Badge } from '@/shared/components/ui/badge';
@@ -50,8 +50,14 @@ export function WelcomeBanner({ unreadCount = 0, pendingApprovals = 0 }: Welcome
   const profile = useUserStore((state) => state.profile);
 
   const role = user?.role || profile?.roleId || 'User';
-  const displayRole = role.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-  const name = user?.name || (role === 'PRIVATE_AUTHORITY' ? 'Private Authority' : displayRole);
+  const displayRole = role.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase());
+  
+  const userName = useMemo(() => {
+    if ((user as any)?.firstName || (user as any)?.lastName) {
+      return `${(user as any).firstName || ''} ${(user as any).lastName || ''}`.trim();
+    }
+    return user?.name || (role === 'PRIVATE_AUTHORITY' ? 'Private Authority' : displayRole);
+  }, [user, role, displayRole]);
   
   // Format current date
   const now = new Date();
@@ -67,14 +73,14 @@ export function WelcomeBanner({ unreadCount = 0, pendingApprovals = 0 }: Welcome
   });
   
   // Try to get last login if available, otherwise just fallback
-  let lastLoginDisplay = '';
-  if (user?.lastLoginAt) {
-    const lastLogin = new Date(user.lastLoginAt);
-    lastLoginDisplay = `Last login: ${lastLogin.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}, ${lastLogin.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
-  } else {
-    lastLoginDisplay = `Last login: Just now`;
+  let lastLoginDisplay = 'Last login: Just now';
+  const userLastLogin = (user as any)?.previousLoginAt || user?.lastLoginAt;
+  if (userLastLogin) {
+    const lastLogin = new Date(userLastLogin);
+    if (Math.abs(now.getTime() - lastLogin.getTime()) > 60000) {
+      lastLoginDisplay = `Last login: ${lastLogin.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}, ${lastLogin.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
+    }
   }
-  
 
   return (
     <div className="relative overflow-hidden rounded-2xl p-6 shadow-lg bg-[#2D3E2C]">
@@ -84,8 +90,8 @@ export function WelcomeBanner({ unreadCount = 0, pendingApprovals = 0 }: Welcome
 
       <div className="relative flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div className="space-y-1.5">
-          <h1 className="text-3xl font-bold tracking-tight text-[#E4FD97]">Welcome back, {name}!</h1>
-          <p className="text-sm font-medium text-[#E4FD97]/80">Role: {displayRole}</p>
+          <h1 className="text-3xl font-bold tracking-tight text-[#E4FD97]">Welcome back, {userName}!</h1>
+          <p className="text-sm font-medium text-[#E4FD97]/80">Role: <span className="font-extrabold underline text-white">{displayRole}</span></p>
         </div>
 
         <div className="flex flex-col sm:items-end gap-1 text-sm text-[#E4FD97]/80">

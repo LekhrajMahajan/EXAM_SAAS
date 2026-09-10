@@ -14,8 +14,8 @@ export const RegisterCompanyPage = () => {
   
   const { data: orgSettings } = usePublicSettings();
   const primaryLogo = orgSettings?.data?.find(s => s.key === "LOGO_PRIMARY")?.value;
-  const shortName = orgSettings?.data?.find(s => s.key === "ORG_SHORT_NAME")?.value || "EP";
-  const orgName = orgSettings?.data?.find(s => s.key === "ORG_NAME")?.value || "ExamGuard Pro";
+  const appName = orgSettings?.data?.find(s => s.key === "APP_NAME")?.value || "ExamGuard Pro";
+  const registrationEnabled = orgSettings?.data?.find(s => s.key === "REGISTRATION_ENABLED")?.value !== false;
 
   const handleSubmit = async (values: CompanyFormValues) => {
     registerCompany(values, {
@@ -36,17 +36,17 @@ export const RegisterCompanyPage = () => {
           {primaryLogo ? (
             <img 
               src={primaryLogo as string} 
-              alt={orgName as string} 
+              alt={appName as string} 
               className="mx-auto h-16 w-auto object-contain mb-4" 
             />
           ) : (
             <div className="mx-auto h-12 w-12 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold text-xl mb-4">
-              {(shortName as string).substring(0, 2).toUpperCase()}
+              {(appName as string).substring(0, 2).toUpperCase()}
             </div>
           )}
           <h2 className="text-3xl font-bold tracking-tight text-primary">Register Your Company</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Apply for an account to start using {orgName as string}
+            Apply for an account to start using {appName as string}
           </p>
         </div>
 
@@ -57,7 +57,14 @@ export const RegisterCompanyPage = () => {
               Back to Login
             </Button>
           </div>
-          <CompanyForm onSubmit={handleSubmit} isPending={isPending} submitButtonText="Approval Request" />
+          {registrationEnabled ? (
+            <CompanyForm onSubmit={handleSubmit} isPending={isPending} submitButtonText="Approval Request" />
+          ) : (
+            <div className="text-center p-6 bg-rose-50 dark:bg-rose-950/20 text-rose-600 dark:text-rose-400 rounded-lg border border-rose-100 dark:border-rose-900/50">
+              <h3 className="font-semibold text-lg mb-2">Registration Disabled</h3>
+              <p>New company registrations are currently not being accepted. Please try again later or contact support.</p>
+            </div>
+          )}
         </div>
         
         <div className="text-center text-sm">

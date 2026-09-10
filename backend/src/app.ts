@@ -56,7 +56,6 @@ import emailRoutes from "./modules/email/email.routes";
 import fileStorageRoutes from "./modules/file-storage/fileStorage.routes";
 import healthRoutes from "./modules/health/health.routes";
 import importExportRoutes from "./modules/import-export/importExport.routes";
-import meritListRoutes from "./modules/merit-list/meritList.routes";
 import notificationRoutes from "./modules/notification/notification.routes";
 import pdfRoutes from "./modules/pdf/pdf.routes";
 import pushNotificationRoutes from "./modules/push-notification/pushNotification.routes";
@@ -90,6 +89,8 @@ import centerAssignCandidateAttendanceRoutes from "./modules/center-assign-candi
 import centerPaymentsRoutes from "./modules/center-payments/centerPayments.routes";
 import importCenterAssignExamRoutes from "./modules/import-center-assign-exam/importCenterAssignExam.routes";
 import entryCheckerRoutes from "./modules/entry-checker/entryChecker.routes";
+import companyAdminRequestRoutes from "./modules/center/companyAdminRequest.routes";
+import companyCenterPaymentRoutes from "./modules/payment/companyCenterPayment.routes";
 
 const app = express();
 
@@ -131,6 +132,8 @@ app.use("/api/v1/permissions", permissionRoutes);
 app.use("/api/v1", rolePermissionRoutes);
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/centers", centerRoutes);
+app.use("/api/v1/centers/admin-requests", companyAdminRequestRoutes);
+app.use("/api/v1/company-center-payments", companyCenterPaymentRoutes);
 app.use("/api/v1/rooms", roomRoutes);
 app.use("/api/v1/seats", seatRoutes);
 app.use("/api/v1/candidates", candidateRoutes);
@@ -171,13 +174,23 @@ app.use("/api/v1/emails", emailRoutes);
 app.use("/api/v1/files", fileStorageRoutes);
 app.use("/api/v1/health", healthRoutes);
 app.use("/api/v1/import-export", importExportRoutes);
-app.use("/api/v1/merit-lists", meritListRoutes);
 app.use("/api/v1/notifications", notificationRoutes);
 app.use("/api/v1/pdf", pdfRoutes);
 app.use("/api/v1/push-notifications", pushNotificationRoutes);
 app.use("/api/v1/qr", qrRoutes);
 app.use("/api/v1/question-history", questionHistoryRoutes);
 app.use("/api/v1/queue", queueRoutes);
+
+app.get('/debug-cands', async (req, res) => {
+    try {
+        const mongoose = require('mongoose');
+        const db = mongoose.connection.db;
+        const cands = await db.collection('candidates').find().toArray();
+        res.json({ success: true, count: cands.length, cands });
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
 app.use("/api/v1/reports", reportRoutes);
 app.use("/api/v1/results", resultRoutes);
 app.use("/api/v1/scheduler", schedulerRoutes);
@@ -193,6 +206,7 @@ app.use("/api/v1/subscriptions", subscriptionRoutes);
 app.use("/api/v1/security", securityRoutes);
 app.use("/api/v1/support-tickets", supportTicketRoutes);
 app.use("/api/v1/onboarding", onboardingRoutes);
+app.use("/api/v1/invoices", invoiceRoutes);
 app.use("/api/v1/sidebar", sidebarRoutes);
 app.use("/api/v1/system", organizationSeederRoutes);
 app.use("/system", organizationSeederRoutes);

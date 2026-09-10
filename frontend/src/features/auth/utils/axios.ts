@@ -3,7 +3,7 @@ import { useAuthStore } from '../store/useAuthStore';
 import type { AuthResponse } from '../types';
 import { handleSessionExpired } from './error.handlers';
 
-const BASE_URL = import.meta.env.VITE_API_URL || '/api';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 
 // Create the axios instance
 export const api = axios.create({

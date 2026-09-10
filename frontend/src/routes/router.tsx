@@ -9,7 +9,7 @@ import { CandidateAdmitCardPage } from '@/features/candidate/pages/CandidateAdmi
 import { ExamSchedulePage } from '@/features/candidate/pages/ExamSchedulePage'
 import { MockTestPage } from '@/features/candidate/pages/MockTestPage'
 import { CandidateResultsPage } from '@/features/candidate/pages/CandidateResultsPage'
-import { CandidateMeritListPage } from '@/features/candidate/pages/CandidateMeritListPage'
+
 import { CandidateCertificatesPage } from '@/features/candidate/pages/CandidateCertificatesPage'
 import { CandidateNotificationsPage } from '@/features/candidate/pages/CandidateNotificationsPage'
 import { CandidateSupportPage } from '@/features/candidate/pages/CandidateSupportPage'
@@ -28,6 +28,8 @@ import {
   ExamAuditLogsPage,
 } from '@/features/exam-manager/pages'
 
+import { SubscriptionUsagePage } from '@/features/company/pages/SubscriptionUsagePage'
+
 // Live Monitoring Pages
 import { LiveDashboardPage } from '@/features/company/live-monitoring/pages/LiveDashboardPage'
 import { CandidateMonitoringPage } from '@/features/company/live-monitoring/pages/CandidateMonitoringPage'
@@ -40,21 +42,22 @@ import { ActivityLogsPage as LiveActivityLogsPage } from '@/features/company/liv
 import { ResultDashboardPage } from '@/features/company/result/pages/ResultDashboardPage'
 import { ResultListPage } from '@/features/company/result/pages/ResultListPage'
 import { GenerateResultsPage } from '@/features/company/result/pages/GenerateResultsPage'
+
 import { ResultDetailsPage } from '@/features/company/result/pages/ResultDetailsPage'
 import { ResultPreviewPage } from '@/features/company/result/pages/ResultPreviewPage'
 import { PublishResultsPage } from '@/features/company/result/pages/PublishResultsPage'
 import { ResultHistoryPage } from '@/features/company/result/pages/ResultHistoryPage'
 import { ResultAnalyticsPage } from '@/features/company/result/pages/ResultAnalyticsPage'
 
-// Merit Management Pages
-import { MeritDashboardPage } from '@/features/company/merit/pages/MeritDashboardPage'
-import { MeritListPage } from '@/features/company/merit/pages/MeritListPage'
-import { GenerateMeritPage } from '@/features/company/merit/pages/GenerateMeritPage'
-import { MeritDetailsPage } from '@/features/company/merit/pages/MeritDetailsPage'
-import { MeritPreviewPage } from '@/features/company/merit/pages/MeritPreviewPage'
-import { PublishMeritPage } from '@/features/company/merit/pages/PublishMeritPage'
-import { MeritHistoryPage } from '@/features/company/merit/pages/MeritHistoryPage'
-import { MeritAnalyticsPage } from '@/features/company/merit/pages/MeritAnalyticsPage'
+
+
+
+
+
+
+
+
+
 
 // Certificate Management Pages
 import { CertificateDashboardPage } from '@/features/company/certificates/pages/CertificateDashboardPage'
@@ -74,7 +77,7 @@ import { ExamReportsPage } from '@/features/company/reports/pages/ExamReportsPag
 import { CandidateReportsPage } from '@/features/company/reports/pages/CandidateReportsPage'
 import { AttendanceReportsPage } from '@/features/company/reports/pages/AttendanceReportsPage'
 import { ResultReportsPage } from '@/features/company/reports/pages/ResultReportsPage'
-import { MeritReportsPage } from '@/features/company/reports/pages/MeritReportsPage'
+
 import { CenterReportsPage } from '@/features/company/reports/pages/CenterReportsPage'
 import { RevenueReportsPage } from '@/features/company/reports/pages/RevenueReportsPage'
 import { AuditReportsPage } from '@/features/company/reports/pages/AuditReportsPage'
@@ -210,8 +213,11 @@ import { CenterPhotosPage } from '@/features/center/pages/CenterPhotosPage'
 import { CenterLocationPage } from '@/features/center/pages/CenterLocationPage'
 import { CenterSystemNetworkPage } from '@/features/center/pages/CenterSystemNetworkPage'
 import { CenterPaymentsPage } from '@/features/center/pages/CenterPaymentsPage'
+import { CenterPaymentsPage as CompanyAdminCenterPaymentsPage } from '@/features/company/pages/CenterPaymentsPage'
 import { CenterAuditLogsPage } from '@/features/center/pages/CenterAuditLogsPage'
 import { CenterManagerProfilePage } from '@/features/center/pages/CenterManagerProfilePage'
+import { CompanyAdminRequestsPage } from '@/features/center/pages/CompanyAdminRequestsPage'
+import { CompanyAdminCenterRequestsPage } from '@/features/company/center/pages/CompanyAdminCenterRequestsPage'
 import { AssignExamStaffPage } from '@/features/center/pages/AssignExamStaffPage'
 import { AssignCandidateSeatAllocationPage } from '@/features/center/pages/AssignCandidateSeatAllocationPage'
 import { AssignedCandidateAttendancePage } from '@/features/center/pages/AssignedCandidateAttendancePage'
@@ -326,17 +332,8 @@ import { MAReportTemplatesPage } from '../features/master-admin/pages/reports/MA
 import { PaperSetterWorkspace } from '@/features/paper-setter/pages/PaperSetterWorkspace'
 import { PaperSetterSubjectWorkspace } from '@/features/paper-setter/pages/PaperSetterSubjectWorkspace'
 import { PaperSetterPapersPage } from '@/features/paper-setter/pages/PaperSetterPapersPage'
-import { SystemSettingsPage } from '../features/master-admin/pages/SystemSettingsPage'
-import { GeneralSettingsPage as MAGeneralSettingsPage } from '../features/master-admin/pages/settings/GeneralSettingsPage'
-import { ExamConfigurationPage } from '@/features/master-admin/pages/settings/ExamConfigurationPage'
-import { ConfigurationHistoryPage } from '@/features/master-admin/pages/settings/ConfigurationHistoryPage'
-import { OrganizationSettingsPage as MAOrganizationSettingsPage } from '@/features/master-admin/pages/settings/OrganizationSettingsPage'
-import { SecuritySettingsPage as MASecuritySettingsPage } from '@/features/master-admin/pages/settings/SecuritySettingsPage'
-import { NotificationSettingsPage as MANotificationSettingsPage } from '@/features/master-admin/pages/settings/NotificationSettingsPage'
-import { EmailSmsGatewayPage } from '@/features/master-admin/pages/settings/EmailSmsGatewayPage'
-import { StorageSettingsPage as MAStorageSettingsPage } from '@/features/master-admin/pages/settings/StorageSettingsPage'
-import { BackupSettingsPage } from '@/features/master-admin/pages/settings/BackupSettingsPage'
-import { IntegrationsPage as MAIntegrationsPage } from '@/features/master-admin/pages/settings/IntegrationsPage'
+
+import { GeneralSettingsPage as MAGeneralSettingsPage } from '@/features/master-admin/pages/settings/GeneralSettingsPage'
 import { AuditCompliancePage } from '@/features/master-admin/components/AuditCompliance/AuditCompliancePage'
 import { ReportsPage } from '@/features/master-admin/pages/ReportsPage'
 import { UserAccessReportsPage } from '@/features/master-admin/pages/UserAccessReportsPage'
@@ -348,7 +345,6 @@ import MAFinancialReportsPage from '@/features/master-admin/pages/reports/Financ
 import { SecurityReportsPage as MASecurityReportsPage } from '@/features/master-admin/pages/reports/SecurityReportsPage'
 
 import { SupportTicketsPage } from '@/features/master-admin/pages/SupportTicketsPage'
-import { ProfilePage as MAProfilePage } from '@/features/master-admin/pages/ProfilePage'
 
 // Company Admin Pages
 import { CompanyDashboardPage } from '@/features/company/pages/CompanyDashboardPage'
@@ -502,6 +498,7 @@ export const router = createBrowserRouter([
   { path: '/unauthorized', element: <UnauthorizedPage /> },
   { path: '/session-expired', element: <SessionExpiredPage /> },
 
+
   // Forced Password Change (Requires Auth bypassed)
 
   {},
@@ -581,6 +578,7 @@ export const router = createBrowserRouter([
               { path: 'center-manager/payments', element: <CenterPaymentsPage /> },
               { path: 'center-manager/audit-logs', element: <CenterAuditLogsPage /> },
               { path: 'center-manager/profile', element: <CenterManagerProfilePage /> },
+              { path: 'center-manager/admin-requests', element: <CompanyAdminRequestsPage /> },
               { path: 'observer', element: <ObserverDashboard /> },
               { path: 'paper-setter', element: <PaperSetterDashboard /> },
               { path: 'paper-setter/papers', element: <PaperSetterPapersPage /> },
@@ -649,7 +647,7 @@ export const router = createBrowserRouter([
               { path: 'exam-schedule', element: <ExamSchedulePage /> },
               { path: 'mock-test', element: <MockTestPage /> },
               { path: 'results', element: <CandidateResultsPage /> },
-              { path: 'merit', element: <CandidateMeritListPage /> },
+
               { path: 'certificates', element: <CandidateCertificatesPage /> },
               { path: 'notifications', element: <CandidateNotificationsPage /> },
               { path: 'support', element: <CandidateSupportPage /> },
@@ -665,7 +663,13 @@ export const router = createBrowserRouter([
               </RoleGuard>
             ),
             children: [
-              { path: 'subscription', element: <SubscriptionSelectionPage /> },
+              {
+                path: 'subscription',
+                children: [
+                  { index: true, element: <SubscriptionSelectionPage /> },
+                  { path: 'usage', element: <SubscriptionUsagePage /> },
+                ]
+              },
               { path: 'onboarding', element: <CompanyOnboardingPage /> },
               {
                 element: <SubscriptionGuard />,
@@ -674,6 +678,7 @@ export const router = createBrowserRouter([
                   { path: 'dashboard', element: <CompanyDashboardPage /> },
                   { path: 'profile', element: <CompanyProfilePage /> },
                   { path: 'settings', element: <CompanySettingsPage /> },
+                  { path: 'centers-payment', element: <CompanyAdminCenterPaymentsPage /> },
                   { path: 'centers', element: <CenterListPage /> },
                   { path: 'centers/create', element: <CreateCenterPage /> },
                   {
@@ -690,6 +695,7 @@ export const router = createBrowserRouter([
                   { path: 'centers/:id/location', element: <CenterLocationPage /> },
                   { path: 'centers/:id/system-network', element: <CenterSystemNetworkPage /> },
                   { path: 'centers/:id/assign-exam-staff', element: <AssignExamStaffPage /> },
+                  { path: 'centers/admin-requests', element: <CompanyAdminCenterRequestsPage /> },
                   {
                     path: 'centers/:id/assigned-candidate-attendance',
                     element: <AssignedCandidateAttendancePage />,
@@ -752,21 +758,23 @@ export const router = createBrowserRouter([
                   { path: 'results', element: <ResultDashboardPage /> },
                   { path: 'results/list', element: <ResultListPage /> },
                   { path: 'results/generate', element: <GenerateResultsPage /> },
+
                   { path: 'results/publish', element: <PublishResultsPage /> },
                   { path: 'results/history', element: <ResultHistoryPage /> },
+
                   { path: 'results/analytics', element: <ResultAnalyticsPage /> },
                   { path: 'results/:id', element: <ResultDetailsPage /> },
                   { path: 'results/:id/preview', element: <ResultPreviewPage /> },
 
-                  // Merit Management
-                  { path: 'merit', element: <MeritDashboardPage /> },
-                  { path: 'merit/list', element: <MeritListPage /> },
-                  { path: 'merit/generate', element: <GenerateMeritPage /> },
-                  { path: 'merit/publish', element: <PublishMeritPage /> },
-                  { path: 'merit/history', element: <MeritHistoryPage /> },
-                  { path: 'merit/analytics', element: <MeritAnalyticsPage /> },
-                  { path: 'merit/:id', element: <MeritDetailsPage /> },
-                  { path: 'merit/:id/preview', element: <MeritPreviewPage /> },
+
+
+
+
+
+
+
+
+
 
                   // Certificate Management
                   { path: 'certificates', element: <CertificateDashboardPage /> },
@@ -790,7 +798,7 @@ export const router = createBrowserRouter([
                   { path: 'reports/candidates', element: <CandidateReportsPage /> },
                   { path: 'reports/attendance', element: <AttendanceReportsPage /> },
                   { path: 'reports/results', element: <ResultReportsPage /> },
-                  { path: 'reports/merit', element: <MeritReportsPage /> },
+
                   { path: 'reports/centers', element: <CenterReportsPage /> },
                   { path: 'reports/revenue', element: <RevenueReportsPage /> },
                   { path: 'reports/audit', element: <AuditReportsPage /> },
@@ -1036,21 +1044,10 @@ export const router = createBrowserRouter([
               { path: 'reports/templates', element: <MAReportTemplatesPage /> },
               {
                 path: 'settings',
-                element: <Navigate to='/master-admin/system-settings' replace />,
+                element: <Navigate to='/master-admin/settings/general' replace />,
               },
-              { path: 'system-settings', element: <SystemSettingsPage /> },
               { path: 'settings/general', element: <MAGeneralSettingsPage /> },
-              { path: 'settings/organization', element: <MAOrganizationSettingsPage /> },
-              { path: 'settings/security', element: <MASecuritySettingsPage /> },
-              { path: 'settings/notifications', element: <MANotificationSettingsPage /> },
-              { path: 'settings/gateways', element: <EmailSmsGatewayPage /> },
-              { path: 'settings/storage', element: <MAStorageSettingsPage /> },
-              { path: 'settings/backup', element: <BackupSettingsPage /> },
-              { path: 'settings/integrations', element: <MAIntegrationsPage /> },
-              { path: 'settings/exam-configuration', element: <ExamConfigurationPage /> },
-              { path: 'settings/configuration-history', element: <ConfigurationHistoryPage /> },
               { path: 'support-tickets', element: <SupportTicketsPage /> },
-              { path: 'profile', element: <MAProfilePage /> },
             ],
           },
         ],

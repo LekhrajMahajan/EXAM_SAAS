@@ -10,6 +10,20 @@ export const generalSettingsSchema = z.object({
 
 export type GeneralSettingsForm = z.infer<typeof generalSettingsSchema>;
 
+export const organizationSettingsSchema = z.object({
+  companyName: z.string().min(1, 'Company name is required'),
+  taxId: z.string().optional(),
+  supportEmail: z.string().email('Invalid email address'),
+  supportPhone: z.string().min(1, 'Support phone is required'),
+  streetAddress: z.string().min(1, 'Street address is required'),
+  city: z.string().min(1, 'City is required'),
+  state: z.string().min(1, 'State is required'),
+  postalCode: z.string().min(1, 'Postal code is required'),
+  country: z.string().min(1, 'Country is required'),
+});
+
+export type OrganizationSettingsForm = z.infer<typeof organizationSettingsSchema>;
+
 export const securitySettingsSchema = z.object({
   passwordMinLength: z.number().min(8).max(32),
   requireSpecialChar: z.boolean(),

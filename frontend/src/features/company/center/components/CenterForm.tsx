@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { centerSchema, type CenterFormValues } from "../schemas/center.schema";
 import { useCreateCenter, useUpdateCenter } from "../hooks/center.hooks";
 import { useQueryClient } from "@tanstack/react-query";
-import { useBranches } from "../../branch/hooks/branch.hooks";
+
 import { 
   Loader2, 
   Plus, 
@@ -94,18 +94,7 @@ export const CenterForm = ({ initialValues, isEditing }: CenterFormProps) => {
 
   const createMutation = useCreateCenter();
   const updateMutation = useUpdateCenter((initialValues as unknown as Record<string, string>)?._id || "");
-  const { data: branchResp } = useBranches({ limit: 100 });
 
-  const branches = useMemo(() => {
-    if (!branchResp) return [];
-    if (Array.isArray(branchResp.data)) return branchResp.data;
-    const resAny = branchResp as unknown as Record<string, unknown>;
-    const dataObj = resAny?.data as Record<string, unknown>;
-    if (dataObj?.branches) return dataObj.branches as Array<Record<string, string>>;
-    if (resAny?.branches) return resAny.branches as Array<Record<string, string>>;
-    return [];
-  }, [branchResp]);
-  
   const form = useForm({
     resolver: zodResolver(centerSchema),
     defaultValues: {
@@ -164,12 +153,9 @@ export const CenterForm = ({ initialValues, isEditing }: CenterFormProps) => {
   const onSubmit = async (data: Record<string, unknown>) => {
     // Debug: log what was submitted
     console.warn('[CenterForm] onSubmit fired', { isEditing });
-    // Resolve branchId: use selected branch, or fallback to first branch in list.
+    // Resolve branchId: use selected branch.
     // In edit mode, if branch is empty string, omit branchId so the existing value is preserved in DB.
-    const resolvedBranchId = (data.branch as string) ||
-      (branches && branches.length > 0
-        ? ((branches[0] as unknown as Record<string, string>)._id || (branches[0] as unknown as Record<string, string>).id)
-        : '');
+    const resolvedBranchId = (data.branch as string) || '';
 
     const payload: Record<string, unknown> = {
       ...data,
@@ -196,7 +182,7 @@ export const CenterForm = ({ initialValues, isEditing }: CenterFormProps) => {
       })),
       facilities: selectedFacilities,
       mouFileName: existingMouName,
-      mouPdfUrl: (initialValues as any)?.mouPdfUrl || undefined,
+      mouFileUrl: (initialValues as any)?.mouFileUrl || (initialValues as any)?.mouPdfUrl || undefined,
     } as any;
 
     if (resolvedBranchId && resolvedBranchId !== "[object Object]") {
@@ -218,12 +204,12 @@ export const CenterForm = ({ initialValues, isEditing }: CenterFormProps) => {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
         if (uploadRes.data?.success) {
-          payload.mouPdfUrl = uploadRes.data.data.url;
+          payload.mouFileUrl = uploadRes.data.data.url;
           payload.mouFileName = mouFile.name;
         }
       } catch (err) {
         console.error("MOU Upload error:", err);
-        alert("Failed to upload MOU PDF. Proceeding without it.");
+        toast({ title: 'Warning', description: "Failed to upload MOU PDF. Proceeding without it.", variant: "destructive" });
       }
     }
 
@@ -234,26 +220,11 @@ export const CenterForm = ({ initialValues, isEditing }: CenterFormProps) => {
       updateMutation.mutate(payload as unknown as Partial<CenterFormValues>, {
         onSuccess: async () => {
           queryClient.removeQueries({ queryKey: ["centers"] });
-          alert("Center updated successfully");
           navigate("/company/centers");
-        },
-        onError: (error: any) => {
-          console.error("Center update error:", error);
-          alert(`Update Failed: ${error.response?.data?.message || error.message || "Unknown error"}`);
         }
       });
     } else {
-      createMutation.mutate(payload as unknown as CenterFormValues, {
-        onSuccess: async () => {
-          queryClient.removeQueries({ queryKey: ["centers"] });
-          alert("Center created successfully and credentials sent.");
-          navigate("/company/centers");
-        },
-        onError: (error: any) => {
-          console.error("Center creation error:", error);
-          alert(`Creation Failed: ${error.response?.data?.message || error.message || "Unknown error"}`);
-        }
-      });
+      createMutation.mutate(payload as unknown as CenterFormValues);
     }
   };
 
@@ -695,49 +666,6 @@ export const CenterForm = ({ initialValues, isEditing }: CenterFormProps) => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <FormField
-              control={form.control}
-              name="maxRooms"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-xs font-semibold text-foreground/80">Total Computer Labs / Testing Halls</FormLabel>
-                  <FormControl>
-                    <Input type="number" placeholder="5" className="bg-background border-border focus:border-primary text-foreground placeholder:text-muted-foreground h-11 rounded-xl text-sm" {...field} value={field.value as number | string} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="maxSystems"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-xs font-semibold text-foreground/80">Total Working Computer Systems (Capacity)</FormLabel>
-                  <FormControl>
-                    <Input type="number" placeholder="100" className="bg-background border-border focus:border-primary text-foreground placeholder:text-muted-foreground h-11 rounded-xl text-sm" {...field} value={field.value as number | string} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="maxCandidates"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-xs font-semibold text-foreground/80">Candidate Seating Capacity</FormLabel>
-                  <FormControl>
-                    <Input type="number" placeholder="100" className="bg-background border-border focus:border-primary text-foreground placeholder:text-muted-foreground h-11 rounded-xl text-sm" {...field} value={field.value as number | string} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
 
           {/* MOU PDF Upload Section */}
           <div className="p-4 rounded-xl bg-background/80 border border-border space-y-2">

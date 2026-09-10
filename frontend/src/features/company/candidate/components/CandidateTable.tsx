@@ -182,12 +182,14 @@ export const CandidateTable = ({ candidates }: CandidateTableProps) => {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {examCandidates.map((candidate) => (
+                          {examCandidates.map((candidate) => {
+                            const cPhoto = candidate.candidatePhoto || (candidate as any).photo || (candidate as any).photoUrl || (candidate as any).profilePhoto || '';
+                            return (
                             <TableRow key={candidate._id}>
                               <TableCell>
-                                {candidate.candidatePhoto ? (
+                                {cPhoto ? (
                                   <img
-                                    src={candidate.candidatePhoto}
+                                    src={cPhoto}
                                     alt={candidate.candidateFullName}
                                     className='w-12 h-12 rounded-full object-cover border-2 border-border shrink-0 shadow-sm'
                                   />
@@ -237,7 +239,8 @@ export const CandidateTable = ({ candidates }: CandidateTableProps) => {
                                 </Button>
                               </TableCell>
                             </TableRow>
-                          ))}
+                            )
+                          })}
                         </TableBody>
                       </Table>
                     </div>

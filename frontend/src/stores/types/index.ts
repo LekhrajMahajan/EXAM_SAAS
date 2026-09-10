@@ -26,6 +26,7 @@ export interface UserProfile {
   forcePasswordChange?: boolean;
   centerSetupStatus?: string;
   centerSetupCurrentStep?: number;
+  lastLoginAt?: string | Date;
 }
 
 export interface ThemeConfig {

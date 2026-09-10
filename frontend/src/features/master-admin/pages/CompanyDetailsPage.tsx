@@ -64,13 +64,13 @@ export const CompanyDetailsPage = () => {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <Badge variant="outline" className={company.status ? "bg-[#E4FD97] text-[#2D3E2C] border-[#2D3E2C]/20" : "bg-slate-50 text-slate-700 border-slate-200"}>
+            <Badge variant="outline" className={company.status ? "bg-[#E4FD97] text-[#2D3E2C] border-[#2D3E2C]/20" : "bg-secondary/50 text-secondary-foreground border-border"}>
               {company.status ? "Active" : "Inactive"}
             </Badge>
             <Badge variant="outline" className={
               company.subscriptionPlan === "ENTERPRISE" ? "bg-[#E4FD97] text-[#2D3E2C] border-[#2D3E2C]/20" : 
-              company.subscriptionPlan === "PROFESSIONAL" ? "bg-blue-50 text-blue-700 border-blue-200" : 
-              "border-slate-200 text-slate-700 bg-slate-50"
+              company.subscriptionPlan === "PROFESSIONAL" ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20" : 
+              "border-border text-secondary-foreground bg-secondary/50"
             }>
               {company.subscriptionPlan || "FREE"} Plan
             </Badge>
@@ -188,15 +188,15 @@ export const CompanyDetailsPage = () => {
                       <p className="text-muted-foreground mb-1.5">Current Plan</p>
                       <Badge variant="outline" className={
                         company.subscriptionPlan === "ENTERPRISE" ? "bg-[#E4FD97] text-[#2D3E2C] border-[#2D3E2C]/20" : 
-                        company.subscriptionPlan === "PROFESSIONAL" ? "bg-blue-50 text-blue-700 border-blue-200" : 
-                        "bg-slate-100 text-slate-800"
+                        company.subscriptionPlan === "PROFESSIONAL" ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20" : 
+                        "bg-secondary/50 text-secondary-foreground"
                       }>
                         {company.subscriptionPlan || "FREE"}
                       </Badge>
                     </div>
                     <div>
                       <p className="text-muted-foreground mb-1.5">Joined Date</p>
-                      <p className="font-medium text-slate-900">{new Date(company.createdAt).toLocaleDateString()}</p>
+                      <p className="font-medium text-foreground">{new Date(company.createdAt).toLocaleDateString()}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -256,13 +256,13 @@ export const CompanyDetailsPage = () => {
                 <div className="relative border-l-2 border-primary/20 ml-3 space-y-6">
                   {activityRes.data.map((log: any) => (
                     <div key={log._id} className="relative pl-6">
-                      <span className="absolute -left-[9px] top-1.5 h-4 w-4 rounded-full border-2 border-white bg-primary shadow-sm" />
-                      <div className="flex flex-col bg-slate-50 rounded-lg p-3 border border-slate-100">
-                        <span className="text-sm font-semibold text-slate-900 capitalize">
+                      <span className="absolute -left-[9px] top-1.5 h-4 w-4 rounded-full border-2 border-background bg-primary shadow-sm" />
+                      <div className="flex flex-col bg-muted/50 rounded-lg p-3 border border-border">
+                        <span className="text-sm font-semibold text-foreground capitalize">
                           {log.action?.replace(/_/g, ' ')}
                         </span>
                         {log.details && (
-                          <span className="text-sm text-slate-700 mt-1">
+                          <span className="text-sm text-muted-foreground mt-1">
                             {log.details}
                           </span>
                         )}

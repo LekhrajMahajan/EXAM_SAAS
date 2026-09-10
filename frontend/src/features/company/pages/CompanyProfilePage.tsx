@@ -19,7 +19,7 @@ export const CompanyProfilePage = () => {
   ].filter(doc => doc.url) : [];
 
   return (
-    <div className="p-6 space-y-6 bg-slate-50 min-h-screen">
+    <div className="p-6 space-y-6 min-h-screen">
       <DashboardHeader 
         title="Company Profile" 
         description="View your company's registration details and profile information." 
@@ -38,53 +38,53 @@ export const CompanyProfilePage = () => {
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card className="shadow-sm border-slate-200">
-            <CardHeader className="bg-white border-b border-slate-100 pb-4">
-              <CardTitle className="text-lg flex items-center gap-2 text-slate-800">
+          <Card className="shadow-sm">
+            <CardHeader className="border-b pb-4">
+              <CardTitle className="text-lg flex items-center gap-2">
                 <Building2 className="h-5 w-5 text-primary" />
                 Basic Information
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-6 space-y-4 bg-white">
+            <CardContent className="p-6 space-y-4">
               <div>
-                <p className="text-sm text-slate-500 mb-1">Company Name</p>
-                <p className="font-medium text-slate-900">{company.companyName}</p>
+                <p className="text-sm text-muted-foreground mb-1">Company Name</p>
+                <p className="font-medium text-foreground">{company.companyName}</p>
               </div>
               <div>
-                <p className="text-sm text-slate-500 mb-1">Organization Type</p>
-                <p className="font-medium text-slate-900">{company.companyType}</p>
+                <p className="text-sm text-muted-foreground mb-1">Organization Type</p>
+                <p className="font-medium text-foreground">{company.companyType}</p>
               </div>
               <div>
-                <p className="text-sm text-slate-500 mb-1">Subscription Plan</p>
-                <p className="font-medium text-slate-900">{company.subscriptionPlan}</p>
+                <p className="text-sm text-muted-foreground mb-1">Subscription Plan</p>
+                <p className="font-medium text-foreground">{company.subscriptionPlan}</p>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="shadow-sm border-slate-200">
-            <CardHeader className="bg-white border-b border-slate-100 pb-4">
-              <CardTitle className="text-lg flex items-center gap-2 text-slate-800">
+          <Card className="shadow-sm">
+            <CardHeader className="border-b pb-4">
+              <CardTitle className="text-lg flex items-center gap-2">
                 <Briefcase className="h-5 w-5 text-primary" />
                 Contact Details
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-6 space-y-4 bg-white">
+            <CardContent className="p-6 space-y-4">
               <div>
-                <p className="text-sm text-slate-500 mb-1">Contact Person</p>
-                <p className="font-medium text-slate-900">{company.ownerName}</p>
+                <p className="text-sm text-muted-foreground mb-1">Contact Person</p>
+                <p className="font-medium text-foreground">{company.ownerName}</p>
               </div>
               <div className="flex items-center gap-3">
-                <Mail className="h-4 w-4 text-slate-400" />
-                <p className="font-medium text-slate-900">{company.email}</p>
+                <Mail className="h-4 w-4 text-muted-foreground" />
+                <p className="font-medium text-foreground">{company.email}</p>
               </div>
               <div className="flex items-center gap-3">
-                <Phone className="h-4 w-4 text-slate-400" />
-                <p className="font-medium text-slate-900">{company.phone}</p>
+                <Phone className="h-4 w-4 text-muted-foreground" />
+                <p className="font-medium text-foreground">{company.phone}</p>
               </div>
               {company.website && (
                 <div className="flex items-center gap-3">
-                  <Globe className="h-4 w-4 text-slate-400" />
-                  <a href={company.website} target="_blank" rel="noopener noreferrer" className="font-medium text-[#2D3E2C] hover:text-secondary transition-colors">
+                  <Globe className="h-4 w-4 text-muted-foreground" />
+                  <a href={company.website} target="_blank" rel="noopener noreferrer" className="font-medium text-primary hover:text-primary/80 hover:underline transition-colors">
                     {company.website}
                   </a>
                 </div>
@@ -92,50 +92,46 @@ export const CompanyProfilePage = () => {
             </CardContent>
           </Card>
 
-          <Card className="shadow-sm border-slate-200 md:col-span-2">
-            <CardHeader className="bg-white border-b border-slate-100 pb-4">
-              <CardTitle className="text-lg flex items-center gap-2 text-slate-800">
+          <Card className="shadow-sm md:col-span-2">
+            <CardHeader className="border-b pb-4">
+              <CardTitle className="text-lg flex items-center gap-2">
                 <MapPin className="h-5 w-5 text-primary" />
                 Address Details
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 bg-white">
+            <CardContent className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="sm:col-span-2 lg:col-span-4">
+                <p className="text-sm text-muted-foreground mb-1">Address Line 1</p>
+                <p className="font-medium text-foreground">{company.address}</p>
+              </div>
               <div>
-                <p className="text-sm text-slate-500 mb-1">Address Line 1</p>
-                <p className="font-medium text-slate-900">{company.address}</p>
+                <p className="text-sm text-muted-foreground mb-1">City</p>
+                <p className="font-medium text-foreground">{company.city}</p>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-slate-500 mb-1">City</p>
-                  <p className="font-medium text-slate-900">{company.city}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500 mb-1">State</p>
-                  <p className="font-medium text-slate-900">{company.state}</p>
-                </div>
+              <div>
+                <p className="text-sm text-muted-foreground mb-1">State</p>
+                <p className="font-medium text-foreground">{company.state}</p>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-slate-500 mb-1">Pincode</p>
-                  <p className="font-medium text-slate-900">{company.pincode}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500 mb-1">Country</p>
-                  <p className="font-medium text-slate-900">{company.country}</p>
-                </div>
+              <div>
+                <p className="text-sm text-muted-foreground mb-1">Pincode</p>
+                <p className="font-medium text-foreground">{company.pincode}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground mb-1">Country</p>
+                <p className="font-medium text-foreground">{company.country}</p>
               </div>
             </CardContent>
           </Card>
 
           {documents.length > 0 && (
-            <Card className="shadow-sm border-slate-200 md:col-span-2">
-              <CardHeader className="bg-white border-b border-slate-100 pb-4">
-                <CardTitle className="text-lg flex items-center gap-2 text-slate-800">
+            <Card className="shadow-sm md:col-span-2">
+              <CardHeader className="border-b pb-4">
+                <CardTitle className="text-lg flex items-center gap-2">
                   <FileText className="h-5 w-5 text-primary" />
                   Uploaded Documents
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-6 bg-white">
+              <CardContent className="p-6">
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                   {documents.map((doc, idx) => (
                     <a 
@@ -143,13 +139,13 @@ export const CompanyProfilePage = () => {
                       href={doc.url} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:border-primary hover:bg-slate-50 transition-colors group"
+                      className="flex items-center justify-between p-4 border rounded-lg hover:border-primary hover:bg-muted/50 transition-colors group"
                     >
                       <div className="flex items-center gap-3">
-                        <FileText className="h-5 w-5 text-slate-400 group-hover:text-primary transition-colors" />
-                        <span className="font-medium text-sm text-slate-700 group-hover:text-slate-900">{doc.label}</span>
+                        <FileText className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                        <span className="font-medium text-sm text-foreground">{doc.label}</span>
                       </div>
-                      <ExternalLink className="h-4 w-4 text-slate-400 group-hover:text-primary transition-colors" />
+                      <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                     </a>
                   ))}
                 </div>

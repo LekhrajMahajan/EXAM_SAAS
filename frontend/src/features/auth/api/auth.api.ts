@@ -17,6 +17,7 @@ export const login = async (data: LoginFormData): Promise<AuthResponse> => {
       role: user.role,
       permissions: user.permissions || [],
       companyId: user.companyId,
+      lastLoginAt: user.lastLoginAt || user.lastLogin,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any,
     token: accessToken,
@@ -33,10 +34,11 @@ export const getProfile = async (): Promise<User> => {
     name: `${user.firstName} ${user.lastName}`,
     email: user.email,
     role: user.role,
-    permissions: user.permissions || [],
-    companyId: user.companyId,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } as any;
+      permissions: user.permissions || [],
+      companyId: user.companyId,
+      lastLoginAt: user.lastLoginAt || user.lastLogin,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any;
 };
 
 export const logout = async (): Promise<void> => {

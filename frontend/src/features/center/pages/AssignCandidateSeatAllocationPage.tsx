@@ -75,7 +75,7 @@ export const AssignCandidateSeatAllocationPage = () => {
           <h2 className="text-3xl font-bold tracking-tight text-foreground">Assign Candidate Seat Allocation</h2>
           <p className="text-muted-foreground mt-2">Manage candidate seat allocations for labs</p>
         </div>
-        <Button onClick={() => setIsModalOpen(true)} className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium shadow-lg shadow-primary/20">
+        <Button onClick={() => setIsModalOpen(true)} className="bg-transparent text-[#2D3E2C] border border-[#2D3E2C] hover:bg-[#2D3E2C] hover:text-[#E4FD97] transition-colors duration-300 font-medium shadow-sm">
           <Plus className="mr-2 h-4 w-4" /> Add Seat Allocation
         </Button>
       </div>

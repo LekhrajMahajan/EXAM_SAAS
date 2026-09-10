@@ -20,7 +20,8 @@ export function GeneralSettingsPage() {
   });
 
   const onSubmit = async (data: GeneralSettingsForm) => {
-    console.log('Saved General Settings:', data);
+    // TODO: Send data to API
+    console.warn('Saved General Settings:', data);
   };
 
   return (
@@ -37,6 +38,7 @@ export function GeneralSettingsPage() {
                  <label className="text-sm font-medium text-slate-700">Platform Name</label>
                  <input 
                    type="text" 
+                   placeholder="e.g. Acme Corp"
                    className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2"
                    {...register('platformName')}
                  />

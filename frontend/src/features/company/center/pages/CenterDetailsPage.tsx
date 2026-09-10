@@ -16,6 +16,9 @@ export const CenterDetailsPage = () => {
   const center: any = data?.data || data;
 
   const [documents, setDocuments] = useState<any[]>([]);
+  const [commercialAgreement, setCommercialAgreement] = useState<any[]>([]);
+  const [mouFileUrl, setMouFileUrl] = useState<string | null>(null);
+  const [companyStats, setCompanyStats] = useState<any>({ totalExamsAssigned: 0, totalCandidatesScheduled: 0 });
   const [docsLoading, setDocsLoading] = useState(true);
 
   useEffect(() => {
@@ -27,6 +30,9 @@ export const CenterDetailsPage = () => {
         const res = await centerApi.getOnboardingStatus(id);
         const onboardingData = res?.data || res;
         setDocuments((onboardingData as any)?.documents || []);
+        setCommercialAgreement((onboardingData as any)?.commercialAgreement || []);
+        setMouFileUrl((onboardingData as any)?.mouFileUrl || null);
+        setCompanyStats((onboardingData as any)?.companyStats || { totalExamsAssigned: 0, totalCandidatesScheduled: 0 });
       } catch {
         setDocuments([]);
       } finally {
@@ -68,7 +74,7 @@ export const CenterDetailsPage = () => {
         <div className="flex-1">
           <CenterHeader
             title={center.centerName}
-            description={`Code: ${center.centerCode} | Branch: ${center.branch || 'N/A'} | Type: ${center.centerType || 'Standard Center'}`}
+            description={`Code: ${center.centerCode} | Type: ${center.centerType || 'Standard Center'}`}
             actions={
               <>
                 <CenterStatusBadge status={center.status} />
@@ -186,8 +192,8 @@ export const CenterDetailsPage = () => {
                 <div className="text-sm text-muted-foreground mb-1">Alternate Number</div>
                 <div className="flex items-center gap-2">
                   <Phone className="h-4 w-4 text-muted-foreground" />
-                  <span className={center.emergencyContact || center.alternatePhone ? "" : "text-muted-foreground"}>
-                    {center.emergencyContact || center.alternatePhone || "Not provided"}
+                  <span className={center.emergencyContact || center.alternatePhone || center?.profileExtension?.alternateContact ? "" : "text-muted-foreground"}>
+                    {center.emergencyContact || center.alternatePhone || center?.profileExtension?.alternateContact || "Not provided"}
                   </span>
                 </div>
               </div>
@@ -205,26 +211,21 @@ export const CenterDetailsPage = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {center.shiftRates && center.shiftRates.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {center.shiftRates.map((shift: any, idx: number) => (
-                <div key={idx} className="p-4 rounded-xl border border-border bg-muted/30">
-                  <div className="font-semibold text-sm mb-1">{shift.name || shift.shiftName}</div>
-                  <div className="text-xs text-muted-foreground mb-3">{shift.timings || shift.specialNotes?.replace('Slot timings: ', '') || 'N/A'}</div>
-                  <div className="text-sm font-bold text-emerald-500">
-                    ₹{shift.price || shift.pricePerCandidate || 250} <span className="text-xs font-normal text-muted-foreground">/ seat</span>
+          {commercialAgreement && commercialAgreement.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {commercialAgreement.map((ca: any, idx: number) => (
+                <div key={idx} className="p-4 rounded-xl border border-border bg-card shadow-sm hover:shadow-md transition-all flex flex-col justify-between group">
+                  <div>
+                    <div className="font-semibold text-foreground mb-1 group-hover:text-primary transition-colors">{ca.shiftName || ca.name}</div>
+                    <div className="text-xs text-muted-foreground mb-4 flex items-center gap-1.5">
+                      <Clock className="h-3.5 w-3.5" />
+                      {ca.specialNotes?.replace('Slot timings: ', '') || ca.timings || 'N/A'}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          ) : center.commercialAgreement && center.commercialAgreement.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {center.commercialAgreement.map((ca: any, idx: number) => (
-                <div key={idx} className="p-4 rounded-xl border border-border bg-muted/30">
-                  <div className="font-semibold text-sm mb-1">{ca.shiftName || ca.name}</div>
-                  <div className="text-xs text-muted-foreground mb-3">{ca.specialNotes?.replace('Slot timings: ', '') || ca.timings || 'N/A'}</div>
-                  <div className="text-sm font-bold text-emerald-500">
-                    ₹{ca.pricePerCandidate || ca.price || 250} <span className="text-xs font-normal text-muted-foreground">/ seat</span>
+                  <div className="mt-auto">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-bold bg-secondary/90 text-secondary-foreground border border-secondary-foreground/10 shadow-sm">
+                      ₹{ca.pricePerCandidate || ca.price || 250} <span className="text-xs font-medium opacity-80">/ seat</span>
+                    </span>
                   </div>
                 </div>
               ))}
@@ -246,18 +247,14 @@ export const CenterDetailsPage = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="p-4 rounded-xl bg-muted/30 border border-border">
-              <div className="text-xs text-muted-foreground uppercase font-semibold tracking-wider mb-2">Total Computer Labs</div>
-              <div className="text-2xl font-bold">{center.totalLabs ?? center.maxRooms ?? 0}</div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div className="p-4 rounded-xl bg-muted/30 border border-border flex flex-col justify-between">
+              <div className="text-xs text-muted-foreground uppercase font-semibold tracking-wider mb-2">Total Exams Assigned</div>
+              <div className="text-3xl font-bold text-primary">{companyStats?.totalExamsAssigned || 0}</div>
             </div>
-            <div className="p-4 rounded-xl bg-muted/30 border border-border">
-              <div className="text-xs text-muted-foreground uppercase font-semibold tracking-wider mb-2">Total Working Systems</div>
-              <div className="text-2xl font-bold">{center.totalSystems ?? center.maxSystems ?? 0}</div>
-            </div>
-            <div className="p-4 rounded-xl bg-muted/30 border border-border">
-              <div className="text-xs text-muted-foreground uppercase font-semibold tracking-wider mb-2">Candidate Capacity</div>
-              <div className="text-2xl font-bold">{center.availableCapacity || center.capacity || 0}</div>
+            <div className="p-4 rounded-xl bg-muted/30 border border-border flex flex-col justify-between">
+              <div className="text-xs text-muted-foreground uppercase font-semibold tracking-wider mb-2">Total Candidates Scheduled</div>
+              <div className="text-3xl font-bold text-primary">{companyStats?.totalCandidatesScheduled || 0}</div>
             </div>
           </div>
 
@@ -279,11 +276,16 @@ export const CenterDetailsPage = () => {
           
           <div>
              <div className="text-sm font-bold text-foreground mb-3">MOU / Center Agreement</div>
-             {center.mouFileName || center.mouFile || center.mouPdfUrl ? (
-                <div className="flex items-center gap-2 p-3 border rounded-xl bg-muted/30 w-fit pr-6">
+             {mouFileUrl ? (
+                <a 
+                   href={`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1'}/files/proxy?url=${encodeURIComponent(mouFileUrl)}&download=true`}
+                   target="_blank" 
+                   rel="noopener noreferrer" 
+                   className="flex items-center gap-2 p-3 border rounded-xl bg-muted/30 w-fit pr-6 hover:bg-muted/50 transition-colors"
+                >
                    <FileCheck className="h-5 w-5 text-primary" />
-                   <span className="text-sm font-medium">{center.mouFileName || center.mouFile || center.mouPdfUrl}</span>
-                </div>
+                   <span className="text-sm font-medium underline">{center.mouFileName || 'Signed MOU (View Document)'}</span>
+                </a>
              ) : (
                 <div className="text-sm text-muted-foreground">No MOU document uploaded.</div>
              )}
@@ -350,7 +352,12 @@ export const CenterDetailsPage = () => {
                   )}
 
                   {doc.fileUrl ? (
-                    <a href={doc.fileUrl} target="_blank" rel="noreferrer" className="mt-auto">
+                    <a 
+                      href={`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1'}/files/proxy?url=${encodeURIComponent(doc.fileUrl)}`}
+                      target="_blank" 
+                      rel="noreferrer" 
+                      className="mt-auto"
+                    >
                       <Button variant="outline" size="sm" className="w-full gap-2">
                         <Eye className="h-4 w-4" />
                         View Document

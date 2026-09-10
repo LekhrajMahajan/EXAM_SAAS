@@ -14,7 +14,7 @@ interface StatCardProps {
     isPositive: boolean;
   };
   colorClass?: string;
-  accent?: 'slate' | 'green' | 'lime' | 'amber' | 'red';
+  accent?: 'slate' | 'green' | 'lime' | 'amber' | 'red' | 'blue';
 }
 
 const ACCENT_MAP = {
@@ -23,6 +23,7 @@ const ACCENT_MAP = {
   slate: { border: 'border-slate-200 dark:border-slate-800', num: 'text-slate-900 dark:text-white' },
   amber: { border: 'border-amber-200 dark:border-amber-500/40', num: 'text-amber-600 dark:text-amber-500' },
   red: { border: 'border-red-200 dark:border-red-500/40', num: 'text-red-600 dark:text-red-500' },
+  blue: { border: 'border-blue-200 dark:border-blue-500/40', num: 'text-blue-600 dark:text-blue-500' },
 };
 
 const useAnimatedNumber = (end: number, duration = 1200) => {

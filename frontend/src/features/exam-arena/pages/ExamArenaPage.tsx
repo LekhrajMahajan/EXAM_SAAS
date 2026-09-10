@@ -1,9 +1,9 @@
-import React, { useEffect, useState, useMemo, useRef } from 'react'
+import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react'
 import { ExamLayout } from '../components/layout/ExamLayout'
 import { QuestionPalette } from '../components/QuestionPalette'
 import { QuestionCard } from '../components/QuestionCard'
 import { apiClient } from '@/core/api/http/axios-client'
-import { Loader2, AlertTriangle } from 'lucide-react'
+import { Loader2, AlertTriangle, Clock } from 'lucide-react'
 import type { ExamQuestion, QuestionStatus } from '../types'
 import { useProctoring } from '../hooks/useProctoring'
 import { ProctoringOverlay } from '../components/ProctoringOverlay'
@@ -28,9 +28,35 @@ export function ExamArenaPage () {
   const [paletteList, setPaletteList] = useState<any[]>([])
   const [currentSubject, setCurrentSubject] = useState<string>('')
   const [remainingTime, setRemainingTime] = useState<number>(0)
+  const [examEndTime, setExamEndTime] = useState<number>(0)
   const [timeLoaded, setTimeLoaded] = useState(false)
   const [dynamicExamName, setDynamicExamName] = useState<string>('')
   const [showSectionWarning, setShowSectionWarning] = useState(false)
+  
+  const [sectionalTimeLimitEnabled, setSectionalTimeLimitEnabled] = useState(false)
+  // sectionTimings: { subjectName, startedAt, lockedAt, isLocked, timeAllottedMinutes }[]
+  const [sectionTimings, setSectionTimings] = useState<any[]>([])
+  const [subjects, setSubjects] = useState<any[]>([])
+
+  // Part-wise state
+  const [partWiseEnabled, setPartWiseEnabled] = useState(false)
+  const [parts, setParts] = useState<any[]>([])  // from exam DB
+  // Ordered subject sequence based on candidate's part choice
+  const [orderedSections, setOrderedSections] = useState<string[]>([])
+  const [currentPartIndex, setCurrentPartIndex] = useState(0)
+  const [partOrder, setPartOrder] = useState<string[]>([])
+
+  // For per-subject countdown rendering — use a tick to recompute remaining seconds
+  const [tick, setTick] = useState(0)
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => {
+    // Run the tick unconditionally so that if ANY subject has timeAllottedMinutes, its timer updates
+    const interval = setInterval(() => {
+      setTick(t => t + 1)
+      setNow(Date.now())
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [])
 
   // Proctoring Integration
   const [baselineDescriptor] = useState<Float32Array | null>(() => {
@@ -139,6 +165,22 @@ export function ExamArenaPage () {
 
         const resData = response.data.data
         setCurrentQuestionData(resData.currentQuestion)
+        
+        if (resData.sectionalTimeLimitEnabled !== undefined) {
+          setSectionalTimeLimitEnabled(resData.sectionalTimeLimitEnabled)
+        }
+        if (resData.sectionTimings) {
+          setSectionTimings(resData.sectionTimings)
+        }
+        if (resData.subjects) {
+          setSubjects(resData.subjects)
+        }
+        if (resData.partWiseCutoffEnabled !== undefined) {
+          setPartWiseEnabled(resData.partWiseCutoffEnabled)
+        }
+        if (resData.parts) {
+          setParts(resData.parts)
+        }
 
         if ((resData.examTitle || resData.examName) && !dynamicExamName) {
           setDynamicExamName(resData.examTitle || resData.examName)
@@ -147,11 +189,9 @@ export function ExamArenaPage () {
         if (resData.paletteList && paletteList.length === 0) {
           let processedPalette = [...resData.paletteList]
 
-          // Use Candidate ID or a fallback as the seed
           const seedStr = candidateInfo?._id || 'default_seed'
 
           if (examMeta?.shuffleQuestions) {
-            // Group by section, shuffle each, and put them back
             const sections = [...new Set(processedPalette.map((p: any) => p.section))]
             const newPalette: any[] = []
             sections.forEach((sec) => {
@@ -161,8 +201,69 @@ export function ExamArenaPage () {
             processedPalette = newPalette
           }
 
-          if (examMeta?.shuffleSubjects) {
-            // Get unique sections in order of their first appearance
+          // Part-wise ordering: read saved part order from localStorage
+          const savedPartOrderStr = localStorage.getItem('candidate_part_order')
+          const savedPartOrder: string[] = savedPartOrderStr ? JSON.parse(savedPartOrderStr) : []
+          // Also try from API response
+          const apiPartOrder: string[] = resData.partOrder || []
+          const activePartOrder = savedPartOrder.length > 0 ? savedPartOrder : apiPartOrder
+          setPartOrder(activePartOrder)
+          if (resData.currentPartIndex !== undefined) {
+            setCurrentPartIndex(resData.currentPartIndex)
+          }
+
+          const partsToUse = examMeta?.parts || resData.parts || [];
+          const subjectsToUse = examMeta?.subjects || resData.subjects || [];
+
+          if (activePartOrder.length > 0 && partsToUse.length > 0) {
+            // Build subject ordering based on part order
+            // Map partName → subject names
+            const partSubjectMap: Record<string, string[]> = {}
+            for (const part of partsToUse) {
+              const mappedNames = (part.subjectIds || []).map((idOrName: any) => {
+                const nameStr = typeof idOrName === 'object' ? (idOrName.name || idOrName.subjectName || String(idOrName._id || '')) : String(idOrName);
+                const idStr = typeof idOrName === 'object' ? String(idOrName._id || nameStr) : String(idOrName);
+                
+                const subj = subjectsToUse.find((s: any) => 
+                  String(s.subjectId || s._id).trim() === idStr.trim() || 
+                  String(s.name).trim().toLowerCase() === nameStr.trim().toLowerCase()
+                );
+                return subj ? subj.name : nameStr;
+              });
+              const pName = part.partName || part.name;
+              partSubjectMap[String(pName).trim()] = mappedNames;
+            }
+
+            // Get unique sections from palette
+            const allSections = [...new Set(processedPalette.map((p: any) => p.section))] as string[]
+            // Reorder sections: first all sections belonging to part 1, then part 2, etc.
+            const reorderedSections: string[] = []
+            for (const partName of activePartOrder) {
+              const subjectsInPart = partSubjectMap[String(partName).trim()] || []
+              for (const sec of allSections) {
+                const secClean = String(sec).trim().toLowerCase();
+                const match = subjectsInPart.find(s => {
+                  const sName = typeof s === 'object' ? (s as any).name || String(s) : String(s);
+                  return sName.trim().toLowerCase() === secClean;
+                });
+                if (match && !reorderedSections.includes(sec)) {
+                  reorderedSections.push(sec)
+                }
+              }
+            }
+            // Add any sections not in any part at the end
+            for (const sec of allSections) {
+              if (!reorderedSections.includes(sec)) reorderedSections.push(sec)
+            }
+            setOrderedSections(reorderedSections)
+
+            // Reorder palette by section order
+            const newPalette: any[] = []
+            for (const sec of reorderedSections) {
+              newPalette.push(...processedPalette.filter((p: any) => p.section === sec))
+            }
+            processedPalette = newPalette
+          } else if (examMeta?.shuffleSubjects) {
             const sections = [...new Set(processedPalette.map((p: any) => p.section))]
             const shuffledSections = seededShuffle(sections, seedStr + 'subjects')
             const newPalette: any[] = []
@@ -190,6 +291,7 @@ export function ExamArenaPage () {
 
         if (resData.remainingTime !== undefined && !timeLoaded) {
           setRemainingTime(resData.remainingTime)
+          setExamEndTime(Date.now() + resData.remainingTime * 1000)
           setTimeLoaded(true)
         }
 
@@ -217,11 +319,262 @@ export function ExamArenaPage () {
 
     fetchQuestion()
   }, [currentQuestionNo])
+  
+  // Section Timing Logic — start section timer in DB when entering a subject
+  useEffect(() => {
+    if (!sectionalTimeLimitEnabled || !currentSubject || !subjects.length) return
+
+    const subjectConfig = subjects.find((s: any) => String(s.name).toLowerCase() === String(currentSubject).toLowerCase())
+    if (!subjectConfig || !subjectConfig.timeAllottedMinutes) return
+
+    const existingTiming = sectionTimings.find((s: any) => String(s.subjectName).toLowerCase() === String(currentSubject).toLowerCase())
+    if (!existingTiming || !existingTiming.startedAt) {
+      const startSection = async () => {
+        try {
+          const examId = candidateInfo?.examId || localStorage.getItem('candidate_exam_id')
+          const sessionId = localStorage.getItem('candidate_session_id') || 'temp_session'
+          const res = await apiClient.post('/candidate-exam/start-section', {
+            sessionId, examId, subjectName: currentSubject
+          })
+          setSectionTimings(prev => {
+            const copy = [...prev]
+            const index = copy.findIndex((s: any) => String(s.subjectName).toLowerCase() === String(currentSubject).toLowerCase())
+            if (index >= 0) {
+              copy[index] = { ...copy[index], startedAt: res.data.data.startedAt }
+            } else {
+              copy.push({
+                subjectName: currentSubject,
+                startedAt: res.data.data.startedAt,
+                isLocked: false,
+                timeAllottedMinutes: res.data.data.timeAllottedMinutes || subjectConfig.timeAllottedMinutes
+              })
+            }
+            return copy
+          })
+        } catch(e) {
+          console.error("Failed to start section", e)
+        }
+      }
+      startSection()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentSubject, sectionalTimeLimitEnabled, subjects])
+
+  const handleSectionTimeUp = useCallback(async (lockedSubject: string) => {
+    // Prevent double-locking
+    setSectionTimings(prev => {
+      const already = prev.find(s => String(s.subjectName).toLowerCase() === String(lockedSubject).toLowerCase())
+      if (already?.isLocked) return prev
+      return prev.map(s => String(s.subjectName).toLowerCase() === String(lockedSubject).toLowerCase() ? { ...s, isLocked: true, lockedAt: new Date() } : s)
+    })
+
+    try {
+      const examId = candidateInfo?.examId || localStorage.getItem('candidate_exam_id')
+      const sessionId = localStorage.getItem('candidate_session_id') || 'temp_session'
+      await apiClient.post('/candidate-exam/lock-section', {
+        sessionId, examId, subjectName: lockedSubject
+      })
+    } catch(e) {
+      console.error("Failed to lock section in DB", e)
+    }
+
+    let advanceToNext = false
+    let allLocked = false
+
+    if (String(lockedSubject).toLowerCase() === String(currentSubject).toLowerCase()) {
+      advanceToNext = true
+    }
+
+    const uniqueSections = paletteList.length > 0
+      ? [...new Set(paletteList.map((p) => p.section))] as string[]
+      : orderedSections
+
+    // Part-gating logic: check if all subjects in current part are now locked
+    if (parts.length > 0 && partOrder.length > 0) {
+      const activePartName = partOrder[currentPartIndex];
+      const activePart = parts.find((p: any) => (p.partName || p.name) === activePartName);
+      if (activePart && activePart.subjectIds) {
+        const allowedSubjectNames = activePart.subjectIds.map((idOrName: any) => {
+          const nameStr = typeof idOrName === 'object' ? (idOrName.name || idOrName.subjectName || String(idOrName._id || '')) : String(idOrName);
+          const idStr = typeof idOrName === 'object' ? String(idOrName._id || nameStr) : String(idOrName);
+          const subj = subjects.find((s: any) => String(s.subjectId || s._id).trim() === idStr.trim() || String(s.name).trim().toLowerCase() === nameStr.trim().toLowerCase());
+          return (subj ? subj.name : nameStr).toLowerCase();
+        }).filter(Boolean);
+
+        const allSubjectsInPartLocked = allowedSubjectNames.every((name: string) => {
+          if (name === String(lockedSubject).toLowerCase()) return true; // Just locked
+          const t = sectionTimings.find(s => String(s.subjectName).toLowerCase() === name);
+          return t?.isLocked === true;
+        });
+
+        if (allSubjectsInPartLocked && allowedSubjectNames.length > 0) {
+          allLocked = true;
+        }
+      }
+    }
+
+    if (allLocked) {
+      const nextIndex = currentPartIndex + 1;
+      if (nextIndex >= partOrder.length) {
+        // Last part finished
+        handleManualSubmit();
+        return;
+      } else {
+        setCurrentPartIndex(nextIndex);
+        advanceToNext = true; // Force advance to first subject of new part
+      }
+    }
+
+    if (advanceToNext) {
+      // Recompute allowed sections for the (possibly new) currentPartIndex
+      let allowedSections = uniqueSections;
+      if (parts.length > 0 && partOrder.length > 0) {
+        const targetPartIndex = allLocked ? currentPartIndex + 1 : currentPartIndex;
+        if (targetPartIndex < partOrder.length) {
+          const activePartName = partOrder[targetPartIndex];
+          const activePart = parts.find((p: any) => (p.partName || p.name) === activePartName);
+          if (activePart && activePart.subjectIds) {
+            const allowedNames = activePart.subjectIds.map((idOrName: any) => {
+              const nameStr = typeof idOrName === 'object' ? (idOrName.name || idOrName.subjectName || String(idOrName._id || '')) : String(idOrName);
+              const idStr = typeof idOrName === 'object' ? String(idOrName._id || nameStr) : String(idOrName);
+              const subj = subjects.find((s: any) => String(s.subjectId || s._id).trim() === idStr.trim() || String(s.name).trim().toLowerCase() === nameStr.trim().toLowerCase());
+              return (subj ? subj.name : nameStr).toLowerCase();
+            }).filter(Boolean);
+            allowedSections = uniqueSections.filter(sec => allowedNames.includes(String(sec).toLowerCase()));
+          }
+        }
+      }
+
+      const nextUnlocked = allowedSections.find(sec => {
+        if (String(sec).toLowerCase() === String(lockedSubject).toLowerCase()) return false
+        const t = sectionTimings.find(s => String(s.subjectName).toLowerCase() === String(sec).toLowerCase())
+        return !t?.isLocked
+      })
+
+      if (nextUnlocked) {
+        setCurrentSubject(nextUnlocked)
+        const firstQ = paletteList.find((p) => String(p.section).toLowerCase() === String(nextUnlocked).toLowerCase())
+        if (firstQ) setCurrentQuestionNo(firstQ.questionNumber)
+      } else if (!partWiseEnabled) {
+        // If not part-wise and all sections locked, auto-submit
+        const allGlobalLocked = uniqueSections.every(sec => {
+          if (sec === lockedSubject) return true
+          const t = sectionTimings.find(s => s.subjectName === sec)
+          return t?.isLocked
+        })
+        if (allGlobalLocked) {
+          handleAutoSubmit('ALL_SECTIONS_LOCKED')
+        }
+      }
+    }
+  }, [currentSubject, paletteList, sectionTimings, orderedSections, currentPartIndex, partWiseEnabled, parts, partOrder, subjects])
+
+  // Centralized single-source-of-truth timer using the main examEndTime and global tick
+  let currentRemainingTime = remainingTime;
+  if (timeLoaded) {
+    if (examEndTime > 0) {
+      currentRemainingTime = Math.max(0, Math.floor((examEndTime - now) / 1000));
+    }
+  } else {
+    currentRemainingTime = (examMeta?.durationMinutes || examMeta?.duration || 120) * 60;
+  }
+
+  // Auto-lock sections whose time has expired (checked every second via tick)
+  useEffect(() => {
+    if (!sectionTimings.length) return
+    
+    const allSections = paletteList.length > 0 
+      ? ([...new Set(paletteList.map(p => p.section))] as string[])
+      : orderedSections
+
+    for (const timing of sectionTimings) {
+      if (timing.isLocked || !timing.startedAt) continue
+      const subjectConfig = subjects.find((s: any) => String(s.name).toLowerCase() === String(timing.subjectName).toLowerCase())
+      const allottedSeconds = sectionalTimeLimitEnabled ? (timing.timeAllottedMinutes || subjectConfig?.timeAllottedMinutes || 0) * 60 : 0
+      
+      if (allottedSeconds > 0) {
+        let isExpired = false
+
+        if (sectionalTimeLimitEnabled && examEndTime > 0) {
+          const currentIndex = allSections.findIndex(s => String(s).toLowerCase() === String(timing.subjectName).toLowerCase())
+          if (currentIndex !== -1) {
+            let unstartedSeconds = 0
+            for (let i = currentIndex + 1; i < allSections.length; i++) {
+               const futureSec = allSections[i]
+               const fConfig = subjects.find((s: any) => String(s.name).toLowerCase() === String(futureSec).toLowerCase())
+               unstartedSeconds += (fConfig?.timeAllottedMinutes || 0) * 60
+            }
+            const calculatedRemaining = currentRemainingTime - unstartedSeconds
+            if (calculatedRemaining <= 0) isExpired = true
+          }
+        } else {
+          const elapsed = Math.floor((Date.now() - new Date(timing.startedAt).getTime()) / 1000)
+          if (elapsed >= allottedSeconds) isExpired = true
+        }
+
+        if (isExpired) {
+          // Time expired for this section — defer lock to avoid synchronous setState inside effect
+          const subjectToLock = timing.subjectName
+          setTimeout(() => handleSectionTimeUp(subjectToLock), 0)
+        }
+      }
+    }
+  }, [tick])
+
+  // Trigger auto-submit when the centralized timer hits 0
+  useEffect(() => {
+    if (timeLoaded && examEndTime > 0 && currentRemainingTime <= 0) {
+      handleAutoSubmit('TIME_EXPIRED');
+    }
+  }, [currentRemainingTime, timeLoaded, examEndTime, handleAutoSubmit]);
+
+  // Compute per-subject remaining seconds (for badge display)
+  const getSubjectRemainingSeconds = useCallback((subjectName: string, allSections: string[]): number | null => {
+    if (!sectionalTimeLimitEnabled) return null;
+    const timing = sectionTimings.find(s => String(s.subjectName).toLowerCase() === String(subjectName).toLowerCase())
+    const subjectConfig = subjects.find((s: any) => String(s.name).toLowerCase() === String(subjectName).toLowerCase())
+    const allottedSeconds = (timing?.timeAllottedMinutes || subjectConfig?.timeAllottedMinutes || 0) * 60
+
+    if (sectionalTimeLimitEnabled && examEndTime > 0) {
+      const currentIndex = allSections.findIndex(s => String(s).toLowerCase() === String(subjectName).toLowerCase())
+      if (currentIndex !== -1) {
+        let unstartedSeconds = 0
+        for (let i = currentIndex + 1; i < allSections.length; i++) {
+           const futureSec = allSections[i]
+           const fConfig = subjects.find((s: any) => String(s.name).toLowerCase() === String(futureSec).toLowerCase())
+           unstartedSeconds += (fConfig?.timeAllottedMinutes || 0) * 60
+        }
+        
+        // Dynamically compute remaining time using the centralized timer!
+        const calculatedRemaining = currentRemainingTime - unstartedSeconds
+        
+        return Math.max(0, Math.min(allottedSeconds, calculatedRemaining))
+      }
+    }
+
+    if (!timing || !timing.startedAt) return null
+
+    const elapsed = Math.floor((Date.now() - new Date(timing.startedAt).getTime()) / 1000)
+    return Math.max(0, allottedSeconds - elapsed)
+  }, [sectionTimings, subjects, tick, sectionalTimeLimitEnabled, examEndTime, currentRemainingTime])
+
+  const formatSubjectTime = (seconds: number): string => {
+    const m = Math.floor(seconds / 60)
+    const s = seconds % 60
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+  }
 
   const handleNext = () => {
     const currentIndex = paletteList.findIndex(p => p.questionNumber === currentQuestionNo)
     if (currentIndex >= 0 && currentIndex < paletteList.length - 1) {
       const nextQ = paletteList[currentIndex + 1]
+      // If current section has a time limit, only allow moving to next section if current section is locked (naturally finished)
+      if (nextQ.section !== currentSubject) {
+        const currentTiming = sectionTimings.find(s => String(s.subjectName).toLowerCase() === String(currentSubject).toLowerCase())
+        const currentSubjectConfig = subjects.find((s: any) => String(s.name).toLowerCase() === String(currentSubject).toLowerCase())
+        const currentHasTimer = sectionalTimeLimitEnabled && (currentTiming?.timeAllottedMinutes || currentSubjectConfig?.timeAllottedMinutes || 0) > 0
+        if (currentHasTimer && !currentTiming?.isLocked) return // Can't skip to next section yet
+      }
       setCurrentQuestionNo(nextQ.questionNumber)
       if (nextQ.section !== currentSubject) {
         setCurrentSubject(nextQ.section)
@@ -233,6 +586,11 @@ export function ExamArenaPage () {
     const currentIndex = paletteList.findIndex(p => p.questionNumber === currentQuestionNo)
     if (currentIndex > 0) {
       const prevQ = paletteList[currentIndex - 1]
+      // Block going back to a locked section
+      if (prevQ.section !== currentSubject) {
+        const prevTiming = sectionTimings.find(s => s.subjectName === prevQ.section)
+        if (prevTiming?.isLocked) return // Section is locked, cannot go back
+      }
       setCurrentQuestionNo(prevQ.questionNumber)
       if (prevQ.section !== currentSubject) {
         setCurrentSubject(prevQ.section)
@@ -284,11 +642,9 @@ export function ExamArenaPage () {
       'Practice Exam',
     candidateName: candidateInfo.candidateName || candidateInfo.candidateFullName,
     rollNumber: candidateInfo.applicationNo || candidateInfo.rollNumber || 'N/A',
-    durationSeconds: timeLoaded
-      ? remainingTime
-      : (examMeta.durationMinutes || examMeta.duration || 120) * 60,
+    // ✅ Main timer always shows TOTAL exam remaining time — never overridden by subject timer
+    durationSeconds: currentRemainingTime,
     onSubmit: handleManualSubmit,
-    onTimeUp: () => handleAutoSubmit('TIME_EXPIRED'),
   }
 
   const isCurrentSectionViewed = useMemo(() => {
@@ -368,7 +724,57 @@ export function ExamArenaPage () {
     )
   }
 
-  const uniqueSections = [...new Set(paletteList.map((p) => p.section))]
+  // Sections follow the exact order of the palette (which is already ordered by selected Part)
+  const uniqueSections = paletteList.length > 0
+    ? [...new Set(paletteList.map((p) => p.section))] as string[]
+    : []
+
+  const effectivePartOrder = partOrder.length > 0 ? partOrder : parts.map((p: any) => p.partName || p.name).filter(Boolean);
+
+  // Part gating logic (Determine which subjects are allowed in current active part)
+  let activePartAllowedSubjects: string[] = [];
+  if (parts.length > 0 && effectivePartOrder.length > 0 && currentPartIndex < effectivePartOrder.length) {
+    const activePartName = effectivePartOrder[currentPartIndex];
+    const activePart = parts.find((p: any) => (p.partName || p.name) === activePartName);
+    if (activePart && activePart.subjectIds) {
+      activePartAllowedSubjects = activePart.subjectIds.map((idOrName: any) => {
+        const nameStr = typeof idOrName === 'object' ? (idOrName.name || idOrName.subjectName || String(idOrName._id || '')) : String(idOrName);
+        const idStr = typeof idOrName === 'object' ? String(idOrName._id || nameStr) : String(idOrName);
+        const subj = subjects.find((s: any) => String(s.subjectId || s._id).trim() === idStr.trim() || String(s.name).trim().toLowerCase() === nameStr.trim().toLowerCase());
+        return (subj ? subj.name : nameStr).toLowerCase();
+      }).filter(Boolean);
+    }
+  }
+
+  // Group sections by parts
+  let groupedSections: { partName: string, subjects: string[] }[] = [];
+  
+  if (parts.length > 0 && effectivePartOrder.length > 0) {
+    effectivePartOrder.forEach((pName: string) => {
+      const partObj = parts.find((p: any) => (p.partName || p.name) === pName);
+      if (partObj && partObj.subjectIds) {
+        const allowedSubjectNames = partObj.subjectIds.map((idOrName: any) => {
+          const nameStr = typeof idOrName === 'object' ? (idOrName.name || idOrName.subjectName || String(idOrName._id || '')) : String(idOrName);
+          const idStr = typeof idOrName === 'object' ? String(idOrName._id || nameStr) : String(idOrName);
+          const subj = subjects.find((s: any) => String(s.subjectId || s._id).trim() === idStr.trim() || String(s.name).trim().toLowerCase() === nameStr.trim().toLowerCase());
+          return (subj ? subj.name : nameStr).toLowerCase();
+        }).filter(Boolean);
+        
+        const matchingSecs = uniqueSections.filter(sec => allowedSubjectNames.includes(sec.toLowerCase()));
+        if (matchingSecs.length > 0) {
+          groupedSections.push({ partName: pName, subjects: matchingSecs });
+        }
+      }
+    });
+    
+    const allGroupedSubjects = groupedSections.flatMap(g => g.subjects);
+    const remainingSecs = uniqueSections.filter(sec => !allGroupedSubjects.includes(sec));
+    if (remainingSecs.length > 0) {
+       groupedSections.push({ partName: 'Other', subjects: remainingSecs });
+    }
+  } else {
+    groupedSections = [{ partName: '', subjects: uniqueSections }];
+  }
 
   return (
     <ExamLayout headerProps={headerProps}>
@@ -382,32 +788,84 @@ export function ExamArenaPage () {
         ) : (
           currentQuestionData && (
             <div className='w-full flex-1 flex flex-col'>
-              <div className='flex items-center gap-2 overflow-x-auto pb-4'>
-                {uniqueSections.map((sec) => (
-                  <button
-                    key={sec as string}
-                    onClick={() => {
-                      if (currentSubject === sec) return
-                      if (!isCurrentSectionViewed) {
-                        setShowSectionWarning(true)
-                        return
-                      }
-                      setCurrentSubject(sec as string)
-                      const firstQ = paletteList.find((p) => p.section === sec)
-                      if (firstQ) setCurrentQuestionNo(firstQ.questionNumber)
-                    }}
-                    className={`px-6 py-2 rounded-md text-base font-bold whitespace-nowrap shadow-sm ${
-                      currentSubject === sec
-                        ? 'bg-primary text-white'
-                        : 'bg-slate-200 text-slate-800'
-                    } ${
-                      !isCurrentSectionViewed && currentSubject !== sec
-                        ? 'opacity-50 cursor-not-allowed'
-                        : ''
-                    }`}
-                  >
-                    {sec as string}
-                  </button>
+              {/* Subject tabs with per-subject countdown timers */}
+              <div className='flex items-start gap-4 overflow-x-auto pb-4'>
+                {groupedSections.map((group, groupIdx) => (
+                  <div key={groupIdx} className="flex flex-col gap-2 border border-slate-200 p-2 rounded-lg bg-slate-50 shadow-sm">
+                    {group.partName && (
+                      <span className='text-xs font-bold text-slate-600 uppercase tracking-wider px-1'>
+                        {group.partName}
+                      </span>
+                    )}
+                    <div className='flex items-center gap-2'>
+                      {group.subjects.map((sec) => {
+                        const timing = sectionTimings.find(s => String(s.subjectName).toLowerCase() === String(sec).toLowerCase())
+                        const isTimeLocked = sectionalTimeLimitEnabled && timing?.isLocked === true
+                        const isPartLocked = activePartAllowedSubjects.length > 0 && !activePartAllowedSubjects.includes(String(sec).toLowerCase())
+                        const isLocked = isTimeLocked || isPartLocked
+
+                        const subjectConfig = subjects.find((s: any) => String(s.name).toLowerCase() === String(sec).toLowerCase())
+                        const hasTimer = sectionalTimeLimitEnabled && (timing?.timeAllottedMinutes || subjectConfig?.timeAllottedMinutes || 0) > 0
+                        const remainingSecs = hasTimer ? getSubjectRemainingSeconds(sec, uniqueSections) : null
+                        const isActive = currentSubject === sec
+                        const isExpired = remainingSecs !== null && remainingSecs === 0
+                        const isCritical = remainingSecs !== null && remainingSecs < 300 && !isExpired  // < 5 min
+                        const isWarningTime = remainingSecs !== null && remainingSecs < 600 && remainingSecs >= 300  // < 10 min
+
+                        return (
+                          <button
+                            key={sec as string}
+                            onClick={() => {
+                              if (isActive || isLocked) return
+                              if (hasTimer && !isLocked) {
+                                const currentTiming = sectionTimings.find(s => String(s.subjectName).toLowerCase() === String(currentSubject).toLowerCase())
+                                const currentSubjectConfig = subjects.find((s: any) => String(s.name).toLowerCase() === String(currentSubject).toLowerCase())
+                                const currentHasTimer = sectionalTimeLimitEnabled && (currentTiming?.timeAllottedMinutes || currentSubjectConfig?.timeAllottedMinutes || 0) > 0
+                                if (currentHasTimer && !currentTiming?.isLocked) {
+                                  setShowSectionWarning(true)
+                                  return
+                                }
+                              }
+                              if (!isCurrentSectionViewed && !hasTimer) {
+                                setShowSectionWarning(true)
+                                return
+                              }
+                              setCurrentSubject(sec as string)
+                              const firstQ = paletteList.find((p) => p.section === sec)
+                              if (firstQ) setCurrentQuestionNo(firstQ.questionNumber)
+                            }}
+                            className={`flex flex-row items-center gap-2 px-4 py-3 rounded-lg text-sm font-bold whitespace-nowrap shadow-sm transition-all border-2 ${
+                              isActive
+                                ? 'bg-slate-900 text-white border-slate-900 scale-105 shadow-md'
+                                : isLocked
+                                ? 'bg-slate-100 text-slate-400 line-through cursor-not-allowed border-slate-200 opacity-70'
+                                : 'bg-white text-slate-700 border-slate-200 hover:border-slate-400 hover:bg-slate-50'
+                            }`}
+                            disabled={isLocked}
+                          >
+                            <span className='text-xs font-semibold tracking-wide uppercase'>{sec as string}</span>
+
+                            {/* Per-subject reverse countdown timer */}
+                            {hasTimer && isActive ? (
+                              <span className={`flex items-center justify-center min-w-[50px] gap-1.5 text-[12px] font-mono font-bold px-2.5 py-1 rounded-md bg-slate-800/80 border border-slate-700 text-white tracking-wider ${
+                                isCritical ? 'animate-pulse text-red-400' : ''
+                              }`}>
+                                <Clock className={`w-3.5 h-3.5 ${isCritical ? 'text-red-400' : 'text-amber-400'}`} />
+                                {isTimeLocked ? '00:00' : remainingSecs !== null ? formatSubjectTime(remainingSecs) : `${String(subjectConfig?.timeAllottedMinutes).padStart(2, '0')}:00`}
+                              </span>
+                            ) : hasTimer && !isLocked ? (
+                              <span className='flex items-center justify-center min-w-[50px] gap-1.5 text-[12px] font-mono font-bold px-2.5 py-1 rounded-md bg-slate-800/80 border border-slate-700 text-white tracking-wider'>
+                                <Clock className='w-3.5 h-3.5 text-amber-400' />
+                                {String(timing?.timeAllottedMinutes || subjectConfig?.timeAllottedMinutes || 0).padStart(2, '0')}:00
+                              </span>
+                            ) : isLocked ? (
+                              <span className='text-[10px] bg-slate-300 text-slate-500 px-2 py-1 rounded-full'>{isPartLocked ? 'Part Locked' : 'Locked'}</span>
+                            ) : null}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
                 ))}
               </div>
 
@@ -428,7 +886,19 @@ export function ExamArenaPage () {
               <div className='mt-auto flex justify-between items-center gap-4 pt-6 px-4'>
                 <button
                   onClick={handlePrevious}
-                  disabled={paletteList.findIndex(p => p.questionNumber === currentQuestionNo) <= 0 || loading}
+                  disabled={(() => {
+                    const currentIndex = paletteList.findIndex(p => p.questionNumber === currentQuestionNo)
+                    if (currentIndex <= 0 || loading) return true
+                    // Block previous if previous question is in a locked section
+                    if (sectionalTimeLimitEnabled) {
+                      const prevQ = paletteList[currentIndex - 1]
+                      if (prevQ && prevQ.section !== currentSubject) {
+                        const prevTiming = sectionTimings.find(s => s.subjectName === prevQ.section)
+                        if (prevTiming?.isLocked) return true
+                      }
+                    }
+                    return false
+                  })()}
                   className='px-6 py-3 bg-slate-900 text-white rounded font-bold hover:bg-slate-800 disabled:opacity-50'
                 >
                   &lt; Previous
@@ -457,14 +927,25 @@ export function ExamArenaPage () {
                       if (currentQuestionData) {
                         setStatuses((prev) => ({ ...prev, [String(currentQuestionData._id)]: 'Answered' }))
                       }
-                      handleNext()
+                      // Only navigate to next if NOT the last question of this subject
+                      const currentIndex = paletteList.findIndex(p => p.questionNumber === currentQuestionNo)
+                      const nextQ = paletteList[currentIndex + 1]
+                      const isLastOfSubject = !nextQ || nextQ.section !== currentSubject
+                      if (!isLastOfSubject) {
+                        handleNext()
+                      }
                     }}
                     disabled={
                       !currentQuestionData || !answers[String(currentQuestionData._id)] || loading
                     }
                     className='px-6 py-3 bg-indigo-600 text-white rounded font-bold hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2'
                   >
-                    Save & Next
+                    {(() => {
+                      const currentIndex = paletteList.findIndex(p => p.questionNumber === currentQuestionNo)
+                      const nextQ = paletteList[currentIndex + 1]
+                      const isLastOfSubject = !nextQ || nextQ.section !== currentSubject
+                      return isLastOfSubject ? 'Save' : 'Save & Next'
+                    })()}
                   </button>
                 </div>
               </div>
@@ -473,7 +954,7 @@ export function ExamArenaPage () {
         )}
       </div>
 
-      <div className='w-80 bg-slate-100 flex-shrink-0 flex-col hidden xl:flex h-full overflow-hidden'>
+      <div className='w-80 bg-slate-100 shrink-0 flex-col hidden xl:flex h-full overflow-hidden'>
         <div className='p-4 flex-1 flex flex-col space-y-4 min-h-0'>
           <ProctoringVideoCard
             title='Live Proctoring'
@@ -501,10 +982,14 @@ export function ExamArenaPage () {
           <div className="bg-white rounded-xl p-6 max-w-md w-full shadow-2xl">
             <div className="flex items-center gap-3 mb-3 text-amber-500">
               <AlertTriangle className="w-7 h-7" />
-              <h3 className="text-xl font-bold text-slate-800">Section Locked</h3>
+              <h3 className="text-xl font-bold text-slate-800">
+                {sectionalTimeLimitEnabled ? 'Section Timer Active' : 'Section Not Complete'}
+              </h3>
             </div>
             <p className="text-slate-600 mb-6 text-base">
-              Please view all questions in the current section before switching to another section.
+              {sectionalTimeLimitEnabled
+                ? 'You cannot switch to another section while the current section\'s timer is still running. Please wait for the timer to expire.'
+                : 'Please view all questions in the current section before switching to another section.'}
             </p>
             <div className="flex justify-end">
               <button

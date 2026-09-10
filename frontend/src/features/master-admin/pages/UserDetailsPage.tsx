@@ -170,7 +170,6 @@ export const UserDetailsPage = () => {
         <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent">
           <TabsTrigger value="overview" className="border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none rounded-none px-6 py-3">Overview</TabsTrigger>
           <TabsTrigger value="employment" className="border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none rounded-none px-6 py-3">Employment</TabsTrigger>
-          <TabsTrigger value="contact" className="border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none rounded-none px-6 py-3">Contact</TabsTrigger>
           <TabsTrigger value="access" className="border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none rounded-none px-6 py-3">Access Controls</TabsTrigger>
           <TabsTrigger value="permissions" className="border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none rounded-none px-6 py-3">Permissions</TabsTrigger>
           <TabsTrigger value="loginHistory" className="border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none rounded-none px-6 py-3">Login History</TabsTrigger>
@@ -192,20 +191,35 @@ export const UserDetailsPage = () => {
                   <div className="text-sm text-muted-foreground mb-1">Full Name</div>
                   <div className="font-medium">{fullName || 'Unknown'}</div>
                 </div>
-                <div>
-                  <div className="text-sm text-muted-foreground mb-1">Gender</div>
-                  <div className="font-medium">{employee.gender || 'Not Specified'}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-muted-foreground mb-1">Date of Birth</div>
-                  <div className="font-medium">{employee.dob ? new Date(employee.dob).toLocaleDateString() : 'Not Specified'}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-muted-foreground mb-1">Profile Photo</div>
-                  <div className="font-medium">{profileImage ? 'Uploaded' : 'No Photo'}</div>
-                </div>
               </CardContent>
             </Card>
+
+            <div className="mt-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <MapPin className="h-5 w-5 text-muted-foreground" />
+                    Contact Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <div className="text-sm text-muted-foreground mb-1">Primary Email</div>
+                    <div className="font-medium flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-muted-foreground" />
+                      {email}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-muted-foreground mb-1">Primary Mobile</div>
+                    <div className="font-medium flex items-center gap-2">
+                      <Phone className="h-4 w-4 text-muted-foreground" />
+                      {phone}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           {/* EMPLOYMENT */}
@@ -239,65 +253,11 @@ export const UserDetailsPage = () => {
                   <div className="text-sm text-muted-foreground mb-1">Joining Date</div>
                   <div className="font-medium">{employee.joiningDate ? new Date(employee.joiningDate).toLocaleDateString() : 'N/A'}</div>
                 </div>
-                <div>
-                  <div className="text-sm text-muted-foreground mb-1">Reporting Manager</div>
-                  <div className="font-medium">{employee.reportingManager || 'N/A'}</div>
-                </div>
               </CardContent>
             </Card>
           </TabsContent>
 
-          {/* CONTACT */}
-          <TabsContent value="contact">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <MapPin className="h-5 w-5 text-muted-foreground" />
-                  Contact Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <div className="text-sm text-muted-foreground mb-1">Primary Email</div>
-                  <div className="font-medium flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-muted-foreground" />
-                    {email}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-sm text-muted-foreground mb-1">Primary Mobile</div>
-                  <div className="font-medium flex items-center gap-2">
-                    <Phone className="h-4 w-4 text-muted-foreground" />
-                    {phone}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-sm text-muted-foreground mb-1">Alternate Mobile</div>
-                  <div className="font-medium">{employee.alternateMobile || 'N/A'}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-muted-foreground mb-1">Address</div>
-                  <div className="font-medium">{employee.address || 'N/A'}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-muted-foreground mb-1">City</div>
-                  <div className="font-medium">{employee.city || 'N/A'}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-muted-foreground mb-1">State</div>
-                  <div className="font-medium">{employee.state || 'N/A'}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-muted-foreground mb-1">Country</div>
-                  <div className="font-medium">{employee.country || 'N/A'}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-muted-foreground mb-1">PIN Code</div>
-                  <div className="font-medium">{employee.pincode || 'N/A'}</div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+
 
           {/* ACCESS */}
           <TabsContent value="access">
@@ -310,10 +270,6 @@ export const UserDetailsPage = () => {
               </CardHeader>
               <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <div className="text-sm text-muted-foreground mb-1">Username</div>
-                  <div className="font-medium">{employee.username || userObj.username || 'Not configured'}</div>
-                </div>
-                <div>
                   <div className="text-sm text-muted-foreground mb-1">Login Email</div>
                   <div className="font-medium">{email}</div>
                 </div>
@@ -324,14 +280,6 @@ export const UserDetailsPage = () => {
                 <div>
                   <div className="text-sm text-muted-foreground mb-1">System Role</div>
                   <div className="font-medium">{role}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-muted-foreground mb-1">Last Login</div>
-                  <div className="font-medium">{userObj.lastLoginAt ? new Date(userObj.lastLoginAt).toLocaleString() : 'Never'}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-muted-foreground mb-1">Password Last Changed</div>
-                  <div className="font-medium">N/A</div>
                 </div>
               </CardContent>
             </Card>
@@ -378,13 +326,11 @@ export const UserDetailsPage = () => {
                 <div className="overflow-x-auto rounded-md border border-slate-200">
                   <GenericDataTable
                     columns={[
-                      { id: "device", header: "Device", accessorKey: "device" },
-                      { id: "ipAddress", header: "IP Address", accessorKey: "ipAddress" },
                       { 
-                        id: "loginAt", 
+                        id: "createdAt", 
                         header: "Login Time", 
-                        accessorKey: "loginAt",
-                        cell: ({ row }) => new Date(row.loginAt).toLocaleString()
+                        accessorKey: "createdAt",
+                        cell: ({ row }) => new Date(row.createdAt).toLocaleString()
                       },
                       { 
                         id: "status", 

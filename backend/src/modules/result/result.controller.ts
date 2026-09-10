@@ -7,6 +7,7 @@ import { sendResponse } from "../../utils/response";
 
 import resultService from "./result.service";
 import Result from "./result.model";
+import Exam from "../exam/exam.model";
 
 /*
 |--------------------------------------------------------------------------
@@ -473,12 +474,26 @@ export const getResults = asyncHandler(
         const skip = (page - 1) * limit;
 
         const filter: any = {};
+        const userCompanyId = (req.user as any)?.companyId?.toString() || (req.user as any)?.company?.toString();
+        const userRole = (req.user as any)?.role;
+        const companyId = userRole === "MASTER_ADMIN" && req.query.companyId
+            ? (req.query.companyId as string)
+            : userCompanyId;
+
+        if (companyId) {
+            const companyExamIds = await Exam.find({ companyId: new mongoose.Types.ObjectId(companyId) }, "_id")
+                .lean()
+                .then(docs => docs.map(d => d._id));
+            filter.examId = { $in: companyExamIds };
+        }
+
         if (req.query.examId) {
             filter.examId = req.query.examId;
         }
 
         const total = await Result.countDocuments(filter);
         const results = await Result.find(filter)
+            .sort({ createdAt: -1 })
             .populate('examId', 'examTitle _id status examDate startTime endTime isResultGenerated isResultPublished')
             .skip(skip)
             .limit(limit)
@@ -489,6 +504,7 @@ export const getResults = asyncHandler(
         const data = await Promise.all(results.map(async (r) => {
             let cName = '';
             let cAppNo = '';
+            let cPhoto = '';
             let candidateFound = false;
 
             const ImportCandidate = mongoose.models.ImportCandidate || mongoose.model("ImportCandidate", new mongoose.Schema({}, { strict: false, collection: 'importcandidate' }));
@@ -508,26 +524,32 @@ export const getResults = asyncHandler(
                     cName = cand.firstName ? `${cand.firstName} ${cand.lastName || ''}`.trim() : '';
                     cName = cName || cand.candidateFullName || cand.fullName || cand.name || '';
                     cAppNo = cand.applicationNumber || cand.enrollmentNo || cand.applicationNo || '';
+                    cPhoto = cand.photo || cand.photoUrl || cand.candidatePhoto || cand.profilePhoto || '';
                     if (cName) candidateFound = true;
                 }
             }
 
             let candAns: any = null;
             const subId = (r.submissionId as any)?._id || r.submissionId;
-            if (!candidateFound && subId) {
+            if (subId) {
                 const CandidateExamAnswer = mongoose.models.CandidateExamAnswer || mongoose.model("CandidateExamAnswer", new mongoose.Schema({}, { strict: false, collection: 'candidateexamanswer' }));
                 candAns = await CandidateExamAnswer.findOne({ $or: [{ _id: subId }, { submissionId: subId }, { _id: String(subId) }, { submissionId: String(subId) }] }).lean();
                 if (candAns) {
-                    const ansName = (candAns as any).name || (candAns as any).candidateName || '';
-                    const ansAppNo = (candAns as any).applicationNo || '';
-                    
-                    if (ansName && ansName !== 'Unknown Candidate') {
-                        cName = ansName;
-                        candidateFound = true;
+                    if (!candidateFound) {
+                        const ansName = (candAns as any).name || (candAns as any).candidateName || (candAns as any).fullName || '';
+                        const ansAppNo = (candAns as any).applicationNo || (candAns as any).applicationNumber || '';
+                        
+                        if (ansName && ansName !== 'Unknown Candidate') {
+                            cName = ansName;
+                            candidateFound = true;
+                        }
+                        if (ansAppNo && ansAppNo !== 'N/A') {
+                            cAppNo = ansAppNo;
+                            candidateFound = true;
+                        }
                     }
-                    if (ansAppNo && ansAppNo !== 'N/A') {
-                        cAppNo = ansAppNo;
-                        candidateFound = true;
+                    if (!cPhoto) {
+                        cPhoto = (candAns as any).photo || (candAns as any).photoUrl || (candAns as any).candidatePhoto || (candAns as any).profilePhoto || '';
                     }
                 }
             }
@@ -537,20 +559,21 @@ export const getResults = asyncHandler(
                 if (importCand) {
                     cName = (importCand as any).candidateFullName || (importCand as any).fullName || '';
                     cAppNo = (importCand as any).applicationNo || 'N/A';
+                    if (!cPhoto) {
+                        cPhoto = (importCand as any).photo || (importCand as any).photoUrl || (importCand as any).candidatePhoto || (importCand as any).profilePhoto || '';
+                    }
                     candidateFound = true;
                 }
             }
 
             if (!cName) cName = 'Unknown Candidate';
             if (!cAppNo) cAppNo = 'N/A';
-            
-            console.log("API RESULT LOOP - r._id:", r._id, "cName:", cName, "candId:", candId, "candidateFound:", candidateFound, "r.candidateId:", r.candidateId);
-
 
             return {
                 id: r._id,
                 applicationNumber: cAppNo,
                 candidateName: cName,
+                photo: cPhoto,
                 exam: (r.examId as any)?.examTitle || 'Unknown Exam',
                 examObj: r.examId,
                 subject: 'General', 
@@ -588,17 +611,46 @@ export const getResults = asyncHandler(
 export const dashboard = asyncHandler(
     async (req: Request, res: Response) => {
         const examId = req.query.examId as string | undefined;
-        const result = await resultService.dashboard(examId);
+
+        const userCompanyId = (req.user as any)?.companyId?.toString() || (req.user as any)?.company?.toString();
+        const userRole = (req.user as any)?.role;
+        const companyId = userRole === "MASTER_ADMIN" && req.query.companyId
+            ? (req.query.companyId as string)
+            : userCompanyId;
+
+        const filter: any = {};
+        if (companyId) {
+            const companyExamIds = await Exam.find({ companyId: new mongoose.Types.ObjectId(companyId) }, "_id")
+                .lean()
+                .then(docs => docs.map(d => d._id));
+            filter.examId = { $in: companyExamIds };
+        }
+        if (examId) {
+            filter.examId = examId; // Override with specific exam if provided
+        }
+
+        const results = await Result.find(filter).lean();
         
-        const results = await Result.find(examId ? { examId } : {});
         let totalScore = 0;
         let highestScore = 0;
         let lowestScore = 100;
+        let passed = 0;
+        let failed = 0;
+        let publishedResults = 0;
+        let pendingResults = 0;
         
-        results.forEach(r => {
+        results.forEach((r: any) => {
             totalScore += r.percentage || 0;
             if ((r.percentage || 0) > highestScore) highestScore = r.percentage || 0;
             if ((r.percentage || 0) < lowestScore) lowestScore = r.percentage || 0;
+            
+            if (r.passStatus === 'PASSED') passed++;
+            else if (r.passStatus === 'FAILED') failed++;
+            else if (r.resultStatus === 'PASS' || (r.percentage && r.percentage >= 40)) passed++; // Fallback
+            else failed++;
+            
+            if (r.resultStatus === 'PUBLISHED') publishedResults++;
+            else pendingResults++;
         });
         
         const averageScore = results.length ? (totalScore / results.length).toFixed(2) : 0;
@@ -606,14 +658,14 @@ export const dashboard = asyncHandler(
 
         const data = {
             examId: examId,
-            totalCandidates: result.total || 0,
-            submittedCandidates: result.total || 0,
+            totalCandidates: results.length,
+            submittedCandidates: results.length,
             pendingEvaluation: 0,
-            evaluatedCandidates: result.total || 0,
-            publishedResults: results.filter(r => r.resultStatus === 'PUBLISHED').length,
-            pendingResults: results.filter(r => r.resultStatus !== 'PUBLISHED').length,
-            passCandidates: result.passed || 0,
-            failCandidates: result.failed || 0,
+            evaluatedCandidates: results.length,
+            publishedResults,
+            pendingResults,
+            passCandidates: passed,
+            failCandidates: failed,
             averageScore: Number(averageScore),
             highestScore,
             lowestScore,
@@ -636,55 +688,54 @@ export const dashboard = asyncHandler(
 
 export const statistics = asyncHandler(
     async (req: Request, res: Response) => {
+        const examId = req.query.examId as string | undefined;
 
-        const result =
-            await resultService.statistics(
-                req.query.examId as string | undefined
-            );
+        const userCompanyId = (req.user as any)?.companyId?.toString() || (req.user as any)?.company?.toString();
+        const userRole = (req.user as any)?.role;
+        const companyId = userRole === "MASTER_ADMIN" && req.query.companyId
+            ? (req.query.companyId as string)
+            : userCompanyId;
+
+        const filter: any = {};
+        if (companyId) {
+            const companyExamIds = await Exam.find({ companyId: new mongoose.Types.ObjectId(companyId) }, "_id")
+                .lean()
+                .then(docs => docs.map(d => d._id));
+            filter.examId = { $in: companyExamIds };
+        }
+        if (examId) {
+            filter.examId = examId; 
+        }
+
+        const results = await Result.find(filter).lean();
+        
+        let passed = 0;
+        let failed = 0;
+        
+        results.forEach((r: any) => {
+            if (r.passStatus === 'PASSED') passed++;
+            else if (r.passStatus === 'FAILED') failed++;
+            else if (r.resultStatus === 'PASS' || (r.percentage && r.percentage >= 40)) passed++; // Fallback
+            else failed++;
+        });
+
+        const total = results.length;
+        const passPercentage = total === 0 ? 0 : Number(((passed / total) * 100).toFixed(2));
 
         sendResponse(res, httpStatus.OK, {
-
             success: true,
-
             message: "Statistics fetched successfully.",
-
-            data: result,
-
+            data: {
+                total,
+                passed,
+                failed,
+                passPercentage
+            },
         });
-
     }
 );
 
-/*
-|--------------------------------------------------------------------------
-| Merit List
-|--------------------------------------------------------------------------
-*/
 
-export const meritList = asyncHandler(
-    async (req: Request, res: Response) => {
-
-        const result =
-            await resultService.meritList(
-
-                req.query.examId as string,
-
-                Number(req.query.limit) || 100
-
-            );
-
-        sendResponse(res, httpStatus.OK, {
-
-            success: true,
-
-            message: "Merit list fetched successfully.",
-
-            data: result,
-
-        });
-
-    }
-);
 
 /*
 |--------------------------------------------------------------------------

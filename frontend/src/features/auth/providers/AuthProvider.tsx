@@ -38,6 +38,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               subscriptionEndDate: profileData.subscriptionEndDate,
               planFeatures: profileData.planFeatures,
               onboardingCompleted: profileData.onboardingCompleted,
+              lastLoginAt: profileData.lastLogin,
             });
 
             // Populate permissions store

@@ -1,24 +1,28 @@
 import React, { useMemo } from 'react';
-import { PageHeader } from '@/shared/components/layout/page-header';
+import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import { DashboardLayout } from '../components/DashboardLayout';
 import { AssignedPapersList } from '@/features/paper-setter/components/AssignedPapersList';
 import { useRoleDashboard } from '../hooks/dashboard.hooks';
 
 export function PaperSetterDashboard() {
+  const { user } = useAuthStore();
   const { data } = useRoleDashboard();
 
   const { currentDate, lastLoginDate } = useMemo(() => {
     const now = new Date();
-    const lastLogin = new Date(now.getTime() - 86400000);
+    let lastLoginStr = "Just now";
+    if (user?.lastLoginAt) {
+      const lastLogin = new Date(user.lastLoginAt);
+      lastLoginStr = `${lastLogin.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}, ${lastLogin.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
+    }
     return {
       currentDate: `${now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })} at ${now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`,
-      lastLoginDate: `${lastLogin.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}, ${lastLogin.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`
+      lastLoginDate: lastLoginStr
     };
-  }, []);
+  }, [user]);
 
   return (
     <DashboardLayout>
-      <PageHeader title="Paper Setter Dashboard" description="Manage question authoring, blueprints, and submissions." />
 
       {/* HEADER BANNER (Paper Setter Style matching Company Admin) */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-[#2D3E2C] p-6 rounded-xl border border-[#2D3E2C] shadow-sm mb-6">

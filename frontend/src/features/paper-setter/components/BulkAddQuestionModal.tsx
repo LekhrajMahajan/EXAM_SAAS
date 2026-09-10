@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/shared/components/ui/dialog";
 import { Button } from "@/shared/components/ui/button";
 import { Label } from "@/shared/components/ui/label";
-import { Loader2, UploadCloud, FileSpreadsheet } from "lucide-react";
+import { Loader2, UploadCloud, FileSpreadsheet, Download } from "lucide-react";
 import api from "@/services/api";
 import * as XLSX from "xlsx";
 
@@ -35,7 +35,7 @@ export function BulkAddQuestionModal({ isOpen, onClose, paperId, subjectName, re
     if (validLines.length < 2) throw new Error("File seems empty or missing headers");
     
     // Skip header line
-    let rows = validLines.slice(1);
+    const rows = validLines.slice(1);
     
     // No slicing here anymore. We send all valid parsed rows to the backend,
     // and the backend will pick enough valid, non-duplicate questions to fill the quota.
@@ -156,7 +156,17 @@ export function BulkAddQuestionModal({ isOpen, onClose, paperId, subjectName, re
         <form onSubmit={handleSubmit} className="space-y-6 pt-4 w-full min-w-0 overflow-hidden">
           
           <div className="p-4 border rounded-lg bg-muted/50 text-sm w-full overflow-hidden">
-            <h4 className="font-semibold mb-2 text-foreground">Format Required:</h4>
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+              <h4 className="font-semibold text-foreground">Format Required:</h4>
+              <a 
+                href="/Bulk%20Question%20Example.xlsx" 
+                download="Bulk Question Example.xlsx"
+                className="bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-md shadow-sm transition-colors"
+              >
+                <Download className="w-3 h-3" />
+                Download Example Excel
+              </a>
+            </div>
             <p className="text-muted-foreground">Header row must exist. Columns should be:</p>
               <div className="bg-background border text-foreground p-3 rounded mt-2 font-mono text-sm break-words whitespace-normal shadow-sm">
                 QuestionText, OptionA, OptionB, OptionC, OptionD, OptionE, CorrectOption

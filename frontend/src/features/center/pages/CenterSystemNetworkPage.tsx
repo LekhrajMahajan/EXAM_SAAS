@@ -17,6 +17,63 @@ interface NetworkScan {
   createdAt: string
 }
 
+const LiveStatusBadge: React.FC<{ 
+  ipAddress: string; 
+  initialStatus: 'ONLINE' | 'OFFLINE';
+  onUpdate?: (data: any) => void;
+}> = ({ ipAddress, initialStatus, onUpdate }) => {
+  const [status, setStatus] = useState(initialStatus)
+  const [lastChecked, setLastChecked] = useState<string>('')
+
+  useEffect(() => {
+    let isMounted = true
+    const checkStatus = async () => {
+      try {
+        const response = await apiClient.get(`/center-system-network/status?ip=${ipAddress}`)
+        if (response.data.success && isMounted) {
+          const { status: newStatus, checkedAt, latency, openPorts } = response.data.data
+          setStatus(newStatus)
+          const date = new Date(checkedAt)
+          setLastChecked(date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }))
+          
+          if (onUpdate) {
+            onUpdate({ status: newStatus, latency, openPorts })
+          }
+        }
+      } catch (error) {
+        // Silently fail for polling so we don't spam toasts
+      }
+    }
+
+    checkStatus()
+    const interval = setInterval(checkStatus, 10000) // Changed to 10s to reduce server load
+
+    return () => {
+      isMounted = false
+      clearInterval(interval)
+    }
+  }, [ipAddress, onUpdate])
+
+  return (
+    <div className='flex flex-col items-start gap-1'>
+      {status === 'ONLINE' ? (
+        <span className='inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-600 border border-emerald-500/20'>
+          <span className='h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse' />
+          ONLINE
+        </span>
+      ) : (
+        <span className='inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-rose-500/10 text-rose-600 border border-rose-500/20'>
+          <span className='h-1.5 w-1.5 rounded-full bg-rose-500' />
+          OFFLINE
+        </span>
+      )}
+      {lastChecked && (
+        <span className='text-[10px] text-muted-foreground font-mono'>Checked: {lastChecked}</span>
+      )}
+    </div>
+  )
+}
+
 export const CenterSystemNetworkPage: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -184,17 +241,17 @@ export const CenterSystemNetworkPage: React.FC = () => {
                     <tr key={scan._id} className='hover:bg-muted/50 transition-colors'>
                       <td className='px-6 py-4 font-medium text-foreground'>{scan.ipAddress}</td>
                       <td className='px-6 py-4'>
-                        {scan.status === 'ONLINE' ? (
-                          <span className='inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-600 border border-emerald-500/20'>
-                            <span className='h-1.5 w-1.5 rounded-full bg-emerald-500' />
-                            ONLINE
-                          </span>
-                        ) : (
-                          <span className='inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-rose-500/10 text-rose-600 border border-rose-500/20'>
-                            <span className='h-1.5 w-1.5 rounded-full bg-rose-500' />
-                            OFFLINE
-                          </span>
-                        )}
+                        <LiveStatusBadge 
+                          ipAddress={scan.ipAddress} 
+                          initialStatus={scan.status} 
+                          onUpdate={(updatedData) => {
+                            setScans(prevScans => prevScans.map(s => 
+                              s._id === scan._id 
+                                ? { ...s, ...updatedData } 
+                                : s
+                            ))
+                          }}
+                        />
                       </td>
                       <td className='px-6 py-4'>
                         {scan.latency !== null ? (

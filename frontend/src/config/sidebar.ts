@@ -1,8 +1,8 @@
 import { 
   Home, 
   Users, 
-  Settings, 
-  ShieldCheck, 
+  Settings,
+  ShieldCheck,
   BarChart, 
   Building2,
   ClipboardCheck,
@@ -35,7 +35,8 @@ import {
   MapPin,
   Network,
   ClipboardList,
-  FileText
+  FileText,
+  Inbox
 } from 'lucide-react';
 import type { ForwardRefExoticComponent, RefAttributes } from 'react';
 import type { LucideProps } from 'lucide-react';
@@ -205,83 +206,14 @@ export const SIDEBAR_MENU: SidebarMenuItem[] = [
     id: 'ma-system-settings',
     title: 'System Settings',
     icon: Settings,
-    path: '/master-admin/system-settings',
+    path: '/master-admin/settings/general',
     roles: ['Master Admin'],
-    children: [
-      {
-        id: 'ma-system-settings-general',
-        title: 'General Settings',
-        path: '/master-admin/settings/general',
-        icon: Settings,
-      },
-      {
-        id: 'ma-system-settings-organization',
-        title: 'Organization Settings',
-        path: '/master-admin/settings/organization',
-        icon: Building2,
-      },
-      {
-        id: 'ma-system-settings-security',
-        title: 'Security Policies',
-        path: '/master-admin/settings/security',
-        icon: Shield,
-      },
-      {
-        id: 'ma-system-settings-notifications',
-        title: 'Notification Settings',
-        path: '/master-admin/settings/notifications',
-        icon: Bell,
-      },
-      {
-        id: 'ma-system-settings-gateways',
-        title: 'Email & SMS Gateways',
-        path: '/master-admin/settings/gateways',
-        icon: Mail,
-      },
-      {
-        id: 'ma-system-settings-integrations',
-        title: 'Dynamic Integrations',
-        path: '/master-admin/settings/integrations',
-        icon: Plug,
-      },
-      {
-        id: 'ma-system-settings-storage',
-        title: 'Storage & File Management',
-        path: '/master-admin/settings/storage',
-        icon: HardDrive,
-      },
-      {
-        id: 'ma-system-settings-backup',
-        title: 'Backup & Restore',
-        path: '/master-admin/settings/backup',
-        icon: Database,
-      },
-      {
-        id: 'ma-system-settings-exam',
-        title: 'Exam Configuration',
-        path: '/master-admin/settings/exam-configuration',
-        icon: ClipboardCheck,
-      },
-      {
-        id: 'ma-system-settings-configuration-history',
-        title: 'Audit & Configuration History',
-        path: '/master-admin/settings/configuration-history',
-        icon: History,
-      }
-    ]
   },
   {
     id: 'ma-support-tickets',
     title: 'Support Tickets',
     icon: Ticket,
     path: '/master-admin/support-tickets',
-    roles: ['Master Admin'],
-  },
-  {
-    id: 'ma-profile',
-    title: 'Profile',
-    icon: UserCircle,
-    path: '/master-admin/profile',
     roles: ['Master Admin'],
   },
   
@@ -299,12 +231,33 @@ export const SIDEBAR_MENU: SidebarMenuItem[] = [
     icon: Award,
     path: '/company/subscription',
     roles: ['Company Admin'],
+    children: [
+      {
+        id: 'ca-subscription-plans',
+        title: 'Plans',
+        path: '/company/subscription',
+        icon: Award,
+      },
+      {
+        id: 'ca-subscription-usage',
+        title: 'Usage Plan',
+        path: '/company/subscription/usage',
+        icon: Activity,
+      }
+    ]
   },
   {
     id: 'ca-centers',
     title: 'Centers',
     icon: Building2,
     path: '/company/centers',
+    roles: ['Company Admin'],
+  },
+  {
+    id: 'ca-center-requests',
+    title: 'Center Requests',
+    icon: Inbox,
+    path: '/company/centers/admin-requests',
     roles: ['Company Admin'],
   },
   {
@@ -382,7 +335,6 @@ export const SIDEBAR_MENU: SidebarMenuItem[] = [
     path: '/company/results',
     roles: ['Company Admin'],
   },
-/*
   {
     id: 'ca-live-monitoring',
     title: 'Live Monitoring',
@@ -391,14 +343,7 @@ export const SIDEBAR_MENU: SidebarMenuItem[] = [
     roles: ['Company Admin'],
     requiredFeature: 'liveMonitoring',
   },
-  {
-    id: 'ca-merit',
-    title: 'Merit List',
-    icon: Ticket,
-    path: '/company/merit',
-    roles: ['Company Admin'],
-    requiredFeature: 'meritList',
-  },
+
   {
     id: 'ca-certificates',
     title: 'Certificates',
@@ -416,6 +361,13 @@ export const SIDEBAR_MENU: SidebarMenuItem[] = [
     requiredFeature: 'reports',
   },
   {
+    id: 'ca-centers-payment',
+    title: 'Centers Payment',
+    icon: IndianRupee,
+    path: '/company/centers-payment',
+    roles: ['Company Admin'],
+  },
+  {
     id: 'ca-profile',
     title: 'Company Profile',
     icon: Building2,
@@ -429,13 +381,19 @@ export const SIDEBAR_MENU: SidebarMenuItem[] = [
     path: '/company/settings',
     roles: ['Company Admin'],
   },
-  */
   // --- Center Manager Routes ---
   {
     id: 'cm-dashboard',
     title: 'Center Dashboard',
     icon: Home,
     path: '/dashboard/center-manager',
+    roles: ['CENTER_MANAGER', 'Center Manager'],
+  },
+  {
+    id: 'cm-admin-requests',
+    title: 'Company Admin Requests',
+    icon: Inbox,
+    path: '/dashboard/center-manager/admin-requests',
     roles: ['CENTER_MANAGER', 'Center Manager'],
   },
   {
@@ -601,5 +559,13 @@ export const SIDEBAR_MENU: SidebarMenuItem[] = [
     icon: Upload,
     path: '/dashboard/private-authority/import-candidates',
     roles: ['PRIVATE_AUTHORITY', 'Private Authority'],
+  },
+  // --- Entry Checker Routes ---
+  {
+    id: 'ec-dashboard',
+    title: 'Dashboard',
+    icon: Home,
+    path: '/dashboard/entry-checker',
+    roles: ['ENTRY_CHECKER', 'Entry Checker'],
   }
 ];

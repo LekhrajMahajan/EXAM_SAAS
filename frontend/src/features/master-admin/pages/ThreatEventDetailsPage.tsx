@@ -100,7 +100,7 @@ export const ThreatEventDetailsPage = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-5xl">
+    <div className="space-y-6 max-w-5xl p-6">
       <div className="flex items-center gap-4 mb-4">
         <Button variant="ghost" size="icon" onClick={() => navigate('/master-admin/security/events')}>
           <ArrowLeft className="w-5 h-5" />

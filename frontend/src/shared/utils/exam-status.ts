@@ -37,20 +37,20 @@ export const getDisplayStatus = (exam: Record<string, any>, now: Date = new Date
   return exam.status;
 };
 
-export const getStatusBadgeConfig = (status?: string) => {
-  if (!status) return { label: 'UNKNOWN', className: 'bg-slate-500 text-white' };
+export const getStatusBadgeConfig = (status?: string): { label: string; variant: "default" | "secondary" | "destructive" | "outline" | "success" | "warning" | "info" } => {
+  if (!status) return { label: 'UNKNOWN', variant: 'outline' };
   const s = status.toUpperCase();
-  const config: Record<string, { label: string; className: string }> = {
-    ACTIVE: { label: 'ACTIVE', className: 'bg-[#2D3E2C] hover:bg-[#2D3E2C]/90 text-[#E4FD97]' },
-    DRAFT: { label: 'DRAFT', className: 'bg-slate-500 hover:bg-slate-600 text-white' },
-    EXAM_STARTED: { label: 'EXAM STARTED', className: 'bg-amber-600 hover:bg-amber-700 text-white' },
-    EXAM_ENDED: { label: 'PENDING RESULT GENERATE', className: 'bg-yellow-500 hover:bg-yellow-600 text-white' },
-    PENDING_RESULT_GENERATE: { label: 'PENDING RESULT GENERATE', className: 'bg-yellow-500 hover:bg-yellow-600 text-white' },
-    PENDING_PUBLISH_RESULT: { label: 'PENDING PUBLISH RESULT', className: 'bg-purple-600 hover:bg-purple-700 text-white' },
-    RESULT_PUBLISHED: { label: 'RESULT PUBLISHED', className: 'bg-blue-600 hover:bg-blue-700 text-white' },
-    COMPLETED: { label: 'COMPLETED', className: 'bg-slate-600 hover:bg-slate-700 text-white' },
-    CANCELLED: { label: 'CANCELLED', className: 'bg-gray-500 hover:bg-gray-600 text-white' },
-    INACTIVE: { label: 'INACTIVE', className: 'bg-gray-400 hover:bg-gray-500 text-white' },
+  const config: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" | "success" | "warning" | "info" }> = {
+    ACTIVE: { label: 'ACTIVE', variant: 'outline' },
+    DRAFT: { label: 'DRAFT', variant: 'outline' },
+    EXAM_STARTED: { label: 'EXAM STARTED', variant: 'outline' },
+    EXAM_ENDED: { label: 'PENDING RESULT GENERATE', variant: 'outline' },
+    PENDING_RESULT_GENERATE: { label: 'PENDING RESULT GENERATE', variant: 'outline' },
+    PENDING_PUBLISH_RESULT: { label: 'PENDING PUBLISH RESULT', variant: 'outline' },
+    RESULT_PUBLISHED: { label: 'RESULT PUBLISHED', variant: 'outline' },
+    COMPLETED: { label: 'COMPLETED', variant: 'outline' },
+    CANCELLED: { label: 'CANCELLED', variant: 'outline' },
+    INACTIVE: { label: 'INACTIVE', variant: 'outline' },
   };
-  return config[s] || { label: s.replace(/_/g, ' '), className: 'bg-slate-500 text-white' };
+  return config[s] || { label: s.replace(/_/g, ' '), variant: 'outline' };
 };

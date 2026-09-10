@@ -105,7 +105,7 @@ export const Navbar = () => {
   const getSettingsLink = (role?: string) => {
     switch (role) {
       case 'MASTER_ADMIN':
-      case 'Master Admin': return '/master-admin/system-settings';
+      case 'Master Admin': return '/master-admin/settings/general';
       case 'COMPANY_ADMIN':
       case 'Company Admin': return '/company/settings';
       case 'CANDIDATE':
@@ -128,10 +128,11 @@ export const Navbar = () => {
       return null;
     }
     
+    const decodedPath = decodeURIComponent(path);
     return {
       path,
       href: `/${rawPaths.slice(0, index + 1).join('/')}`,
-      title: path.charAt(0).toUpperCase() + path.slice(1).replace(/-/g, ' ')
+      title: decodedPath.charAt(0).toUpperCase() + decodedPath.slice(1).replace(/-/g, ' ')
     };
   }).filter(Boolean) as { path: string, href: string, title: string }[];
 
@@ -288,12 +289,14 @@ export const Navbar = () => {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem asChild className="cursor-pointer">
-                <Link to={getProfileLink(user?.role)}>
-                  <UserIcon className="mr-2 h-4 w-4" />
-                  <span>Profile</span>
-                </Link>
-              </DropdownMenuItem>
+              {user?.role !== 'MASTER_ADMIN' && user?.role !== 'Master Admin' && (
+                <DropdownMenuItem asChild className="cursor-pointer">
+                  <Link to={getProfileLink(user?.role)}>
+                    <UserIcon className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                  </Link>
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem asChild className="cursor-pointer">
                 <Link to={getSettingsLink(user?.role)}>
                   <Settings className="mr-2 h-4 w-4" />

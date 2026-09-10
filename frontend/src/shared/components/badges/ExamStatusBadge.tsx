@@ -22,7 +22,7 @@ export const ExamStatusBadge: React.FC<ExamStatusBadgeProps> = ({ exam, classNam
   const config = getStatusBadgeConfig(currentStatus);
 
   return (
-    <Badge className={`text-[11px] px-2.5 py-0.5 font-medium border-transparent uppercase tracking-wide ${config.className} ${className}`}>
+    <Badge variant={config.variant} className={`text-[10px] px-2.5 py-1 font-bold uppercase tracking-wider rounded-md border-2 ${className}`}>
       {config.label}
     </Badge>
   );

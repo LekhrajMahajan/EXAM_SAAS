@@ -5,9 +5,10 @@ import { Link } from "react-router-dom";
 interface WelcomeCardProps {
   companyName: string;
   adminName: string;
+  lastLoginAt?: string | Date;
 }
 
-export const WelcomeCard = ({ companyName, adminName }: WelcomeCardProps) => {
+export const WelcomeCard = ({ companyName, adminName, lastLoginAt, previousLoginAt }: WelcomeCardProps & { previousLoginAt?: string | Date }) => {
   const { currentDate, lastLoginDate } = useMemo(() => {
     const now = new Date();
     const formatter = new Intl.DateTimeFormat('en-US', {
@@ -19,12 +20,22 @@ export const WelcomeCard = ({ companyName, adminName }: WelcomeCardProps) => {
       month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true
     });
 
-    const lastLogin = new Date(now.getTime() - 86400000);
+    // Prefer previousLoginAt if available, else lastLoginAt
+    const userLastLogin = previousLoginAt || lastLoginAt;
+    let lastLogin = "Just now";
+    
+    if (userLastLogin) {
+      const loginDate = new Date(userLastLogin);
+      if (Math.abs(now.getTime() - loginDate.getTime()) > 60000) {
+        lastLogin = loginFormatter.format(loginDate);
+      }
+    }
+    
     return {
       currentDate: formatter.format(now),
-      lastLoginDate: loginFormatter.format(lastLogin)
+      lastLoginDate: lastLogin
     };
-  }, []);
+  }, [lastLoginAt, previousLoginAt]);
 
   return (
     <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-[#2D3E2C] p-6 rounded-xl border border-[#2D3E2C] shadow-sm mb-8">
@@ -42,7 +53,7 @@ export const WelcomeCard = ({ companyName, adminName }: WelcomeCardProps) => {
           <p className="mt-0.5 text-xs">Last login: {lastLoginDate}</p>
         </div>
         <div className="flex items-center gap-3 w-full sm:w-auto">
-          <Button variant="outline" className="border-slate-200 dark:border-slate-700 bg-white dark:bg-[#161E2E] text-[#2D3E2C] dark:text-[#E2E8F0] hover:bg-[#2D3E2C] hover:text-secondary hover:border-secondary dark:hover:bg-[#2D3E2C] dark:hover:text-secondary dark:hover:border-secondary transition-all duration-200 w-full sm:w-auto text-xs sm:text-sm font-semibold shadow-sm" asChild>
+          <Button variant="outline" className="w-full sm:w-auto text-xs sm:text-sm font-semibold bg-white/5 text-white border border-[#E4FD97]/30 shadow-none hover:bg-[#E4FD97] hover:text-[#2D3E2C] hover:border-[#E4FD97] hover:shadow-[0_0_15px_rgba(228,253,151,0.4)] hover:-translate-y-0.5 transition-all duration-300" asChild>
             <Link to="/company/profile">View Profile</Link>
           </Button>
 
