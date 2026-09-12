@@ -84,7 +84,7 @@ export const getEmployees = asyncHandler(
         "email",
         "employeeCode",
       ],
-      companyId: (req as any).user?.role === "MASTER_ADMIN"
+      companyId: ((req as any).user?.role === "MASTER_ADMIN" || (req as any).user?.role === "Master Admin")
         ? (req.query.companyId as string)
         : ((req.query.companyId as string) || (req as any).user?.companyId),
       designation: req.query.designation as string,

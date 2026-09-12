@@ -334,7 +334,15 @@ class PaperService extends BaseService<IPaper> {
     if (paper.examId && payload.subjectName) {
       const exam = await Exam.findById(paper.examId);
       if (exam) {
-        subjectReq = exam.subjects?.find(s => s.name === payload.subjectName);
+        subjectReq = exam.subjects?.find(
+          (s: any) => s.name?.trim().toLowerCase() === payload.subjectName?.trim().toLowerCase()
+        );
+        if (!subjectReq) {
+          throw new ApiError(
+            HTTP_STATUS.BAD_REQUEST,
+            `Subject "${payload.subjectName}" exam ke subjects config mein nahi mila. Available subjects: ${exam.subjects?.map((s: any) => s.name).join(', ') || 'none'}`
+          );
+        }
         if (subjectReq) {
           targetLimit = subjectReq.questions;
         }
@@ -399,7 +407,15 @@ class PaperService extends BaseService<IPaper> {
     if (paper.examId && payload.subjectName) {
       const exam = await Exam.findById(paper.examId);
       if (exam) {
-        subjectReq = exam.subjects?.find(s => s.name === payload.subjectName);
+        subjectReq = exam.subjects?.find(
+          (s: any) => s.name?.trim().toLowerCase() === payload.subjectName?.trim().toLowerCase()
+        );
+        if (!subjectReq) {
+          throw new ApiError(
+            HTTP_STATUS.BAD_REQUEST,
+            `Subject "${payload.subjectName}" exam ke subjects config mein nahi mila. Available subjects: ${exam.subjects?.map((s: any) => s.name).join(', ') || 'none'}`
+          );
+        }
         if (subjectReq) {
           targetLimit = subjectReq.questions;
         }
@@ -526,10 +542,11 @@ class PaperService extends BaseService<IPaper> {
   async getAssignedPapersWithAutoCreate(employeeId: string, companyId?: string, userId?: string) {
     const assignedPapers: any[] = [];
     const processedPaperIds = new Set<string>();
+    const processedExamIds = new Set<string>();
 
     console.log(`[getAssigned] Starting: employeeId=${employeeId}, companyId=${companyId}, userId=${userId}`);
 
-    // ─── Step 1: Find papers directly assigned to this employee ────────────────
+    // ─── Step 1: Find papers directly assigned to this employee 
     if (employeeId) {
       const directPapers = await Paper.find({ assignedTo: employeeId, isDeleted: false })
         .populate("examId")
@@ -538,9 +555,13 @@ class PaperService extends BaseService<IPaper> {
       console.log(`[getAssigned] Direct papers by employeeId: ${directPapers.length}`);
       for (const p of directPapers) {
         const pid = (p._id as any).toString();
-        if (!processedPaperIds.has(pid)) {
+        const examIdStr = (p.examId as any)?._id?.toString() || p.examId?.toString();
+        
+        // Only add one paper per exam to avoid duplicates
+        if (!processedPaperIds.has(pid) && (!examIdStr || !processedExamIds.has(examIdStr))) {
           assignedPapers.push(p);
           processedPaperIds.add(pid);
+          if (examIdStr) processedExamIds.add(examIdStr);
         }
       }
     }
@@ -554,24 +575,28 @@ class PaperService extends BaseService<IPaper> {
       console.log(`[getAssigned] Papers by userId: ${userPapers.length}`);
       for (const p of userPapers) {
         const pid = (p._id as any).toString();
-        if (!processedPaperIds.has(pid)) {
+        const examIdStr = (p.examId as any)?._id?.toString() || p.examId?.toString();
+        
+        if (!processedPaperIds.has(pid) && (!examIdStr || !processedExamIds.has(examIdStr))) {
           assignedPapers.push(p);
           processedPaperIds.add(pid);
+          if (examIdStr) processedExamIds.add(examIdStr);
         }
       }
     }
 
     // ─── Step 3: If nothing found yet, use staffAssignment to auto-create ────────
-    if (assignedPapers.length === 0 && employeeId) {
-      console.log(`[getAssigned] No papers found directly, trying assignment-based auto-create...`);
+    // We can auto-create for exams that we haven't seen yet.
+    if (employeeId) {
+      console.log(`[getAssigned] Trying assignment-based auto-create...`);
       const assignments = await staffAssignmentRepository.findActiveByEmployee(employeeId, companyId);
       const paperSetterAssignments = assignments.filter(a => a.role === 'PAPER_SETTER' && a.examId);
 
       console.log(`[getAssigned] Staff assignments found: ${assignments.length}, PAPER_SETTER: ${paperSetterAssignments.length}`);
 
-      const processedExamIds = new Set<string>();
       for (const assignment of paperSetterAssignments) {
         const examIdStr = (assignment.examId as any)._id?.toString() || assignment.examId.toString();
+        
         if (processedExamIds.has(examIdStr)) continue;
         processedExamIds.add(examIdStr);
 

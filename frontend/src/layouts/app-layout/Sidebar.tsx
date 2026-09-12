@@ -206,16 +206,17 @@ export const Sidebar = () => {
     (orgSettings?.data?.find((s) => s.key === 'APP_NAME')?.value as string) || 'ExamGuard Pro'
   const appShortName =
     (orgSettings?.data?.find((s) => s.key === 'APP_NAME')?.value as string) || 'EP'
-  const primaryLogo = orgSettings?.data?.find((s) => s.key === 'LOGO_PRIMARY')?.value as string
-  const darkLogo = orgSettings?.data?.find((s) => s.key === 'LOGO_DARK')?.value as string
-  const lightLogo = orgSettings?.data?.find((s) => s.key === 'LOGO_LIGHT')?.value as string
-
+  
   const activeTheme =
     theme === 'system'
       ? window.matchMedia('(prefers-color-scheme: dark)').matches
         ? 'dark'
         : 'light'
       : theme
+
+  const primaryLogo = orgSettings?.data?.find((s) => s.key === 'LOGO_PRIMARY')?.value as string
+  const darkLogo = orgSettings?.data?.find((s) => s.key === 'LOGO_DARK')?.value as string || '/Logos/Dark%20Theme%20Logo.png'
+  const lightLogo = orgSettings?.data?.find((s) => s.key === 'LOGO_LIGHT')?.value as string || '/Logos/Light%20Theme%20Logo.png'
 
   const logoUrl = (activeTheme === 'dark' ? darkLogo : lightLogo) || primaryLogo
 
@@ -301,15 +302,17 @@ export const Sidebar = () => {
                   className='flex items-center gap-2 overflow-hidden whitespace-nowrap'
                 >
                   {logoUrl ? (
-                    <img src={logoUrl} alt={appName} className='h-8 w-8 object-contain rounded-lg' />
+                    <img src={logoUrl} alt={appName} className='h-14 w-auto max-w-[240px] object-contain' />
                   ) : (
-                    <div className='h-8 w-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold'>
-                      {appShortName.substring(0, 2).toUpperCase()}
-                    </div>
+                    <>
+                      <div className='h-8 w-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold'>
+                        {appShortName.substring(0, 2).toUpperCase()}
+                      </div>
+                      <span className='font-bold text-lg truncate' title={appName}>
+                        {appName}
+                      </span>
+                    </>
                   )}
-                  <span className='font-bold text-lg truncate' title={appName}>
-                    {appName}
-                  </span>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -319,7 +322,7 @@ export const Sidebar = () => {
                 <img
                   src={logoUrl}
                   alt={appName}
-                  className='mx-auto h-8 w-8 object-contain rounded-lg'
+                  className='mx-auto h-10 w-auto max-w-[60px] object-contain'
                 />
               ) : (
                 <div className='mx-auto h-8 w-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold'>
@@ -424,10 +427,16 @@ export const Sidebar = () => {
       <Sheet open={isMobileDrawerOpen} onOpenChange={setMobileDrawerOpen}>
         <SheetContent side='left' className='p-0 w-72 flex flex-col h-full'>
           <div className='flex h-16 items-center px-6 border-b shrink-0'>
-            <div className='h-8 w-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold mr-2'>
-              {appShortName.substring(0, 2).toUpperCase()}
-            </div>
-            <span className='font-bold text-lg'>{appName}</span>
+            {logoUrl ? (
+              <img src={logoUrl} alt={appName} className='h-14 w-auto max-w-[240px] object-contain mr-2' />
+            ) : (
+              <>
+                <div className='h-8 w-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold mr-2'>
+                  {appShortName.substring(0, 2).toUpperCase()}
+                </div>
+                <span className='font-bold text-lg truncate'>{appName}</span>
+              </>
+            )}
           </div>
           <div className='p-3 border-b shrink-0'>
             <div className='relative'>

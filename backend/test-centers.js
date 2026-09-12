@@ -1,0 +1,1 @@
+const mongoose = require('mongoose'); const { env } = require('./src/config/env'); mongoose.connect(env.MONGODB_URI).then(async () => { const Center = require('./src/modules/center/center.model').default; const centers = await Center.aggregate([{ $group: { _id: '$companyId', count: { $sum: 1 } } }]); console.log(centers); process.exit(0); });

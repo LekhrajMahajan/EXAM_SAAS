@@ -864,6 +864,20 @@ class CandidateExamService {
         const masterQ = q.questionId || {};
         const masterQId = (masterQ._id || masterQ).toString(); // Master Question ID — used for scoring
         const pqId = q._id.toString(); // PaperQuestion ID — used only for payload answer lookup
+        let derivedSubjectId = masterQ.subjectId;
+        if (exam && exam.subjects) {
+            const secLower = (q.sectionCode || "").toString().toLowerCase().trim();
+            const masterSubjName = (masterQ.subjectId && typeof masterQ.subjectId === 'object' ? (masterQ.subjectId.name || masterQ.subjectId.subjectName || "") : "").toString().toLowerCase().trim();
+            const matchedSubject = exam.subjects.find((s: any) => {
+                const sName = String(s.name).toLowerCase().trim();
+                return (secLower && sName === secLower) || 
+                       (masterSubjName && sName === masterSubjName) ||
+                       (masterQ.subjectId && String(s.subjectId || s._id) === String(masterQ.subjectId._id || masterQ.subjectId));
+            });
+            if (matchedSubject) {
+                derivedSubjectId = matchedSubject.subjectId || matchedSubject._id;
+            }
+        }
         return {
           questionId: masterQId,         // Save Master Question ID for result engine
           paperQuestionId: pqId,         // Keep PaperQuestion ID for reference
@@ -873,7 +887,7 @@ class CandidateExamService {
           candidateAnswer: payload.answers ? (payload.answers[pqId] ?? payload.answers[masterQId] ?? null) : null,
           status: payload.statuses ? (payload.statuses[pqId] ?? payload.statuses[masterQId] ?? "NOT_VISITED") : "NOT_VISITED",
           isAnswered: !!(payload.answers ? (payload.answers[pqId] ?? payload.answers[masterQId]) : null),
-          subjectId: masterQ.subjectId ? masterQ.subjectId.toString() : null,
+          subjectId: derivedSubjectId ? derivedSubjectId.toString() : null,
           marks: q.marks,
           negativeMarks: q.negativeMarks
         };
@@ -954,6 +968,20 @@ class CandidateExamService {
         const masterQ = q.questionId || {};
         const masterQId = (masterQ._id || masterQ).toString(); // Master Question ID — used for scoring
         const pqId = q._id.toString(); // PaperQuestion ID — used only for payload answer lookup
+        let derivedSubjectId = masterQ.subjectId;
+        if (exam && exam.subjects) {
+            const secLower = (q.sectionCode || "").toString().toLowerCase().trim();
+            const masterSubjName = (masterQ.subjectId && typeof masterQ.subjectId === 'object' ? (masterQ.subjectId.name || masterQ.subjectId.subjectName || "") : "").toString().toLowerCase().trim();
+            const matchedSubject = exam.subjects.find((s: any) => {
+                const sName = String(s.name).toLowerCase().trim();
+                return (secLower && sName === secLower) || 
+                       (masterSubjName && sName === masterSubjName) ||
+                       (masterQ.subjectId && String(s.subjectId || s._id) === String(masterQ.subjectId._id || masterQ.subjectId));
+            });
+            if (matchedSubject) {
+                derivedSubjectId = matchedSubject.subjectId || matchedSubject._id;
+            }
+        }
         return {
           questionId: masterQId,         // Save Master Question ID for result engine
           paperQuestionId: pqId,         // Keep PaperQuestion ID for reference
@@ -963,7 +991,7 @@ class CandidateExamService {
           candidateAnswer: payload.answers ? (payload.answers[pqId] ?? payload.answers[masterQId] ?? null) : null,
           status: payload.statuses ? (payload.statuses[pqId] ?? payload.statuses[masterQId] ?? "NOT_VISITED") : "NOT_VISITED",
           isAnswered: !!(payload.answers ? (payload.answers[pqId] ?? payload.answers[masterQId]) : null),
-          subjectId: masterQ.subjectId ? masterQ.subjectId.toString() : null,
+          subjectId: derivedSubjectId ? derivedSubjectId.toString() : null,
           marks: q.marks,
           negativeMarks: q.negativeMarks
         };

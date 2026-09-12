@@ -159,7 +159,7 @@ class DashboardService {
 
     // Common queries
     const [recentActivities, unreadNotifications] = await Promise.all([
-      ActivityLog.find({ userId, isDeleted: false })
+      ActivityLog.find({ performedBy: userId, isDeleted: false })
         .sort({ createdAt: -1 })
         .limit(10)
         .lean(),
@@ -580,13 +580,24 @@ class DashboardService {
 
       case UserRole.EXAM_MANAGER:
       case "Exam Manager": {
+        let upcoming = 0, active = 0, pending = 0, completed = 0;
+        
+        const myExams = await Exam.find({ createdBy: userId, isDeleted: { $ne: true } }).lean();
+        myExams.forEach((exam: any) => {
+          if (exam.approvalStatus === "PENDING_APPROVAL") pending++;
+          
+          if (exam.status === "COMPLETED") completed++;
+          else if (exam.status === "ACTIVE" && new Date(exam.examDate) <= now) active++;
+          else if (exam.status === "ACTIVE" && new Date(exam.examDate) > now) upcoming++;
+        });
+
         return {
           ...base,
           stats: [
             {
               id: "1",
               label: "Upcoming Exams",
-              value: 0,
+              value: upcoming,
               change: "Scheduled",
               trend: "neutral",
               iconName: "Calendar",
@@ -595,7 +606,7 @@ class DashboardService {
             {
               id: "2",
               label: "Active Exams",
-              value: 0,
+              value: active,
               change: "Running now",
               trend: "neutral",
               iconName: "PlayCircle",
@@ -604,7 +615,7 @@ class DashboardService {
             {
               id: "3",
               label: "Pending Approvals",
-              value: 0,
+              value: pending,
               change: "Awaiting review",
               trend: "down",
               iconName: "Clock",
@@ -613,7 +624,7 @@ class DashboardService {
             {
               id: "4",
               label: "Completed Exams",
-              value: 0,
+              value: completed,
               change: "This month",
               trend: "up",
               iconName: "CheckCircle",

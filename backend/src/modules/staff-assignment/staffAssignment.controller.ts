@@ -103,7 +103,8 @@ export const getAssignments = asyncHandler(async (req: Request, res: Response) =
   const query: any = { ...req.query, companyId };
   
   // Data Isolation Logic
-  if (user && !['COMPANY_ADMIN', 'MASTER_ADMIN'].includes(user.role)) {
+  const isAdmin = ['COMPANY_ADMIN', 'Company Admin', 'MASTER_ADMIN', 'Master Admin'].includes(user.role);
+  if (user && !isAdmin) {
     const employee = await Employee.findOne({ userId: user._id });
     if (employee) {
       query.employeeId = employee._id.toString();

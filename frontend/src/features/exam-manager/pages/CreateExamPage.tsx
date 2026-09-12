@@ -86,6 +86,7 @@ const formSchema = z.object({
       })
     )
     .optional(),
+  qualifyingCriteriaEnabled: z.boolean().default(false),
   partWiseCutoffEnabled: z.boolean().default(false),
   parts: z
     .array(
@@ -251,6 +252,7 @@ type FormValues = {
   overallQualifyingPercent?: number | string
   sectionalCutoffEnabled: boolean
   sectionalTimeLimitEnabled: boolean
+  qualifyingCriteriaEnabled: boolean
   partWiseCutoffEnabled: boolean
   parts?: { partName: string; subjectIds: string[]; cutoffType: 'MARKS' | 'PERCENTAGE'; cutoffValue: number | string }[]
   categoryWiseCutoff?: { category: string; cutoffPercent: number | string }[]
@@ -317,6 +319,7 @@ export const CreateExamPage = () => {
       overallQualifyingPercent: '',
       sectionalCutoffEnabled: false,
       sectionalTimeLimitEnabled: false,
+      qualifyingCriteriaEnabled: false,
       partWiseCutoffEnabled: false,
       parts: [],
       categoryWiseCutoff: [],
@@ -364,6 +367,7 @@ export const CreateExamPage = () => {
   const watchCutoffType = form.watch('cutoffType')
   const watchSectionalCutoffEnabled = form.watch('sectionalCutoffEnabled')
   const watchSectionalTimeLimitEnabled = form.watch('sectionalTimeLimitEnabled')
+  const watchQualifyingCriteriaEnabled = form.watch('qualifyingCriteriaEnabled')
   const watchPartWiseCutoffEnabled = form.watch('partWiseCutoffEnabled')
   const watchParts = form.watch('parts')
   const watchIsMultiStage = form.watch('isMultiStage')
@@ -576,6 +580,7 @@ export const CreateExamPage = () => {
         proctoringWarningEnabled: _pwe,
         proctoringWarningLimit: _pwl,
         tabSwitchingEnabled: _tse,
+        qualifyingCriteriaEnabled: _qce,
         ...restValues
       } = values
 
@@ -1285,48 +1290,62 @@ export const CreateExamPage = () => {
 
           <Card className='bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 shadow-sm'>
             <CardHeader>
-              <CardTitle>Qualifying Criteria</CardTitle>
-            </CardHeader>
-            <CardContent className='space-y-6'>
-              <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+              <div className='flex items-center justify-between'>
+                <CardTitle>Qualifying Criteria</CardTitle>
                 <FormField
                   control={form.control}
-                  name='cutoffType'
+                  name='qualifyingCriteriaEnabled'
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Cutoff Type</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder='Select Cutoff Type' />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value='MARKS'>Marks (Absolute)</SelectItem>
-                          <SelectItem value='PERCENTAGE'>Percentage (%)</SelectItem>
-                          <SelectItem value='PERCENTILE'>Percentile</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name='overallQualifyingPercent'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Overall Qualifying Percentage (Optional)</FormLabel>
+                    <FormItem className='flex items-center space-x-2 space-y-0'>
                       <FormControl>
-                        <Input type='number' placeholder='e.g., 35' {...field} />
+                        <Switch checked={field.value} onCheckedChange={field.onChange} />
                       </FormControl>
-                      <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
-
-            </CardContent>
+            </CardHeader>
+            {watchQualifyingCriteriaEnabled && (
+              <CardContent className='space-y-6'>
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                  <FormField
+                    control={form.control}
+                    name='cutoffType'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Cutoff Type</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder='Select Cutoff Type' />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value='MARKS'>Marks (Absolute)</SelectItem>
+                            <SelectItem value='PERCENTAGE'>Percentage (%)</SelectItem>
+                            <SelectItem value='PERCENTILE'>Percentile</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name='overallQualifyingPercent'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Overall Qualifying Percentage (Optional)</FormLabel>
+                        <FormControl>
+                          <Input type='number' placeholder='e.g., 35' {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </CardContent>
+            )}
           </Card>
 
           <Card className='bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 shadow-sm'>

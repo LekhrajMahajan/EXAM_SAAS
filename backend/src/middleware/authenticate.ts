@@ -45,11 +45,13 @@ export const authenticate = (
     if ((decoded.role as string) !== UserRole.MASTER_ADMIN && (decoded.role as string) !== "MASTER_ADMIN") {
       if (decoded.companyId) {
         // Override any queried companyId to ensure they only fetch their own data
-        if (req.query && req.query.companyId) {
+        if (req.query) {
           req.query.companyId = decoded.companyId;
+        } else {
+          req.query = { companyId: decoded.companyId };
         }
         // Override any posted companyId to ensure they only create/update their own data
-        if (req.body && typeof req.body === "object" && req.body.companyId) {
+        if (req.body && typeof req.body === "object") {
           req.body.companyId = decoded.companyId;
         }
       }

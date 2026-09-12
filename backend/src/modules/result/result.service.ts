@@ -403,8 +403,11 @@ class ResultService extends BaseService<IResult> {
                 subjCfg = firstSubjCfg; // Always fall back to first subject config
             }
 
-            const marksForQ: number = subjCfg ? subjCfg.marksPerQuestion : 1;
-            const penaltyForQ: number = subjCfg ? subjCfg.negativeMarksPerQuestion : 0;
+            const examLevelMarks = Number((exam as any).marksPerQuestion) || Number((exam as any).marks) || 1;
+            const examLevelNeg = Number((exam as any).negativeMarks) || 0;
+            
+            const marksForQ: number = (subjCfg?.marksPerQuestion !== undefined && subjCfg?.marksPerQuestion !== null) ? Number(subjCfg.marksPerQuestion) : examLevelMarks;
+            const penaltyForQ: number = (subjCfg?.negativeMarksPerQuestion !== undefined && subjCfg?.negativeMarksPerQuestion !== null) ? Number(subjCfg.negativeMarksPerQuestion) : examLevelNeg;
             let se: any = null;
             if (subjCfg && subjectBreakdownMap.has(String(subjCfg.subjectId))) {
                 se = subjectBreakdownMap.get(String(subjCfg.subjectId));
@@ -443,8 +446,8 @@ class ResultService extends BaseService<IResult> {
             }
 
             item.isCorrect = isCorrect;
-            item.marks = isCorrect ? marksForQ : 0;
-            item.negativeMarks = (!isCorrect && notAttempted === false) ? penaltyForQ : 0;
+            item.marks = marksForQ;
+            item.negativeMarks = penaltyForQ;
             
             let correctAnsText = "";
             if (question.correctAnswer && question.correctAnswer.length > 0) {
@@ -1157,14 +1160,14 @@ class ResultService extends BaseService<IResult> {
         const submissions = await ExamSubmission.find({
             examId,
             submissionStatus: { $in: [SubmissionStatus.SUBMITTED, SubmissionStatus.AUTO_SUBMITTED] }
-        });
+        }).sort({ _id: -1 }).lean();
 
         const CandidateExamAnswer = mongoose.models.CandidateExamAnswer || mongoose.model("CandidateExamAnswer", new mongoose.Schema({}, { strict: false, collection: 'candidateexamanswer' }));
         // Query with both ObjectId and string examId since data may store either format
         const candidateAnswers = await CandidateExamAnswer.find({ 
             $or: [{ examId }, { examId: String(examId) }],
             submitReason: { $exists: true } 
-        }).lean();
+        }).sort({ _id: -1 }).lean();
 
         if (!submissions.length && !candidateAnswers.length) {
             return {
@@ -1217,35 +1220,26 @@ class ResultService extends BaseService<IResult> {
             if (evaluatedCandidates.has(candIdStr)) continue;
             evaluatedCandidates.add(candIdStr);
 
-            const answers = await CandidateAnswer.find({
-                examId,
-                candidateId: submission.candidateId
+            const subId = (submission as any).submissionId || submission._id;
+            const CandidateExamAnswerModel = mongoose.models.CandidateExamAnswer || mongoose.model("CandidateExamAnswer", new mongoose.Schema({}, { strict: false, collection: 'candidateexamanswer' }));
+            const candAns = await CandidateExamAnswerModel.findOne({
+                $or: [{ _id: subId }, { submissionId: subId }, { _id: String(subId) }, { submissionId: String(subId) }]
             }).lean();
 
             let extractedAnswers: any[] = [];
-            for (const a of answers as any[]) {
-                if (a.results && Array.isArray(a.results)) {
-                    for (const res of a.results) {
-                        const statusLower = (res.status || "").toLowerCase();
-                        extractedAnswers.push({
-                            questionId: String(res.questionId),
-                            candidateAnswer: res.candidateAnswer ?? res.selectedOption ?? res.selectedOptions ?? res.numericalAnswer ?? null,
-                            isAnswered: statusLower === "answered" || statusLower === "marked for review" || !!(res.isAnswered),
-                            status: res.status,
-                            options: res.options,
-                            correctAnswer: res.correctAnswer,
-                            questionType: res.questionType,
-                            marks: res.marks,
-                            negativeMarks: res.negativeMarks,
-                        });
-                    }
-                } else if (a.questionId) {
-                    const statusLower = (a.questionStatus || a.status || "").toLowerCase();
+            if (candAns && (candAns as any).results && Array.isArray((candAns as any).results)) {
+                for (const res of (candAns as any).results) {
+                    const statusLower = (res.status || "").toLowerCase();
                     extractedAnswers.push({
-                        questionId: String(a.questionId),
-                        candidateAnswer: a.selectedOption ?? a.selectedOptions ?? a.numericalAnswer ?? a.candidateAnswer ?? null,
-                        isAnswered: statusLower === "answered" || statusLower === "marked for review" || !!(a.isAnswered),
-                        status: a.questionStatus || a.status,
+                        questionId: String(res.questionId),
+                        candidateAnswer: res.candidateAnswer ?? res.selectedOption ?? res.selectedOptions ?? res.numericalAnswer ?? null,
+                        isAnswered: statusLower === "answered" || statusLower === "marked for review" || !!(res.isAnswered),
+                        status: res.status,
+                        options: res.options,
+                        correctAnswer: res.correctAnswer,
+                        questionType: res.questionType,
+                        marks: res.marks,
+                        negativeMarks: res.negativeMarks,
                     });
                 }
             }
@@ -1259,8 +1253,6 @@ class ResultService extends BaseService<IResult> {
             );
 
             // Update the CandidateExamAnswer with evaluated marks
-            const subId = (submission as any).submissionId || submission._id;
-            const CandidateExamAnswerModel = mongoose.models.CandidateExamAnswer || mongoose.model("CandidateExamAnswer", new mongoose.Schema({}, { strict: false, collection: 'candidateexamanswer' }));
             await CandidateExamAnswerModel.updateOne(
                 { $or: [{ _id: subId }, { submissionId: subId }, { _id: String(subId) }, { submissionId: String(subId) }] },
                 { $set: { results: extractedAnswers } }
@@ -1678,17 +1670,19 @@ class ResultService extends BaseService<IResult> {
         const examSubjectConfigMap = new Map<string, any>();
         if (examObj && examObj.subjects) {
             const examLevelNeg = Number(examObj.negativeMarks) || 0;
+            let idx = 0;
             for (const s of examObj.subjects) {
-                if (s.subjectId) {
-                    const marksPerQ = (s.marksPerQuestion !== undefined && s.marksPerQuestion !== null && s.marksPerQuestion !== "") ? Number(s.marksPerQuestion) : 0;
-                    // Use subject-level negativeMarksPerQuestion if > 0, else fall back to exam-level negativeMarks
-                    const subNeg = (s.negativeMarksPerQuestion !== undefined && s.negativeMarksPerQuestion !== null && Number(s.negativeMarksPerQuestion) > 0) ? Number(s.negativeMarksPerQuestion) : examLevelNeg;
-                    examSubjectConfigMap.set(String(s.subjectId), { 
-                        marks: marksPerQ, 
-                        negativeMarks: subNeg,
-                        subjectName: s.subjectName || "Unknown Subject"
-                    });
-                }
+                idx++;
+                const key = String(s.subjectId || s._id || s.name || idx);
+                const subjectDoc = s.subjectId ? await mongoose.model("Subject").findById(s.subjectId).lean() as any : null;
+                const marksPerQ = (s.marksPerQuestion !== undefined && s.marksPerQuestion !== null && s.marksPerQuestion !== "") ? Number(s.marksPerQuestion) : 0;
+                // Use subject-level negativeMarksPerQuestion if > 0, else fall back to exam-level negativeMarks
+                const subNeg = (s.negativeMarksPerQuestion !== undefined && s.negativeMarksPerQuestion !== null && Number(s.negativeMarksPerQuestion) > 0) ? Number(s.negativeMarksPerQuestion) : examLevelNeg;
+                examSubjectConfigMap.set(key, { 
+                    marks: marksPerQ, 
+                    negativeMarks: subNeg,
+                    subjectName: subjectDoc?.name || subjectDoc?.subjectName || s.name || s.subjectName || "Unknown Subject"
+                });
             }
         }
         
@@ -1704,6 +1698,7 @@ class ResultService extends BaseService<IResult> {
         // Build PaperQuestion -> subjectConfig map for reliable question->subject resolution
         const qIdToSubjCfgForDetails = new Map<string, any>();
         const pqIdToMasterQForDetails = new Map<string, any>();
+        const qIdToDisplayOrder = new Map<string, number>();
         try {
             const paperId = examObj?.finalPaperId || examObj?.paperId;
             if (paperId) {
@@ -1712,8 +1707,10 @@ class ResultService extends BaseService<IResult> {
                     const paperQs = await PaperQuestion.find({ paperId }).populate({
                         path: 'questionId',
                         populate: { path: 'subjectId', select: 'name subjectName' }
-                    }).lean() as any[];
+                    }).sort({ displayOrder: 1, _id: 1 }).lean() as any[];
+                    let displayIdx = 0;
                     for (const pq of paperQs) {
+                        displayIdx++;
                         const masterQ = pq.questionId || {};
                         const qIdStr = String(masterQ._id || pq.questionId);
                         const pqSubId = masterQ.subjectId?._id || masterQ.subjectId || pq.subjectId;
@@ -1732,6 +1729,10 @@ class ResultService extends BaseService<IResult> {
                         if (pq._id) {
                             pqIdToMasterQForDetails.set(String(pq._id), masterQ);
                         }
+                        
+                        qIdToDisplayOrder.set(qIdStr, displayIdx);
+                        if (pq._id) qIdToDisplayOrder.set(String(pq._id), displayIdx);
+
                         if (mappedCfg) {
                             qIdToSubjCfgForDetails.set(qIdStr, mappedCfg);
                             if (pq._id) {
@@ -1760,9 +1761,13 @@ class ResultService extends BaseService<IResult> {
         };
 
         let useOldFormat = candidateAnswers.length > 0;
-        if (candidateAnswers.length === 1 && (candidateAnswers[0] as any).results && Array.isArray((candidateAnswers[0] as any).results)) {
+        // Prioritize candidateexamanswer (candAns) because that's what generateResults uses
+        if (candAns && candAns.results && Array.isArray(candAns.results) && candAns.results.length > 0) {
+            useOldFormat = false;
+        } else if (candidateAnswers.length === 1 && (candidateAnswers[0] as any).results && Array.isArray((candidateAnswers[0] as any).results)) {
             useOldFormat = false;
         }
+        
         if (useOldFormat) {
             const masterIds = candidateAnswers.map((ans: any) => {
                 const pqMaster = pqIdToMasterQForDetails.get(String(ans.questionId));
@@ -1807,6 +1812,11 @@ class ResultService extends BaseService<IResult> {
                 // Derive isAnswered from actual answer content
                 const actuallyAnswered = !!(answer.selectedOption || (answer.selectedOptions && answer.selectedOptions.length > 0) || answer.numericalAnswer !== undefined);
                 
+                const examLevelMarks = Number((examObj as any).marksPerQuestion) || Number((examObj as any).marks) || 1;
+                const examLevelNeg = Number((examObj as any).negativeMarks) || 0;
+                const configMarks = (subjectCfg?.marks !== undefined && subjectCfg?.marks !== null) ? Number(subjectCfg.marks) : examLevelMarks;
+                const configNeg = (subjectCfg?.negativeMarks !== undefined && subjectCfg?.negativeMarks !== null) ? Number(subjectCfg.negativeMarks) : examLevelNeg;
+
                 return {
                     questionId: answer.questionId,
                     questionText: question ? (question.question || 'Q_FOUND_BUT_EMPTY_TEXT') : ('DEBUG_Q_NOT_FOUND: pqMaster=' + !!pqMaster + ' masterId=' + masterId),
@@ -1815,8 +1825,8 @@ class ResultService extends BaseService<IResult> {
                     selectedAnswer: selectedAnswerText,
                     correctAnswer: correctAnswerText,
                     isCorrect,
-                    marks: isCorrect ? (subjectCfg?.marks || 0) : 0,
-                    negativeMarks: (!isCorrect && actuallyAnswered) ? (subjectCfg?.negativeMarks || 0) : 0,
+                    marks: isCorrect ? configMarks : 0,
+                    negativeMarks: (!isCorrect && actuallyAnswered) ? configNeg : 0,
                     subjectName: subjectCfg?.subjectName || 'Unknown Subject',
                 };
             });
@@ -1878,8 +1888,16 @@ class ResultService extends BaseService<IResult> {
 
                 // Use reliable PaperQuestion-based subject config lookup
                 const subjectCfg = getSubjCfg(res.questionId, question);
-                const marks = isCorrect ? (subjectCfg?.marks || 0) : 0;
-                const negativeMarks = (!isCorrect && isAnswered) ? (subjectCfg?.negativeMarks || 0) : 0;
+                
+                // IMPORTANT: In getDetails, the marks MUST be exactly what authoritativeEvaluate uses.
+                // We do NOT use res.marks because it might be stale.
+                const examLevelMarks = Number((examObj as any).marksPerQuestion) || Number((examObj as any).marks) || 1;
+                const examLevelNeg = Number((examObj as any).negativeMarks) || 0;
+                const configMarks = (subjectCfg?.marks !== undefined && subjectCfg?.marks !== null) ? Number(subjectCfg.marks) : examLevelMarks;
+                const configNeg = (subjectCfg?.negativeMarks !== undefined && subjectCfg?.negativeMarks !== null) ? Number(subjectCfg.negativeMarks) : examLevelNeg;
+
+                const marks = isCorrect ? configMarks : 0;
+                const negativeMarks = (!isCorrect && isAnswered) ? configNeg : 0;
                 const finalSubjectName = subjectCfg?.subjectName || res.subjectName || 'Unknown Subject';
 
                 return {
@@ -1896,6 +1914,22 @@ class ResultService extends BaseService<IResult> {
                 };
             });
         }
+
+        // Fix the shuffle misalignment bug by enforcing the paper's original question order
+        questionsDetails.sort((a, b) => {
+            const orderA = qIdToDisplayOrder.get(String(a.questionId)) ?? 999999;
+            const orderB = qIdToDisplayOrder.get(String(b.questionId)) ?? 999999;
+            if (orderA !== orderB) return orderA - orderB;
+            
+            // Fallback grouping by subject, then question text
+            const subjA = a.subjectName || '';
+            const subjB = b.subjectName || '';
+            if (subjA !== subjB) return subjA.localeCompare(subjB);
+            
+            const textA = a.questionText || '';
+            const textB = b.questionText || '';
+            return textA.localeCompare(textB);
+        });
 
         return {
             id: result._id,

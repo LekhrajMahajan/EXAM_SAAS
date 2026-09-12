@@ -21,7 +21,13 @@ const getScopedFilters = async (req: Request, filters: Record<string, any> = {})
     return scopedFilters;
   }
 
-  if (user?.role === UserRole.CENTER_MANAGER && user?.centerId) {
+  // Restrict Exam Manager to only see their own activity logs
+  if (user?.role === UserRole.EXAM_MANAGER) {
+    const uId = user.userId || user.id || user._id;
+    if (uId) {
+      scopedFilters.performedBy = uId;
+    }
+  } else if (user?.role === UserRole.CENTER_MANAGER && user?.centerId) {
     const usersInCenter = await User.find({ centerId: user.centerId }).select('_id');
     const userIds = usersInCenter.map(u => u._id.toString());
     

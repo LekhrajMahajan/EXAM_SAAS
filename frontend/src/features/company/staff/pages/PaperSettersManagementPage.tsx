@@ -427,32 +427,33 @@ export const PaperSettersManagementPage = () => {
                         : null
 
                       return (
-                        <div className='flex flex-col items-end gap-2'>
-                          <div title={tooltipMsg}>
-                            <Button
-                              size='sm'
-                              disabled={isDisabled}
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                setCreateExamId(examId)
-                                setIsCreateOpen(true)
-                              }}
-                              className='shadow-sm'
-                            >
-                              <Plus className='w-4 h-4 mr-1' /> Create Paper Setter
-                            </Button>
-                          </div>
-                          
-                          <div className='flex flex-col items-end gap-1.5'>
-                            <span className='text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20 inline-flex items-center justify-center'>
+                        <div className='flex flex-col items-end gap-1.5'>
+                          <div className='flex flex-row items-center gap-3'>
+                            <span className='text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20 inline-flex items-center justify-center whitespace-nowrap'>
                               {examStaff.length}/5 Setters Assigned
                             </span>
-                            {warningMsg && (
-                              <p className='text-xs text-destructive font-medium'>
-                                * {warningMsg}
-                              </p>
-                            )}
+                            
+                            <div title={tooltipMsg}>
+                              <Button
+                                size='sm'
+                                disabled={isDisabled}
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setCreateExamId(examId)
+                                  setIsCreateOpen(true)
+                                }}
+                                className='shadow-sm'
+                              >
+                                <Plus className='w-4 h-4 mr-1' /> Create Paper Setter
+                              </Button>
+                            </div>
                           </div>
+                          
+                          {warningMsg && (
+                            <p className='text-xs text-destructive font-medium text-right'>
+                              * {warningMsg}
+                            </p>
+                          )}
                         </div>
                       )
                     })()}

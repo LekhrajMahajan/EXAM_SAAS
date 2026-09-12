@@ -1,33 +1,16 @@
 const mongoose = require("mongoose");
-const fs = require("fs");
-require("dotenv").config();
-
+require("dotenv").config({ path: ".env" });
 async function test() {
-  await mongoose.connect(process.env.MONGODB_URI);
-  console.log("Connected to MongoDB");
+  await mongoose.connect(process.env.MONGODB_URI || "mongodb://localhost:27017/exam-saas");
+  const Employee = mongoose.model("Employee", new mongoose.Schema({}, { collection: "generaterolecredentials", strict: false }));
+  const StaffAssignment = mongoose.model("StaffAssignment", new mongoose.Schema({}, { collection: "staffassignments", strict: false }));
   
-  const Employee = mongoose.connection.collection("generaterolecredentials");
-  const Manager = mongoose.connection.collection("managers");
+  const employees = await Employee.find({ role: "PAPER_SETTER" });
+  console.log("Paper Setters:", employees.map(e => ({ id: e._id, name: e.firstName, companyId: e.companyId })));
   
-  const email = "parmarvaibhav2703@gmail.com".toLowerCase();
+  const assignments = await StaffAssignment.find({ role: "PAPER_SETTER" });
+  console.log("Assignments:", assignments.map(a => ({ id: a._id, employeeId: a.employeeId, examId: a.examId, companyId: a.companyId, status: a.status })));
   
-  const managers = await Manager.find({ email }).toArray();
-  console.log("Found managers:", managers.length);
-  
-  for (const m of managers) {
-    console.log("Manager:", m._id, m.email, m.status, m.role);
-    const emp = await Employee.findOne({ userId: m._id });
-    if (emp) {
-      console.log(" -> Employee:", emp._id, "isDeleted:", emp.isDeleted);
-    } else {
-      console.log(" -> No linked employee found for Manager", m._id);
-      // Wait! Check if it's stored as string!
-      const empStr = await Employee.findOne({ userId: m._id.toString() });
-      if (empStr) {
-         console.log(" -> Employee found with STRING ID:", empStr._id, "isDeleted:", empStr.isDeleted);
-      }
-    }
-  }
-  process.exit(0);
+  mongoose.disconnect();
 }
 test().catch(console.error);
