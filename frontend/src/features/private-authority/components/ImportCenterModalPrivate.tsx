@@ -39,10 +39,10 @@ export function ImportCenterModalPrivate({ onSuccess }: { onSuccess?: (importId:
     const fetchExams = async () => {
       try {
         setIsLoadingExams(true)
-        const res = await examApi.getAll({ limit: 100, status: 'ACTIVE' })
+        const res = await examApi.getAll({ limit: 100 })
         if (res.success) {
           const activeExams = res.data.exams.filter(
-            (exam: Exam) => getDisplayStatus(exam) === 'ACTIVE' && exam.examMode === 'ONLINE'
+            (exam: Exam) => ['ACTIVE', 'PENDING_EXAM'].includes(getDisplayStatus(exam)) && exam.examMode === 'ONLINE'
           );
           setExams(activeExams)
           if (activeExams.length === 1) {

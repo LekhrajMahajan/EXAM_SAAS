@@ -52,13 +52,17 @@ export const ExamListPage = () => {
     return getDisplayStatus(exam, now);
   }, [now]);
 
-  // Check if exam is in an editable state (only ACTIVE/DRAFT before start)
+  // Check if exam is in an editable state (only PENDING_EXAM before active)
   // Exception: RESERVEBA (RBI), STAFFSELF, STAFFSELE can be edited anytime
+  // Exception: 6aabe8da696de247aaf02f70 requested by user for testing
   const isEditable = useCallback((exam: Exam): boolean => {
+    if (exam._id === '6aabe8da696de247aaf02f70' || (exam as any).id === '6aabe8da696de247aaf02f70') {
+      return true;
+    }
     if (['STAFFSELF', 'STAFFSELE', 'RESERVEBA'].includes(exam.examCode)) {
       return true;
     }
-    return ['ACTIVE', 'DRAFT'].includes(getDisplayStatusMemoized(exam));
+    return ['PENDING_EXAM'].includes(getDisplayStatusMemoized(exam));
   }, [getDisplayStatusMemoized]);
 
   // Re-check every 30 seconds so badges update live when exam time arrives

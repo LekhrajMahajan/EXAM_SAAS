@@ -432,6 +432,7 @@ export const sendCredentialsEmail = asyncHandler(async (req: Request, res: Respo
           <h2 style="color: #059669; margin-top: 0;">Welcome to ExamGuard Pro Enterprise</h2>
           <p>Hello <strong>${managerName || "Center Manager"}</strong>,</p>
           <p>A new examination center <strong>${centerName || 'Center'}</strong> has been registered, and your user profile has been provisioned as the designated Center Manager.</p>
+          <p style="color: #dc2626; font-weight: bold;">Please log in using the credentials below and upload your statutory documents to complete the center verification process.</p>
           <div style="background: #f0fdf4; padding: 15px; border-radius: 6px; border-left: 4px solid #10b981; margin: 20px 0;">
             <p style="margin: 0 0 10px 0;"><strong>Your Secure Login Credentials:</strong></p>
             <p style="margin: 5px 0;"><b>Official Email:</b> ${email}</p>
@@ -739,7 +740,8 @@ export const getOnboardingStatus = asyncHandler(async (req: any, res: Response) 
   // Data Privacy Filter:
   // If a Company Admin from a DIFFERENT company (via connection request) is viewing this,
   // we must return THEIR specific documents, not the original onboarding documents.
-  if (req.user?.companyId && center.companyId && req.user.companyId.toString() !== center.companyId.toString()) {
+  const centerCompanyIdStr = (center.companyId as any)?._id?.toString() || center.companyId.toString();
+  if (req.user?.companyId && center.companyId && req.user.companyId.toString() !== centerCompanyIdStr) {
     const CompanyAdminRequest = require("./companyAdminRequest.model").default;
     const adminRequest = await CompanyAdminRequest.findOne({
       companyId: req.user.companyId,

@@ -14,8 +14,8 @@ export function LiveDashboardPage() {
   const { data: centersData } = useLiveCenters();
   const { data: violationsData } = useViolations();
 
-  const liveCenters = centersData?.data || [];
-  const violations = violationsData?.data || [];
+  const liveCenters = Array.isArray(centersData?.data) ? centersData.data : [];
+  const violations = Array.isArray(violationsData?.data) ? violationsData.data : [];
 
   const stats: MonitoringStats = {
     activeExams: 3, // Assuming 3 active exams 

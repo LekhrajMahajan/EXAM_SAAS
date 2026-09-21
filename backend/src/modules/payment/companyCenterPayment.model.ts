@@ -17,6 +17,8 @@ export enum PaymentStatus {
 export interface ICompanyCenterPayment {
   companyId: Types.ObjectId;
   centerId: Types.ObjectId;
+  examId?: Types.ObjectId;
+  shift?: string;
   amount: number;
   paymentMode: PaymentMode;
   transactionId?: string;
@@ -62,6 +64,14 @@ const CompanyCenterPaymentSchema = new Schema<ICompanyCenterPayment>(
       ref: "Center",
       required: true,
       index: true,
+    },
+    examId: {
+      type: Schema.Types.ObjectId,
+      ref: "Exam",
+      index: true,
+    },
+    shift: {
+      type: String,
     },
     amount: {
       type: Number,

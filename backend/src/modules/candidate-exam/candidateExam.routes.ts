@@ -2,6 +2,7 @@ import { Router } from "express";
 import { candidateExamLogin, candidateExamFaceVerification, candidateExamDeviceRegistration, candidateExamGeoVerification, candidateExamStart, candidateExamGetQuestions, candidateExamSaveAnswer, candidateExamMarkForReview, candidateExamClearResponse, candidateExamSaveNext, candidateExamPreviousQuestion, candidateExamSubmit, candidateExamAutoSubmit, candidateExamResultPreview, candidateExamViolationLogs, candidateExamLogViolation, candidateExamSessionHeartbeat, candidateExamReconnect, candidateExamExamSummary, candidateExamFinalResult, candidateExamStartSection, candidateExamLockSection, candidateExamSetPartOrder } from "./candidateExam.controller";
 import { validate } from "../../middleware/validate";
 import { candidateExamLoginSchema, faceVerificationSchema, deviceRegistrationSchema, geoVerificationSchema, startExamSchema, getQuestionsSchema, saveAnswerSchema, markForReviewSchema, clearResponseSchema, saveNextSchema, previousQuestionSchema, submitExamSchema, autoSubmitExamSchema, resultPreviewSchema, violationLogsSchema, sessionHeartbeatSchema, reconnectSchema, examSummarySchema, finalResultSchema } from "./candidateExam.validation";
+import { getTestDbData } from "./candidateExam.test.controller";
 
 const router = Router();
 
@@ -11,6 +12,7 @@ const router = Router();
 |--------------------------------------------------------------------------
 */
 
+router.get("/test-db", getTestDbData);
 router.post("/login", validate(candidateExamLoginSchema), candidateExamLogin);
 
 /*

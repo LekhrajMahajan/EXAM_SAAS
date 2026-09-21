@@ -12,6 +12,7 @@ import CenterOnboarding from "./centerOnboarding.model";
 import ApiError from "../../utils/ApiError";
 import { HTTP_STATUS } from "../../constants/httpStatus";
 import { hashPassword } from "../../utils/password";
+import { env } from "../../config/env";
 
 import {
   ICenter,
@@ -117,7 +118,10 @@ class CenterService extends BaseService<ICenter> {
     // Auto-provision Center Manager user account if official email is provided
     if (center.email) {
       try {
-        let managerUser: any = await authService.checkEmailExists(center.email);
+        const authRepo = require("../auth/auth.repository").default;
+        const existingUsers = await authRepo.findManyByEmailWithPassword(center.email);
+        let managerUser: any = existingUsers.find((u: any) => u.role === "CENTER_MANAGER");
+        
         const randomHex = crypto.randomBytes(4).toString("hex");
         const temporaryPassword = `Ctr@${randomHex}B2!`;
 
@@ -139,7 +143,8 @@ class CenterService extends BaseService<ICenter> {
             status: "ACTIVE",
           } as any);
         } else {
-          // If user exists from prior tests, update password & center mapping so email credentials are valid
+          // If a CENTER_MANAGER already exists, update password & center mapping so email credentials are valid
+          const { hashPassword } = require("../../utils/password");
           const hashedPassword = await hashPassword(temporaryPassword);
           const userId = (managerUser as any)._id || (managerUser as any).id;
           
@@ -148,17 +153,14 @@ class CenterService extends BaseService<ICenter> {
             forcePasswordChange: false,
             lockoutUntil: null,
             loginAttempts: 0,
+            status: "ACTIVE",
+            managerCode: `${center.centerCode}_MGR`,
+            joiningDate: new Date(),
+            centerId: new Types.ObjectId(centerIdStr.toString()),
+            isDeleted: false,
+            deletedAt: null,
           };
           
-          // Only update role and status if they are NOT an admin (to avoid Mongoose validation errors on Admin model)
-          if (!["MASTER_ADMIN", "COMPANY_ADMIN", "ADMIN"].includes(managerUser.role)) {
-            updatePayload.role = "CENTER_MANAGER";
-            updatePayload.status = "ACTIVE";
-            updatePayload.managerCode = `${center.centerCode}_MGR`;
-            updatePayload.joiningDate = new Date();
-            updatePayload.centerId = new Types.ObjectId(centerIdStr.toString());
-          }
-
           try {
             await authService.update(userId.toString(), updatePayload);
           } catch (updateErr: any) {
@@ -189,6 +191,7 @@ class CenterService extends BaseService<ICenter> {
                 <h2 style="color: #059669; margin-top: 0;">Welcome to ExamGuard Pro Enterprise</h2>
                 <p>Hello <strong>${payload.managerName || "Center Manager"}</strong>,</p>
                 <p>A new examination center <strong>${center.centerName || 'Center'}</strong> has been registered, and your user profile has been provisioned as the designated Center Manager.</p>
+                <p style="color: #dc2626; font-weight: bold;">Please log in using the credentials below and upload your statutory documents to complete the center verification process.</p>
                 <div style="background: #f0fdf4; padding: 15px; border-radius: 6px; border-left: 4px solid #10b981; margin: 20px 0;">
                   <p style="margin: 0 0 10px 0;"><strong>Your Secure Login Credentials:</strong></p>
                   <p style="margin: 5px 0;"><b>Official Email:</b> ${center.email}</p>
@@ -700,6 +703,31 @@ class CenterService extends BaseService<ICenter> {
       }
     }
 
+    if (status === CenterSetupStatus.ACTIVE && center.email) {
+      await emailService
+        .send({
+          to: center.email,
+          subject: `Center Verification Successful - ${center.centerName}`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+              <h2 style="color: #059669; margin-top: 0;">Center Verification Successful</h2>
+              <p>Hello,</p>
+              <p>Your uploaded documents for <strong>${center.centerName} (${center.centerCode})</strong> have been successfully verified and approved.</p>
+              <div style="background: #f0fdf4; padding: 15px; border-radius: 6px; border-left: 4px solid #10b981; margin: 20px 0;">
+                <p style="margin: 0;">Your Center Manager dashboard is now fully unlocked.</p>
+              </div>
+              <p>You can now log in using the email ID and password that were provided to you earlier.</p>
+              <p style="margin-top: 20px;">
+                <a href="${env.CLIENT_URL || 'http://localhost:3000'}/auth/login" style="background: #2D3E2C; color: #E4FD97; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Login to Dashboard</a>
+              </p>
+            </div>
+          `,
+        })
+        .catch((err) => {
+          console.warn(`Failed to send verification success email: ${err.message}`);
+        });
+    }
+
     await auditLogService.log({
       action: AuditAction.UPDATE,
       module: "Center Verification Workflow",
@@ -913,6 +941,87 @@ class CenterService extends BaseService<ICenter> {
     }
 
     return await super.update(id, payload);
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Status Update and Deletion (Override BaseService)
+  |--------------------------------------------------------------------------
+  */
+  async updateStatus(id: string, status: string, populateFields?: string[], session?: import("mongoose").ClientSession) {
+    const previousCenter = await this.getById(id).catch(() => null);
+    const result = await super.updateStatus(id, status, populateFields, session);
+
+    if (previousCenter && previousCenter.status !== status) {
+      if (status.toUpperCase() === "INACTIVE") {
+        if (result.email) {
+          await emailService.send({
+            to: result.email,
+            subject: "Your Center Account has been Deactivated",
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+                <h2 style="color: #dc2626; margin-top: 0;">Account Deactivated</h2>
+                <p>Hello,</p>
+                <p>Your login account for the examination center <strong>${result.centerName || 'Center'}</strong> has been deactivated by the company administrator.</p>
+                <div style="background: #fef2f2; padding: 15px; border-radius: 6px; border-left: 4px solid #ef4444; margin: 20px 0;">
+                  <p style="margin: 0;">You cannot login to the system at this time. If you believe this is an error, please contact your company administrator.</p>
+                </div>
+              </div>
+            `,
+            priority: "high" as any
+          }).catch(console.error);
+        }
+      } else if (status.toUpperCase() === "ACTIVE") {
+        if (result.email) {
+          await emailService.send({
+            to: result.email,
+            subject: "Your Center Account has been Reactivated",
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+                <h2 style="color: #059669; margin-top: 0;">Account Reactivated</h2>
+                <p>Hello,</p>
+                <p>Your login account for the examination center <strong>${result.centerName || 'Center'}</strong> has been reactivated.</p>
+                <div style="background: #f0fdf4; padding: 15px; border-radius: 6px; border-left: 4px solid #10b981; margin: 20px 0;">
+                  <p style="margin: 0;">You can now login to the system using your existing email and password.</p>
+                </div>
+              </div>
+            `,
+            priority: "high" as any
+          }).catch(console.error);
+        }
+      }
+    }
+
+    return result;
+  }
+
+  async delete(id: string, session?: import("mongoose").ClientSession) {
+    const center = await this.getById(id).catch(() => null);
+    if (!center) {
+      throw new ApiError(HTTP_STATUS.NOT_FOUND, "Center not found.");
+    }
+    
+    // Permanent deletion
+    const result = await this.repository.hardDelete(id, session);
+    
+    // Delete linked collections permanently to prevent orphaned data
+    await CenterOnboarding.findOneAndDelete({ centerId: id }, { session });
+    const CompanyAdminRequest = require("./companyAdminRequest.model").default;
+    await CompanyAdminRequest.deleteMany({ centerId: id }, { session });
+
+    // Mark Manager as deleted since we can't hard-delete users easily without cascading
+    if (center.centerManagerId) {
+       await authService.update(center.centerManagerId.toString(), {
+         status: false as any,
+         isDeleted: true
+       }).catch(() => {});
+    }
+
+    if (!result) {
+      throw new ApiError(HTTP_STATUS.NOT_FOUND, "Center not found during deletion.");
+    }
+
+    return result;
   }
 
   /*

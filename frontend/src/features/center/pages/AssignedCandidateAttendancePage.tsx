@@ -92,7 +92,12 @@ const ExamAttendanceList = ({ exam, centerId }: { exam: any, centerId: string })
     if (record && (record.attendanceStatus === 'PRESENT' || record.attendanceStatus === 'COMPLETED')) {
       return 'PRESENT';
     }
-    return 'ABSENT';
+
+    const endedStatuses = ['PENDING_RESULT_GENERATE', 'RESULT_GENERATED', 'COMPLETED', 'CANCELLED', 'INACTIVE'];
+    if (exam.status && endedStatuses.includes(exam.status)) {
+      return 'ABSENT';
+    }
+    return 'PENDING';
   };
 
   const getSessionStatus = (candidateId: string) => {
@@ -161,6 +166,11 @@ const ExamAttendanceList = ({ exam, centerId }: { exam: any, centerId: string })
                       <CheckCircle2 className="h-3.5 w-3.5" />
                       Verified / Present
                     </span>
+                  ) : status === 'PENDING' ? (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-600 border border-amber-500/20">
+                      <AlertCircle className="h-3.5 w-3.5" />
+                      Pending
+                    </span>
                   ) : (
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-rose-500/10 text-rose-600 border border-rose-500/20">
                       <XCircle className="h-3.5 w-3.5" />
@@ -184,6 +194,7 @@ export const AssignedCandidateAttendancePage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedExamId, setSelectedExamId] = useState<string>('ALL');
+  const [statusFilter, setStatusFilter] = useState<string>('ALL');
   
   const user = useAuthStore(state => state.user);
   const centerId = user?.centerId || user?.referenceId || '';
@@ -232,10 +243,26 @@ export const AssignedCandidateAttendancePage = () => {
     fetchExams();
   }, [resolvedCenterId]);
 
+  const getCenterExamStatusLabel = (coreStatus?: string) => {
+    if (!coreStatus) return 'Exam Assigned';
+    switch (coreStatus) {
+      case 'PENDING_EXAM': return 'Exam Assigned';
+      case 'ACTIVE': return 'Active';
+      case 'EXAM_STARTED': return 'Exam Started';
+      case 'PENDING_RESULT_GENERATE': return 'Exam Ended';
+      case 'RESULT_GENERATED': return 'Result Generated';
+      default: return coreStatus.replace(/_/g, ' ');
+    }
+  };
+
   const filteredExams = exams.filter(exam => {
     const matchesSearch = (exam.examTitle || exam.title || exam.name || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesSelect = selectedExamId === 'ALL' || (exam._id || exam.id) === selectedExamId;
-    return matchesSearch && matchesSelect;
+    
+    const mappedStatus = getCenterExamStatusLabel(exam.status);
+    const matchesStatus = statusFilter === 'ALL' || mappedStatus === statusFilter;
+
+    return matchesSearch && matchesSelect && matchesStatus;
   });
 
   return (
@@ -289,6 +316,30 @@ export const AssignedCandidateAttendancePage = () => {
             </SelectContent>
           </Select>
         </div>
+        <div className="w-full sm:w-48">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className='w-full bg-background'>
+              <SelectValue placeholder='Filter Status' />
+            </SelectTrigger>
+            <SelectContent className='bg-background border-border'>
+              <SelectItem value='ALL' className='text-foreground focus:bg-muted py-2'>
+                All Status
+              </SelectItem>
+              <SelectItem value='Exam Assigned' className='text-foreground focus:bg-muted py-2'>
+                Exam Assigned
+              </SelectItem>
+              <SelectItem value='Active' className='text-foreground focus:bg-muted py-2'>
+                Active
+              </SelectItem>
+              <SelectItem value='Exam Started' className='text-foreground focus:bg-muted py-2'>
+                Exam Started
+              </SelectItem>
+              <SelectItem value='Exam Ended' className='text-foreground focus:bg-muted py-2'>
+                Exam Ended
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {isLoading ? (
@@ -313,10 +364,13 @@ export const AssignedCandidateAttendancePage = () => {
               {filteredExams.map((exam) => (
                 <AccordionItem key={exam._id || exam.id} value={exam._id || exam.id} className="border border-border rounded-md overflow-hidden bg-background">
                   <AccordionTrigger className="px-4 hover:bg-muted/50 transition-colors">
-                    <div className="flex items-center text-base font-semibold text-left">
+                    <div className="flex items-center text-base font-semibold text-left flex-wrap gap-2">
                       <span className="text-primary">{exam.examTitle || exam.title || exam.name || 'Unknown Exam'}</span>
-                      {exam.examCode && <span className="ml-2 bg-[#E4FD97] text-[#2D3E2C] border border-[#2D3E2C]/20 px-2 py-0.5 rounded font-mono font-bold text-xs">{exam.examCode}</span>}
-                      {exam.examDate && <span className="ml-4 text-muted-foreground font-normal text-sm bg-muted px-2 py-0.5 rounded">Date: {new Date(exam.examDate).toLocaleDateString()}</span>}
+                      {exam.examCode && <span className="bg-[#E4FD97] text-[#2D3E2C] border border-[#2D3E2C]/20 px-2 py-0.5 rounded font-mono font-bold text-xs">{exam.examCode}</span>}
+                      <span className="flex items-center justify-center bg-[#2D3E2C] text-[#E4FD97] border-0 border-transparent rounded px-2.5 py-0.5 text-[10px] uppercase font-bold tracking-wider">
+                        {getCenterExamStatusLabel(exam.status)}
+                      </span>
+                      {exam.examDate && <span className="text-muted-foreground font-normal text-sm bg-muted px-2 py-0.5 rounded">Date: {new Date(exam.examDate).toLocaleDateString()}</span>}
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="pt-0 pb-0">

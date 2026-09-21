@@ -341,7 +341,7 @@ const ExamSchema = new Schema<IExam>(
     status: {
       type: String,
       enum: Object.values(ExamStatus),
-      default: ExamStatus.ACTIVE,
+      default: ExamStatus.PENDING_EXAM,
       index: true,
     },
 

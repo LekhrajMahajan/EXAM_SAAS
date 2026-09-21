@@ -23,10 +23,10 @@ interface AnswerDetails {
 
 interface ResultDetailsProps {
   answers: AnswerDetails[];
+  subjectWiseBreakdown?: any[];
 }
 
-export function ResultAnswersView({ answers }: ResultDetailsProps) {
-  // Group answers by subjectName
+export function ResultAnswersView({ answers, subjectWiseBreakdown = [] }: ResultDetailsProps) {
   // Group answers by subjectName, but deduplicate by questionId first
   const groupedAnswers = React.useMemo(() => {
     if (!answers) return {};
@@ -44,6 +44,7 @@ export function ResultAnswersView({ answers }: ResultDetailsProps) {
     const uniqueAnswers = Array.from(uniqueAnswersMap.values());
 
     return uniqueAnswers.reduce((acc, answer) => {
+      // Use the provided subjectName, or fallback
       const subject = answer.subjectName || "Other Questions";
       if (!acc[subject]) acc[subject] = [];
       acc[subject].push(answer);
@@ -51,7 +52,21 @@ export function ResultAnswersView({ answers }: ResultDetailsProps) {
     }, {} as Record<string, AnswerDetails[]>);
   }, [answers]);
 
-  const subjects = Object.keys(groupedAnswers);
+  const subjects = React.useMemo(() => {
+    const keys = Object.keys(groupedAnswers);
+    if (subjectWiseBreakdown && subjectWiseBreakdown.length > 0) {
+      const orderMap = new Map();
+      subjectWiseBreakdown.forEach((s, i) => {
+        if (s.subjectName) orderMap.set(s.subjectName, i);
+      });
+      return keys.sort((a, b) => {
+        const orderA = orderMap.has(a) ? orderMap.get(a) : 999;
+        const orderB = orderMap.has(b) ? orderMap.get(b) : 999;
+        return orderA - orderB;
+      });
+    }
+    return keys;
+  }, [groupedAnswers, subjectWiseBreakdown]);
 
   if (!answers || answers.length === 0) {
     return (

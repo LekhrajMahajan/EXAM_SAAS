@@ -66,9 +66,9 @@ export function ResultDetailsPage() {
     subject: 'General',
     shift: 'General',
     center: 'Online',
-    marksObtained: result.marks?.obtainedMarks ?? result.marksObtained ?? 0,
-    totalMarks: result.marks?.totalMarks ?? result.totalMarks ?? 0,
-    percentage: result.marks?.percentage ?? result.percentage ?? 0,
+    marksObtained: Number(Number(result.marks?.obtainedMarks ?? result.marksObtained ?? 0).toFixed(3)),
+    totalMarks: Number(Number(result.marks?.totalMarks ?? result.totalMarks ?? 0).toFixed(3)),
+    percentage: Number(Number(result.marks?.percentage ?? result.percentage ?? 0).toFixed(3)),
     grade: result.grade,
     status: result.status || result.resultStatus || 'Generated',
     publishStatus: 'Published'
@@ -157,7 +157,7 @@ export function ResultDetailsPage() {
               <div>
                 <p className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Correct ({result.marks?.correctAnswers ?? result.correctAnswers ?? 0} Qs)</p>
                 <div className="flex items-baseline gap-2 mt-0.5">
-                  <h3 className="font-bold text-slate-900 dark:text-white text-3xl">+{result.marks?.correctMarks ?? result.correctMarks ?? 0}</h3>
+                  <h3 className="font-bold text-slate-900 dark:text-white text-3xl">+{Number(Number(result.marks?.correctMarks ?? result.correctMarks ?? 0).toFixed(3))}</h3>
                   <span className="text-base text-slate-500 dark:text-slate-400 font-medium">Marks</span>
                 </div>
               </div>
@@ -175,7 +175,7 @@ export function ResultDetailsPage() {
               <div>
                 <p className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Wrong ({result.marks?.wrongAnswers ?? result.wrongAnswers ?? 0} Qs)</p>
                 <div className="flex items-baseline gap-2 mt-0.5">
-                  <h3 className="font-bold text-slate-900 dark:text-white text-3xl">-{result.marks?.negativeMarks ?? result.negativeMarks ?? 0}</h3>
+                  <h3 className="font-bold text-slate-900 dark:text-white text-3xl">-{Number(Number(result.marks?.negativeMarks ?? result.negativeMarks ?? 0).toFixed(3))}</h3>
                   <span className="text-base text-slate-500 dark:text-slate-400 font-medium">Marks</span>
                 </div>
               </div>
@@ -194,7 +194,10 @@ export function ResultDetailsPage() {
 
       <div className="mt-8">
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Question Analysis</h3>
-        <ResultAnswersView answers={result.answers || []} />
+        <ResultAnswersView 
+          answers={result.answers || []} 
+          subjectWiseBreakdown={result.subjectWiseBreakdown || []}
+        />
       </div>
     </div>
   );

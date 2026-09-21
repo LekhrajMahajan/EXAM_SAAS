@@ -10,6 +10,8 @@ import { ProctoringOverlay } from '../components/ProctoringOverlay'
 import { ProctoringVideoCard } from '../components/ProctoringVideoCard'
 import { useNavigate } from 'react-router-dom'
 import { seededShuffle } from '@/utils/seedShuffle'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogOverlay } from '@/shared/components/ui/dialog'
+import { Button } from '@/shared/components/ui/button'
 
 export function ExamArenaPage () {
   const [loading, setLoading] = useState(true)
@@ -17,6 +19,8 @@ export function ExamArenaPage () {
 
   const [currentQuestionData, setCurrentQuestionData] = useState<any>(null)
   const [currentQuestionNo, setCurrentQuestionNo] = useState(1)
+  const [allQuestionsCache, setAllQuestionsCache] = useState<Record<number, any>>({})
+  const [hasFetchedBulk, setHasFetchedBulk] = useState(false)
   const navigate = useNavigate()
 
   const [answers, setAnswers] = useState<Record<string, string>>({})
@@ -116,9 +120,11 @@ export function ExamArenaPage () {
     submitted: boolean
     type: 'MANUAL' | 'AUTO'
     reason?: string
+    message?: string
   }>({ submitted: false, type: 'MANUAL' })
 
   const isSubmitting = useRef(false)
+  const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false)
 
   const handleAutoSubmit = async (reason?: string) => {
     if (isSubmitting.current || submissionStatus.submitted) return
@@ -136,12 +142,24 @@ export function ExamArenaPage () {
 
   const handleManualSubmit = async () => {
     if (isSubmitting.current || submissionStatus.submitted) return
-    if (window.confirm('Are you sure you want to submit your exam?')) {
-      isSubmitting.current = true
+    setIsSubmitModalOpen(true)
+  }
+
+  const confirmSubmitExam = async () => {
+    setIsSubmitModalOpen(false)
+    if (isSubmitting.current || submissionStatus.submitted) return
+    
+    isSubmitting.current = true
+    try {
       setLoading(true)
       await submitExamToServer('MANUAL')
       setLoading(false)
       setSubmissionStatus({ submitted: true, type: 'MANUAL' })
+    } catch (err: any) {
+      console.error(err)
+      isSubmitting.current = false
+      setLoading(false)
+      alert(err.response?.data?.message || 'Failed to submit exam. Please try again.')
     }
   }
 
@@ -154,17 +172,47 @@ export function ExamArenaPage () {
   useEffect(() => {
     const fetchQuestion = async () => {
       try {
-        setLoading(true)
+        // If we already have the question in cache, use it instantly without loading screen
+        if (allQuestionsCache[currentQuestionNo]) {
+          setCurrentQuestionData(allQuestionsCache[currentQuestionNo])
+          return
+        }
+
+        if (!hasFetchedBulk) {
+          setLoading(true)
+        }
         setError(null)
         const examId = candidateInfo?.examId || localStorage.getItem('candidate_exam_id')
         const sessionId = localStorage.getItem('candidate_session_id') || 'temp_session'
 
         const response = await apiClient.get('/candidate-exam/questions', {
-          params: { questionNo: currentQuestionNo, examId, sessionId },
+          params: { 
+            questionNo: currentQuestionNo, 
+            examId, 
+            sessionId,
+            fetchBulk: !hasFetchedBulk ? 'true' : 'false'
+          },
         })
 
         const resData = response.data.data
-        setCurrentQuestionData(resData.currentQuestion)
+        
+        // If we got bulk questions back, cache them all
+        if (resData.allQuestions) {
+          const newCache: Record<number, any> = {}
+          resData.allQuestions.forEach((q: any) => {
+            newCache[q.questionNumber] = q
+          })
+          setAllQuestionsCache(newCache)
+          setHasFetchedBulk(true)
+          
+          if (newCache[currentQuestionNo]) {
+            setCurrentQuestionData(newCache[currentQuestionNo])
+          } else {
+            setCurrentQuestionData(resData.currentQuestion)
+          }
+        } else {
+          setCurrentQuestionData(resData.currentQuestion)
+        }
         
         if (resData.sectionalTimeLimitEnabled !== undefined) {
           setSectionalTimeLimitEnabled(resData.sectionalTimeLimitEnabled)
@@ -777,6 +825,7 @@ export function ExamArenaPage () {
   }
 
   return (
+    <React.Fragment>
     <ExamLayout headerProps={headerProps}>
       <ProctoringOverlay proctoringState={proctoringState} />
 
@@ -836,7 +885,7 @@ export function ExamArenaPage () {
                             }}
                             className={`flex flex-row items-center gap-2 px-4 py-3 rounded-lg text-sm font-bold whitespace-nowrap shadow-sm transition-all border-2 ${
                               isActive
-                                ? 'bg-slate-900 text-white border-slate-900 scale-105 shadow-md'
+                                ? 'bg-white text-slate-800 border-slate-900 scale-105 shadow-md'
                                 : isLocked
                                 ? 'bg-slate-100 text-slate-400 line-through cursor-not-allowed border-slate-200 opacity-70'
                                 : 'bg-white text-slate-700 border-slate-200 hover:border-slate-400 hover:bg-slate-50'
@@ -847,10 +896,10 @@ export function ExamArenaPage () {
 
                             {/* Per-subject reverse countdown timer */}
                             {hasTimer && isActive ? (
-                              <span className={`flex items-center justify-center min-w-[50px] gap-1.5 text-[12px] font-mono font-bold px-2.5 py-1 rounded-md bg-slate-800/80 border border-slate-700 text-white tracking-wider ${
-                                isCritical ? 'animate-pulse text-red-400' : ''
+                              <span className={`flex items-center justify-center min-w-[50px] gap-1.5 text-[12px] font-mono font-bold px-2.5 py-1 rounded-md bg-slate-100 border border-slate-300 text-slate-600 tracking-wider ${
+                                isCritical ? 'animate-pulse text-red-500 bg-red-50 border-red-200' : ''
                               }`}>
-                                <Clock className={`w-3.5 h-3.5 ${isCritical ? 'text-red-400' : 'text-amber-400'}`} />
+                                <Clock className={`w-3.5 h-3.5 ${isCritical ? 'text-red-500' : 'text-slate-500'}`} />
                                 {isTimeLocked ? '00:00' : remainingSecs !== null ? formatSubjectTime(remainingSecs) : `${String(subjectConfig?.timeAllottedMinutes).padStart(2, '0')}:00`}
                               </span>
                             ) : hasTimer && !isLocked ? (
@@ -1003,5 +1052,34 @@ export function ExamArenaPage () {
         </div>
       )}
     </ExamLayout>
+
+    {/* Custom Submit Confirmation Modal */}
+    <Dialog open={isSubmitModalOpen} onOpenChange={setIsSubmitModalOpen}>
+      <DialogOverlay className="bg-black/20 backdrop-blur-sm" />
+      <DialogContent className="sm:max-w-md bg-white text-slate-800 border-none shadow-xl">
+        <DialogHeader>
+          <DialogTitle className="text-xl font-bold">Submit Exam?</DialogTitle>
+          <DialogDescription className="text-slate-500 pt-2 text-sm">
+            Are you sure you want to submit your exam? You will not be able to change your answers after submission.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter className="mt-6 flex gap-3 sm:justify-end">
+          <Button
+            variant="outline"
+            onClick={() => setIsSubmitModalOpen(false)}
+            className="bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={confirmSubmitExam}
+            className="bg-slate-900 text-white hover:bg-slate-800"
+          >
+            Confirm Submit
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </React.Fragment>
   )
 }

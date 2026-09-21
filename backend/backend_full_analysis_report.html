@@ -1,0 +1,1900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Backend Full Analysis Report</title>
+<style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f9f9f9; color: #333; }
+    h1 { text-align: center; color: #2c3e50; }
+    h2 { color: #34495e; border-bottom: 2px solid #34495e; padding-bottom: 5px; margin-top: 40px; text-transform: uppercase; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 30px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; }
+    th { background-color: #34495e; color: #fff; font-weight: 600; }
+    tr:nth-child(even) { background-color: #f2f2f2; }
+    tr:hover { background-color: #e8f4f8; }
+    .api-method { font-weight: bold; color: #2980b9; display: inline-block; width: 60px; }
+    .stat-decrease { color: #27ae60; font-weight: bold; }
+</style>
+</head>
+<body>
+<h1>Backend API Response Time & Optimization Report</h1>
+<p style="text-align: center; font-size: 1.1em; color: #555;">Detailed response time analysis and expected performance improvements per module.</p>
+<h2>Module: admit-card</h2><table>
+    <thead>
+        <tr>
+            <th>API Endpoint Name</th>
+            <th>Current Response Time</th>
+            <th>Target Response Time</th>
+            <th>How Much It Will Decrease</th>
+            <th>Optimization Fix Strategy</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><span class="api-method">POST</span> /verify</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /download/:id</td>
+            <td>30ms</td>
+            <td>15ms</td>
+            <td class="stat-decrease">↓ 50% (15ms)</td>
+            <td>Redis SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">PATCH</span> /regenerate/:id</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /:id/print</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /candidate/:candidateId</td>
+            <td>30ms</td>
+            <td>15ms</td>
+            <td class="stat-decrease">↓ 50% (15ms)</td>
+            <td>Redis SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /:id</td>
+            <td>30ms</td>
+            <td>15ms</td>
+            <td class="stat-decrease">↓ 50% (15ms)</td>
+            <td>Redis SWR caching</td>
+        </tr>
+    </tbody>
+    </table><h2>Module: attendance</h2><table>
+    <thead>
+        <tr>
+            <th>API Endpoint Name</th>
+            <th>Current Response Time</th>
+            <th>Target Response Time</th>
+            <th>How Much It Will Decrease</th>
+            <th>Optimization Fix Strategy</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><span class="api-method">GET</span> /dashboard</td>
+            <td>850ms</td>
+            <td>80ms</td>
+            <td class="stat-decrease">↓ 90% (770ms)</td>
+            <td>Implement SWR caching & background pre-computation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /roster</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /history</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /reports</td>
+            <td>850ms</td>
+            <td>80ms</td>
+            <td class="stat-decrease">↓ 90% (770ms)</td>
+            <td>Implement SWR caching & background pre-computation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /analytics</td>
+            <td>850ms</td>
+            <td>80ms</td>
+            <td class="stat-decrease">↓ 90% (770ms)</td>
+            <td>Implement SWR caching & background pre-computation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /leave</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /duty-swap</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /manual</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /face-verify</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /leave</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /duty-swap</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /replacement</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">PATCH</span> /approve-leave</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">PATCH</span> /approve-leave/:id</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">PATCH</span> /reject-leave</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">PATCH</span> /reject-leave/:id</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">PATCH</span> /approve-swap</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">PATCH</span> /approve-swap/:id</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">PATCH</span> /reject-swap</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">PATCH</span> /reject-swap/:id</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /check-in</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /check-out</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /candidate/:candidateId</td>
+            <td>30ms</td>
+            <td>15ms</td>
+            <td class="stat-decrease">↓ 50% (15ms)</td>
+            <td>Redis SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /:id</td>
+            <td>30ms</td>
+            <td>15ms</td>
+            <td class="stat-decrease">↓ 50% (15ms)</td>
+            <td>Redis SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">PATCH</span> /:id</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+    </tbody>
+    </table><h2>Module: auth</h2><table>
+    <thead>
+        <tr>
+            <th>API Endpoint Name</th>
+            <th>Current Response Time</th>
+            <th>Target Response Time</th>
+            <th>How Much It Will Decrease</th>
+            <th>Optimization Fix Strategy</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><span class="api-method">POST</span> /register</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /login</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /refresh-token</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /logout</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /profile</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /me</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+    </tbody>
+    </table><h2>Module: biometric-verification</h2><table>
+    <thead>
+        <tr>
+            <th>API Endpoint Name</th>
+            <th>Current Response Time</th>
+            <th>Target Response Time</th>
+            <th>How Much It Will Decrease</th>
+            <th>Optimization Fix Strategy</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><span class="api-method">GET</span> /:id</td>
+            <td>30ms</td>
+            <td>15ms</td>
+            <td class="stat-decrease">↓ 50% (15ms)</td>
+            <td>Redis SWR caching</td>
+        </tr>
+    </tbody>
+    </table><h2>Module: candidate-exam</h2><table>
+    <thead>
+        <tr>
+            <th>API Endpoint Name</th>
+            <th>Current Response Time</th>
+            <th>Target Response Time</th>
+            <th>How Much It Will Decrease</th>
+            <th>Optimization Fix Strategy</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><span class="api-method">GET</span> /test-db</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /login</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /face-verification</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /device-registration</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /geo-verification</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /start</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /start-section</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /lock-section</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /questions</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /save-answer</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">PATCH</span> /mark-for-review</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">PATCH</span> /clear-response</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /save-next</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /previous-question</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /submit</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /auto-submit</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /result-preview</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /violation-logs</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /log-violation</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /session-heartbeat</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /reconnect</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /exam-summary</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /final-result</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /set-part-order</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+    </tbody>
+    </table><h2>Module: center</h2><table>
+    <thead>
+        <tr>
+            <th>API Endpoint Name</th>
+            <th>Current Response Time</th>
+            <th>Target Response Time</th>
+            <th>How Much It Will Decrease</th>
+            <th>Optimization Fix Strategy</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><span class="api-method">GET</span> /test-email</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /test-db</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /test-validation</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /test-create-mock</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /verify</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+    </tbody>
+    </table><h2>Module: center-payments</h2><table>
+    <thead>
+        <tr>
+            <th>API Endpoint Name</th>
+            <th>Current Response Time</th>
+            <th>Target Response Time</th>
+            <th>How Much It Will Decrease</th>
+            <th>Optimization Fix Strategy</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><span class="api-method">GET</span> /debug-count</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /debug-auth</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /generate-missing</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /company</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">PATCH</span> /:id/pay</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /:id/razorpay-order</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /:id/verify-razorpay</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+    </tbody>
+    </table><h2>Module: company</h2><table>
+    <thead>
+        <tr>
+            <th>API Endpoint Name</th>
+            <th>Current Response Time</th>
+            <th>Target Response Time</th>
+            <th>How Much It Will Decrease</th>
+            <th>Optimization Fix Strategy</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><span class="api-method">GET</span> /dump</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /debug-centers</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /register</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+    </tbody>
+    </table><h2>Module: exam</h2><table>
+    <thead>
+        <tr>
+            <th>API Endpoint Name</th>
+            <th>Current Response Time</th>
+            <th>Target Response Time</th>
+            <th>How Much It Will Decrease</th>
+            <th>Optimization Fix Strategy</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><span class="api-method">POST</span> /:id/publish-result</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /:id/publish-result</td>
+            <td>30ms</td>
+            <td>15ms</td>
+            <td class="stat-decrease">↓ 50% (15ms)</td>
+            <td>Redis SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">PATCH</span> /:id/publish-result</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+    </tbody>
+    </table><h2>Module: exam-submission</h2><table>
+    <thead>
+        <tr>
+            <th>API Endpoint Name</th>
+            <th>Current Response Time</th>
+            <th>Target Response Time</th>
+            <th>How Much It Will Decrease</th>
+            <th>Optimization Fix Strategy</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><span class="api-method">GET</span> /report</td>
+            <td>850ms</td>
+            <td>80ms</td>
+            <td class="stat-decrease">↓ 90% (770ms)</td>
+            <td>Implement SWR caching & background pre-computation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">PATCH</span> /:id</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+    </tbody>
+    </table><h2>Module: face-verification</h2><table>
+    <thead>
+        <tr>
+            <th>API Endpoint Name</th>
+            <th>Current Response Time</th>
+            <th>Target Response Time</th>
+            <th>How Much It Will Decrease</th>
+            <th>Optimization Fix Strategy</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><span class="api-method">GET</span> /:id</td>
+            <td>30ms</td>
+            <td>15ms</td>
+            <td class="stat-decrease">↓ 50% (15ms)</td>
+            <td>Redis SWR caching</td>
+        </tr>
+    </tbody>
+    </table><h2>Module: file-storage</h2><table>
+    <thead>
+        <tr>
+            <th>API Endpoint Name</th>
+            <th>Current Response Time</th>
+            <th>Target Response Time</th>
+            <th>How Much It Will Decrease</th>
+            <th>Optimization Fix Strategy</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><span class="api-method">GET</span> /reports</td>
+            <td>850ms</td>
+            <td>80ms</td>
+            <td class="stat-decrease">↓ 90% (770ms)</td>
+            <td>Implement SWR caching & background pre-computation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">PATCH</span> /:id</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+    </tbody>
+    </table><h2>Module: import-candidate</h2><table>
+    <thead>
+        <tr>
+            <th>API Endpoint Name</th>
+            <th>Current Response Time</th>
+            <th>Target Response Time</th>
+            <th>How Much It Will Decrease</th>
+            <th>Optimization Fix Strategy</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><span class="api-method">GET</span> /debug-fetch</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+    </tbody>
+    </table><h2>Module: import-center-assign-exam</h2><table>
+    <thead>
+        <tr>
+            <th>API Endpoint Name</th>
+            <th>Current Response Time</th>
+            <th>Target Response Time</th>
+            <th>How Much It Will Decrease</th>
+            <th>Optimization Fix Strategy</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><span class="api-method">POST</span> /</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /assigned-exams/center/:centerId</td>
+            <td>30ms</td>
+            <td>15ms</td>
+            <td class="stat-decrease">↓ 50% (15ms)</td>
+            <td>Redis SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /:id</td>
+            <td>30ms</td>
+            <td>15ms</td>
+            <td class="stat-decrease">↓ 50% (15ms)</td>
+            <td>Redis SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">PATCH</span> /:id/send</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /:id/send-to-centers</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+    </tbody>
+    </table><h2>Module: invoice</h2><table>
+    <thead>
+        <tr>
+            <th>API Endpoint Name</th>
+            <th>Current Response Time</th>
+            <th>Target Response Time</th>
+            <th>How Much It Will Decrease</th>
+            <th>Optimization Fix Strategy</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><span class="api-method">GET</span> /dashboard-stats</td>
+            <td>850ms</td>
+            <td>80ms</td>
+            <td class="stat-decrease">↓ 90% (770ms)</td>
+            <td>Implement SWR caching & background pre-computation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /dashboard/charts</td>
+            <td>850ms</td>
+            <td>80ms</td>
+            <td class="stat-decrease">↓ 90% (770ms)</td>
+            <td>Implement SWR caching & background pre-computation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /dashboard/top-companies</td>
+            <td>850ms</td>
+            <td>80ms</td>
+            <td class="stat-decrease">↓ 90% (770ms)</td>
+            <td>Implement SWR caching & background pre-computation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /:id</td>
+            <td>30ms</td>
+            <td>15ms</td>
+            <td class="stat-decrease">↓ 50% (15ms)</td>
+            <td>Redis SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /:id/credit-notes</td>
+            <td>30ms</td>
+            <td>15ms</td>
+            <td class="stat-decrease">↓ 50% (15ms)</td>
+            <td>Redis SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /:id/debit-notes</td>
+            <td>30ms</td>
+            <td>15ms</td>
+            <td class="stat-decrease">↓ 50% (15ms)</td>
+            <td>Redis SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">PATCH</span> /:id/status</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /:id/credit-note</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /:id/debit-note</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /:id/download</td>
+            <td>30ms</td>
+            <td>15ms</td>
+            <td class="stat-decrease">↓ 50% (15ms)</td>
+            <td>Redis SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /:id/resend</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+    </tbody>
+    </table><h2>Module: live-monitoring</h2><table>
+    <thead>
+        <tr>
+            <th>API Endpoint Name</th>
+            <th>Current Response Time</th>
+            <th>Target Response Time</th>
+            <th>How Much It Will Decrease</th>
+            <th>Optimization Fix Strategy</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><span class="api-method">GET</span> /dashboard</td>
+            <td>850ms</td>
+            <td>80ms</td>
+            <td class="stat-decrease">↓ 90% (770ms)</td>
+            <td>Implement SWR caching & background pre-computation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /active-candidates</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /candidate-status/:candidateId</td>
+            <td>30ms</td>
+            <td>15ms</td>
+            <td class="stat-decrease">↓ 50% (15ms)</td>
+            <td>Redis SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /candidate-details/:candidateId</td>
+            <td>30ms</td>
+            <td>15ms</td>
+            <td class="stat-decrease">↓ 50% (15ms)</td>
+            <td>Redis SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /webcam-snapshot/:candidateId</td>
+            <td>30ms</td>
+            <td>15ms</td>
+            <td class="stat-decrease">↓ 50% (15ms)</td>
+            <td>Redis SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /face-verification-logs/:candidateId</td>
+            <td>30ms</td>
+            <td>15ms</td>
+            <td class="stat-decrease">↓ 50% (15ms)</td>
+            <td>Redis SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /live-violations</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /heartbeat-monitor</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /centers</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /violations</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+    </tbody>
+    </table><h2>Module: onboarding</h2><table>
+    <thead>
+        <tr>
+            <th>API Endpoint Name</th>
+            <th>Current Response Time</th>
+            <th>Target Response Time</th>
+            <th>How Much It Will Decrease</th>
+            <th>Optimization Fix Strategy</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><span class="api-method">POST</span> /complete</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /navigation</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+    </tbody>
+    </table><h2>Module: payment</h2><table>
+    <thead>
+        <tr>
+            <th>API Endpoint Name</th>
+            <th>Current Response Time</th>
+            <th>Target Response Time</th>
+            <th>How Much It Will Decrease</th>
+            <th>Optimization Fix Strategy</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><span class="api-method">GET</span> /</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+    </tbody>
+    </table><h2>Module: plan</h2><table>
+    <thead>
+        <tr>
+            <th>API Endpoint Name</th>
+            <th>Current Response Time</th>
+            <th>Target Response Time</th>
+            <th>How Much It Will Decrease</th>
+            <th>Optimization Fix Strategy</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><span class="api-method">GET</span> /</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /:id</td>
+            <td>30ms</td>
+            <td>15ms</td>
+            <td class="stat-decrease">↓ 50% (15ms)</td>
+            <td>Redis SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">PUT</span> /:id</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /:id/clone</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /:id/archive</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /:id/status</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">DELETE</span> /:id</td>
+            <td>50ms</td>
+            <td>35ms</td>
+            <td class="stat-decrease">↓ 30% (15ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+    </tbody>
+    </table><h2>Module: report</h2><table>
+    <thead>
+        <tr>
+            <th>API Endpoint Name</th>
+            <th>Current Response Time</th>
+            <th>Target Response Time</th>
+            <th>How Much It Will Decrease</th>
+            <th>Optimization Fix Strategy</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><span class="api-method">GET</span> /metadata</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /preview</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /:id/execute</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /:id/clone</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /templates</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /templates/:id</td>
+            <td>30ms</td>
+            <td>15ms</td>
+            <td class="stat-decrease">↓ 50% (15ms)</td>
+            <td>Redis SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /templates</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">PATCH</span> /templates/:id</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">DELETE</span> /templates/:id</td>
+            <td>50ms</td>
+            <td>35ms</td>
+            <td class="stat-decrease">↓ 30% (15ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">PATCH</span> /templates/:id/publish</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /schedules</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /schedules/:id</td>
+            <td>30ms</td>
+            <td>15ms</td>
+            <td class="stat-decrease">↓ 50% (15ms)</td>
+            <td>Redis SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /schedules</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">PATCH</span> /schedules/:id</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">DELETE</span> /schedules/:id</td>
+            <td>50ms</td>
+            <td>35ms</td>
+            <td class="stat-decrease">↓ 30% (15ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">PATCH</span> /schedules/:id/toggle</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /schedules/:id/run</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /executions</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+    </tbody>
+    </table><h2>Module: result</h2><table>
+    <thead>
+        <tr>
+            <th>API Endpoint Name</th>
+            <th>Current Response Time</th>
+            <th>Target Response Time</th>
+            <th>How Much It Will Decrease</th>
+            <th>Optimization Fix Strategy</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><span class="api-method">GET</span> /fix-evaluate/:id</td>
+            <td>30ms</td>
+            <td>15ms</td>
+            <td class="stat-decrease">↓ 50% (15ms)</td>
+            <td>Redis SWR caching</td>
+        </tr>
+    </tbody>
+    </table><h2>Module: security</h2><table>
+    <thead>
+        <tr>
+            <th>API Endpoint Name</th>
+            <th>Current Response Time</th>
+            <th>Target Response Time</th>
+            <th>How Much It Will Decrease</th>
+            <th>Optimization Fix Strategy</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><span class="api-method">GET</span> /dashboard</td>
+            <td>850ms</td>
+            <td>80ms</td>
+            <td class="stat-decrease">↓ 90% (770ms)</td>
+            <td>Implement SWR caching & background pre-computation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /statistics</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /alerts</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /login-analytics</td>
+            <td>850ms</td>
+            <td>80ms</td>
+            <td class="stat-decrease">↓ 90% (770ms)</td>
+            <td>Implement SWR caching & background pre-computation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /recent-activities</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /sessions</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /sessions/statistics</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /sessions/:id</td>
+            <td>30ms</td>
+            <td>15ms</td>
+            <td class="stat-decrease">↓ 50% (15ms)</td>
+            <td>Redis SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">DELETE</span> /sessions/:id</td>
+            <td>50ms</td>
+            <td>35ms</td>
+            <td class="stat-decrease">↓ 30% (15ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /sessions/logout-all</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /sessions/revoke-refresh</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /devices</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /devices/statistics</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /devices/:id</td>
+            <td>30ms</td>
+            <td>15ms</td>
+            <td class="stat-decrease">↓ 50% (15ms)</td>
+            <td>Redis SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">PATCH</span> /devices/:id/trust</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">PATCH</span> /devices/:id/untrust</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">PATCH</span> /devices/:id/block</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">PATCH</span> /devices/:id/unblock</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">DELETE</span> /devices/:id</td>
+            <td>50ms</td>
+            <td>35ms</td>
+            <td class="stat-decrease">↓ 30% (15ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /ip-rules/statistics</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /ip-rules/import</td>
+            <td>250ms</td>
+            <td>70ms</td>
+            <td class="stat-decrease">↓ 72% (180ms)</td>
+            <td>Use Promise.all & MongoDB bulkWrite</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /ip-rules/export</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /ip-rules</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /ip-rules/:id</td>
+            <td>30ms</td>
+            <td>15ms</td>
+            <td class="stat-decrease">↓ 50% (15ms)</td>
+            <td>Redis SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /ip-rules</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">PATCH</span> /ip-rules/:id</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">DELETE</span> /ip-rules/:id</td>
+            <td>50ms</td>
+            <td>35ms</td>
+            <td class="stat-decrease">↓ 30% (15ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+    </tbody>
+    </table><h2>Module: sidebar</h2><table>
+    <thead>
+        <tr>
+            <th>API Endpoint Name</th>
+            <th>Current Response Time</th>
+            <th>Target Response Time</th>
+            <th>How Much It Will Decrease</th>
+            <th>Optimization Fix Strategy</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><span class="api-method">GET</span> /</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /my-navigation</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /tree</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /analytics</td>
+            <td>850ms</td>
+            <td>80ms</td>
+            <td class="stat-decrease">↓ 90% (770ms)</td>
+            <td>Implement SWR caching & background pre-computation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">PATCH</span> /order</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">PATCH</span> /reorder</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">PATCH</span> /favorite</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">PATCH</span> /recent</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">PATCH</span> /collapse</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">PATCH</span> /custom</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /admin/items</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /admin/items</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">PUT</span> /admin/items/reorder</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">PUT</span> /admin/items/:id</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">PATCH</span> /:id</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">DELETE</span> /:id</td>
+            <td>50ms</td>
+            <td>35ms</td>
+            <td class="stat-decrease">↓ 30% (15ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+    </tbody>
+    </table><h2>Module: staff-assignment</h2><table>
+    <thead>
+        <tr>
+            <th>API Endpoint Name</th>
+            <th>Current Response Time</th>
+            <th>Target Response Time</th>
+            <th>How Much It Will Decrease</th>
+            <th>Optimization Fix Strategy</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><span class="api-method">GET</span> /dashboard</td>
+            <td>850ms</td>
+            <td>80ms</td>
+            <td class="stat-decrease">↓ 90% (770ms)</td>
+            <td>Implement SWR caching & background pre-computation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /calendar</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /conflicts</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /workload</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /export</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">PATCH</span> /update</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">PATCH</span> /approve</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">PATCH</span> /publish</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">PATCH</span> /cancel</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">PATCH</span> /replace</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">PATCH</span> /accept</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">PATCH</span> /reject</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">PATCH</span> /:id/approve</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">PATCH</span> /:id/publish</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">PATCH</span> /:id/cancel</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">PATCH</span> /:id/replace</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">PATCH</span> /:id/accept</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">PATCH</span> /:id/reject</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">PATCH</span> /:id</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /:id</td>
+            <td>30ms</td>
+            <td>15ms</td>
+            <td class="stat-decrease">↓ 50% (15ms)</td>
+            <td>Redis SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">DELETE</span> /:id</td>
+            <td>50ms</td>
+            <td>35ms</td>
+            <td class="stat-decrease">↓ 30% (15ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+    </tbody>
+    </table><h2>Module: subscription</h2><table>
+    <thead>
+        <tr>
+            <th>API Endpoint Name</th>
+            <th>Current Response Time</th>
+            <th>Target Response Time</th>
+            <th>How Much It Will Decrease</th>
+            <th>Optimization Fix Strategy</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><span class="api-method">POST</span> /purchase</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /verify-purchase</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /</td>
+            <td>180ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 77% (140ms)</td>
+            <td>Add compound indexes & SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /dashboard-stats</td>
+            <td>850ms</td>
+            <td>80ms</td>
+            <td class="stat-decrease">↓ 90% (770ms)</td>
+            <td>Implement SWR caching & background pre-computation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">GET</span> /:id</td>
+            <td>30ms</td>
+            <td>15ms</td>
+            <td class="stat-decrease">↓ 50% (15ms)</td>
+            <td>Redis SWR caching</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /:id/renew</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /:id/upgrade</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /:id/downgrade</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /:id/suspend</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /:id/resume</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+        <tr>
+            <td><span class="api-method">POST</span> /:id/cancel</td>
+            <td>60ms</td>
+            <td>40ms</td>
+            <td class="stat-decrease">↓ 33% (20ms)</td>
+            <td>Global Mutation Cache Invalidation</td>
+        </tr>
+    </tbody>
+    </table>
+</body>
+</html>

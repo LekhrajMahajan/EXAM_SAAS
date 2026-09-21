@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { Label } from '@/shared/components/ui/label';
-import { Building2, Key, Loader2, AlertCircle } from 'lucide-react';
+import { Building2, Key, Loader2, AlertCircle, Clock } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/shared/components/ui/alert';
 import { apiClient } from '@/core/api/http/axios-client';
 
@@ -56,8 +56,10 @@ export function CandidateLoginPage() {
     }
   };
 
+  const isNoticeError = error.includes('Login will be enabled') || error.includes('already submitted');
+
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col justify-center py-6 sm:px-6 lg:px-8 relative">
       <div className="absolute top-4 right-4">
       </div>
 
@@ -67,31 +69,34 @@ export function CandidateLoginPage() {
             <Building2 className="h-10 w-10 text-primary-foreground" />
           </div>
         </div>
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-slate-900 dark:text-white">
+        <h2 className="mt-4 text-center text-3xl font-extrabold text-slate-900 dark:text-white">
           Candidate Login
         </h2>
-        <p className="mt-2 text-center text-sm text-slate-600 dark:text-slate-400">
+        <p className="mt-1 text-center text-sm text-slate-600 dark:text-slate-400">
           Enter your Application No and Date of Birth
         </p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+      <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-md">
         <Card className="border-0 shadow-xl bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl">
-          <CardHeader>
+          <CardHeader className="pb-4">
             <CardTitle>Welcome Back</CardTitle>
             <CardDescription>Sign in to access your assigned exam</CardDescription>
           </CardHeader>
           <CardContent>
             {error && (
-              <Alert variant="destructive" className="mb-6">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Error</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
+              <Alert 
+                variant={isNoticeError ? "default" : "destructive"} 
+                className={`mb-4 py-3 ${isNoticeError ? "bg-[#E4FD97]/20 border-[#2D3E2C]/30 text-[#2D3E2C] [&>svg]:text-[#2D3E2C]" : ""}`}
+              >
+                {isNoticeError ? <Clock className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
+                <AlertTitle>{isNoticeError ? "Notice" : "Error"}</AlertTitle>
+                <AlertDescription className={isNoticeError ? "text-[#2D3E2C]/80 text-xs" : "text-xs"}>{error}</AlertDescription>
               </Alert>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-2">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-1.5">
                 <Label htmlFor="applicationNo">Application Number</Label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground">
@@ -102,7 +107,7 @@ export function CandidateLoginPage() {
                     name="applicationNo"
                     type="text"
                     required
-                    className="pl-10 h-12"
+                    className="pl-10 h-11"
                     placeholder="e.g. APP-2026-1029"
                     value={formData.applicationNo}
                     onChange={handleChange}
@@ -111,7 +116,7 @@ export function CandidateLoginPage() {
                 </div>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label htmlFor="dateOfBirth">Date of Birth (Password)</Label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground">
@@ -122,7 +127,7 @@ export function CandidateLoginPage() {
                     name="dateOfBirth"
                     type="date"
                     required
-                    className="pl-10 h-12"
+                    className="pl-10 h-11"
                     value={formData.dateOfBirth}
                     onChange={handleChange}
                     disabled={loading}
@@ -130,7 +135,7 @@ export function CandidateLoginPage() {
                 </div>
               </div>
 
-              <Button type="submit" className="w-full h-12 text-base font-medium" disabled={loading}>
+              <Button type="submit" className="w-full h-11 text-base font-medium mt-2" disabled={loading}>
                 {loading ? (
                   <>
                     <Loader2 className="animate-spin -ml-1 mr-3 h-5 w-5" />
@@ -141,7 +146,7 @@ export function CandidateLoginPage() {
                 )}
               </Button>
 
-              <div className="text-center text-sm mt-6">
+              <div className="text-center text-sm mt-4">
                 <span className="text-muted-foreground">Go back to </span>
                 <Link to="/auth/login" className="text-primary font-medium hover:underline">
                   Main Login

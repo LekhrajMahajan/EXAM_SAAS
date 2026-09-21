@@ -9,6 +9,7 @@ import { Link, useParams } from "react-router-dom";
 import { useCenter } from "../hooks/center.hooks";
 import { Loader2 } from "lucide-react";
 import { centerApi } from '@/features/company/center/api/center.api';
+import { handleViewOrDownloadFile } from '@/utils/fileUtils';
 
 export const CenterDetailsPage = () => {
   const { id } = useParams();
@@ -278,9 +279,15 @@ export const CenterDetailsPage = () => {
              <div className="text-sm font-bold text-foreground mb-3">MOU / Center Agreement</div>
              {mouFileUrl ? (
                 <a 
-                   href={`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1'}/files/proxy?url=${encodeURIComponent(mouFileUrl)}&download=true`}
-                   target="_blank" 
+                   href={mouFileUrl.startsWith('data:') ? '#' : `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1'}/files/proxy?url=${encodeURIComponent(mouFileUrl)}&download=true`}
+                   target={mouFileUrl.startsWith('data:') ? undefined : "_blank"} 
                    rel="noopener noreferrer" 
+                   onClick={(e) => {
+                     if (mouFileUrl.startsWith('data:')) {
+                       e.preventDefault();
+                       handleViewOrDownloadFile(mouFileUrl, true);
+                     }
+                   }}
                    className="flex items-center gap-2 p-3 border rounded-xl bg-muted/30 w-fit pr-6 hover:bg-muted/50 transition-colors"
                 >
                    <FileCheck className="h-5 w-5 text-primary" />
@@ -353,9 +360,15 @@ export const CenterDetailsPage = () => {
 
                   {doc.fileUrl ? (
                     <a 
-                      href={`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1'}/files/proxy?url=${encodeURIComponent(doc.fileUrl)}`}
-                      target="_blank" 
+                      href={doc.fileUrl.startsWith('data:') ? '#' : `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1'}/files/proxy?url=${encodeURIComponent(doc.fileUrl)}`}
+                      target={doc.fileUrl.startsWith('data:') ? undefined : "_blank"} 
                       rel="noreferrer" 
+                      onClick={(e) => {
+                        if (doc.fileUrl.startsWith('data:')) {
+                          e.preventDefault();
+                          handleViewOrDownloadFile(doc.fileUrl, false);
+                        }
+                      }}
                       className="mt-auto"
                     >
                       <Button variant="outline" size="sm" className="w-full gap-2">

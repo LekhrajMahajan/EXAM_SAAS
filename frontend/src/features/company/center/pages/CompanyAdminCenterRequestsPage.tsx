@@ -6,6 +6,7 @@ import {
 import { companyAdminRequestApi } from '@/features/center/api/companyAdminRequestApi';
 import { toast } from 'react-hot-toast';
 import { MasterAdminStatCard as StatCard } from '@/features/master-admin/components/cards/MasterAdminStatCard';
+import { handleViewOrDownloadFile } from '@/utils/fileUtils';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -192,9 +193,15 @@ function DocumentReviewModal({
             {request.mouFileUrl && (
               <div className="col-span-2 mt-2 pt-3 border-t border-slate-200 dark:border-slate-700/50">
                 <a
-                  href={`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1'}/files/proxy?url=${encodeURIComponent(request.mouFileUrl)}&download=true`}
-                  target="_blank"
+                  href={request.mouFileUrl!.startsWith('data:') ? '#' : `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1'}/files/proxy?url=${encodeURIComponent(request.mouFileUrl!)}&download=true`}
+                  target={request.mouFileUrl!.startsWith('data:') ? undefined : "_blank"}
                   rel="noopener noreferrer"
+                  onClick={(e) => {
+                    if (request.mouFileUrl!.startsWith('data:')) {
+                      e.preventDefault();
+                      handleViewOrDownloadFile(request.mouFileUrl!, true);
+                    }
+                  }}
                   className="inline-flex items-center gap-2 px-2.5 py-1 rounded bg-[#2D3E2C] text-[#E4FD97] hover:bg-[#2D3E2C]/90 transition-colors text-xs font-bold border-0 border-transparent shadow-sm w-fit"
                 >
                   <FileText className="w-3.5 h-3.5" />
@@ -227,13 +234,11 @@ function DocumentReviewModal({
                     </div>
 
                     <div className="flex items-center gap-2 flex-shrink-0">
-                      {/* View file — backend streams inline (no download) */}
+                      {/* View file — frontend handles Base64 data inline or falls back to backend proxy */}
                       {doc.fileUrl && doc.fileUrl !== '' && (
                         <button
                           onClick={() => {
-                            // Use backend proxy endpoint which streams Cloudinary file with Content-Disposition: inline
-                            const proxyUrl = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1'}/files/proxy?url=${encodeURIComponent(doc.fileUrl)}`;
-                            window.open(proxyUrl, '_blank', 'noopener,noreferrer');
+                            handleViewOrDownloadFile(doc.fileUrl, false);
                             setViewedDocs((prev) => new Set(prev).add(doc._id));
                           }}
                           className="p-1.5 rounded-lg bg-[#2D3E2C]/5 dark:bg-slate-700 hover:bg-[#2D3E2C]/10 dark:hover:bg-slate-600 text-[#2D3E2C] dark:text-[#E4FD97] transition-colors"

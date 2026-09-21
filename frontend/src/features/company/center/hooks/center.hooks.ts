@@ -134,7 +134,7 @@ export const useCreateCenter = () => {
   return useMutation({
     mutationFn: (data: CenterFormValues) => centerApi.create(data),
     onSuccess: (res: any) => {
-      queryClient.invalidateQueries({ queryKey: centerKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: ["centers"] });
       if (res.status === 202) {
         toast({ 
           title: 'Connection Request Sent', 

@@ -833,9 +833,35 @@ export const exportExamResults = asyncHandler(
             }
 
             let candAns: any = null;
+            let dataCompleteness = 'FULL';
             const subId = (r.submissionId as any)?._id || r.submissionId;
+            const candIdForQuery = (r.candidateId as any)?._id || r.candidateId;
+            const examIdForQuery = (r.examId as any)?._id || r.examId;
+
+            const candAnsQuery: any[] = [];
             if (subId) {
-                candAns = await CandidateExamAnswer.findOne({ $or: [{ _id: subId }, { submissionId: subId }, { _id: String(subId) }, { submissionId: String(subId) }] }).lean();
+                candAnsQuery.push({ _id: subId }, { submissionId: subId }, { _id: String(subId) }, { submissionId: String(subId) });
+            }
+            if (candIdForQuery) {
+                candAnsQuery.push({ candidateId: candIdForQuery }, { candidateId: String(candIdForQuery) });
+            }
+
+            const candidateExamAnswerCollection = mongoose.connection.db!.collection('candidateexamanswer');
+            if (candAnsQuery.length > 0) {
+                if (examIdForQuery) {
+                    candAns = await candidateExamAnswerCollection.findOne({
+                        $or: candAnsQuery,
+                        examId: { $in: [examIdForQuery, String(examIdForQuery)] }
+                    });
+                }
+                if (!candAns) {
+                    candAns = await candidateExamAnswerCollection.findOne({ $or: candAnsQuery });
+                }
+            }
+
+            if (!candAns) {
+                console.warn(`[EXPORT] No CandidateExamAnswer found for resultId=${r._id}, submissionId=${subId}, candidateId=${candIdForQuery}`);
+                dataCompleteness = 'SUMMARY_ONLY';
             }
 
             if (candAns) {
@@ -866,6 +892,22 @@ export const exportExamResults = asyncHandler(
             
             let answers: any[] = [];
             if (candAns && (candAns as any).results && Array.isArray((candAns as any).results)) {
+                const qIds = (candAns as any).results
+                    .map((res: any) => {
+                        try { return new mongoose.Types.ObjectId(res.questionId); }
+                        catch (e) { return null; }
+                    })
+                    .filter(Boolean);
+                
+                const questionTextMap = new Map<string, string>();
+                if (qIds.length > 0) {
+                    const questionsCollection = mongoose.connection.db!.collection('questions');
+                    const questions = await questionsCollection.find({ _id: { $in: qIds } }).toArray();
+                    questions.forEach(q => {
+                        questionTextMap.set(q._id.toString(), q.questionText || '');
+                    });
+                }
+
                 answers = (candAns as any).results.map((res: any) => {
                     let isCorrect = false;
                     let selected = Array.isArray(res.candidateAnswer) ? res.candidateAnswer.map(String).join(", ") : String(res.candidateAnswer || "");
@@ -876,9 +918,12 @@ export const exportExamResults = asyncHandler(
                     }
                     if (selected === correct) isCorrect = true;
 
+                    const qIdStr = String(res.questionId);
+                    const realQuestionText = questionTextMap.get(qIdStr) || res.questionText || 'Question';
+
                     return {
                         questionId: res.questionId,
-                        questionText: res.questionText || 'Question',
+                        questionText: realQuestionText,
                         isAnswered: res.status !== 'NOT_VISITED' && res.candidateAnswer !== null && res.candidateAnswer !== undefined,
                         selectedAnswer: selected,
                         correctAnswer: correct,
@@ -895,16 +940,30 @@ export const exportExamResults = asyncHandler(
                 id: r._id,
                 applicationNumber: cAppNo,
                 candidateName: cName,
+                aadharNumber: cand?.aadharNumber || cand?.aadharCardNumber || cand?.aadhar || 'N/A',
                 exam: (r.examId as any)?.examTitle || 'Unknown Exam',
-                subject: 'General', 
-                shift: 'Morning',
-                center: 'Main Center',
+                category: r.category || 'N/A', 
+                shift: candAns?.shift || (r.examId as any)?.shift || 'N/A',
+                center: (r.examCenterId as any)?.centerName || (r.examCenterId as any)?.name || r.examCenterId || candAns?.center || 'N/A',
                 marksObtained: r.marksObtained,
                 totalMarks: r.totalMarks,
                 percentage: r.percentage,
                 grade: r.percentage >= 90 ? 'A+' : r.percentage >= 80 ? 'A' : r.percentage >= 70 ? 'B' : r.percentage >= 60 ? 'C' : 'D',
                 status: r.resultStatus === 'EVALUATED' ? 'Generated' : r.resultStatus,
                 publishStatus: r.resultStatus === 'PUBLISHED' ? 'Published' : 'Draft',
+                passStatus: r.passStatus || 'N/A',
+                overallCutoffStatus: r.overallCutoffStatus || 'N/A',
+                dataCompleteness: dataCompleteness,
+                subjectWiseBreakdown: (r.subjectWiseBreakdown || []).map((s: any) => ({
+                    subjectName: s.subjectName,
+                    questionsAttempted: s.questionsAttempted,
+                    correctAnswers: s.correctAnswers,
+                    wrongAnswers: s.wrongAnswers,
+                    marksObtained: s.marksObtained,
+                    maxMarks: s.maxMarks,
+                    sectionalCutoff: s.sectionalCutoff,
+                    sectionalStatus: s.sectionalStatus,
+                })),
                 answers: answers
             };
         }));

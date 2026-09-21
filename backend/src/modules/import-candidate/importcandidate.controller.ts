@@ -178,15 +178,42 @@ export const uploadCandidateExcel = async (req: Request, res: Response): Promise
       const parsedRow: any = {};
       const rowNumber = i + 2;
       let isRowValid = true;
+      const candidateNameForError = row['Candidate Full Name'] ? String(row['Candidate Full Name']).trim() : 'Unknown Candidate';
 
       // Validate required fields
       for (const [excelCol, dbField] of Object.entries(requiredFieldsMap)) {
-        if (!row[excelCol] || String(row[excelCol]).trim() === '') {
-          errors.push(`Row ${rowNumber}: Required column '${excelCol}' is missing or empty.`);
+        const val = String(row[excelCol] || '').trim();
+        const lowerVal = val.toLowerCase();
+        const invalidPlaceholders = ['not provided', 'n/a', 'na', 'none', 'null', '-'];
+
+        if (val === '' || invalidPlaceholders.includes(lowerVal)) {
+          errors.push(`Row ${rowNumber} (Candidate: ${candidateNameForError}): Required column '${excelCol}' is missing or contains invalid text (e.g. NOT PROVIDED).`);
           isRowValid = false;
           break;
         }
-        parsedRow[dbField] = String(row[excelCol]).trim();
+
+        // Specific Type checks
+        if (dbField === 'aadharNumber') {
+          // Allow spaces or hyphens in Aadhaar but validate it has exactly 12 digits
+          const numericAadhaar = val.replace(/[\s-]/g, '');
+          if (!/^\d{12}$/.test(numericAadhaar)) {
+            errors.push(`Row ${rowNumber} (Candidate: ${candidateNameForError}): '${excelCol}' must contain exactly 12 digits.`);
+            isRowValid = false;
+            break;
+          }
+          parsedRow[dbField] = numericAadhaar; // Save clean aadhaar
+          continue;
+        }
+
+        if (dbField === 'dateOfBirth') {
+          if (!/\d/.test(val)) {
+            errors.push(`Row ${rowNumber} (Candidate: ${candidateNameForError}): '${excelCol}' must be a valid date containing numbers.`);
+            isRowValid = false;
+            break;
+          }
+        }
+
+        parsedRow[dbField] = val;
       }
       if (!isRowValid) continue;
 
@@ -194,7 +221,7 @@ export const uploadCandidateExcel = async (req: Request, res: Response): Promise
 
       // Duplicate Candidate ID check
       if (seenCandidateIds.has(candidateId.toLowerCase())) {
-        errors.push(`Row ${rowNumber}: Duplicate Candidate ID "${candidateId}".`);
+        errors.push(`Row ${rowNumber} (Candidate: ${candidateNameForError}): Duplicate Candidate ID "${candidateId}".`);
         continue;
       }
       seenCandidateIds.add(candidateId.toLowerCase());
@@ -202,16 +229,33 @@ export const uploadCandidateExcel = async (req: Request, res: Response): Promise
       // Match photo from ZIP images by Candidate ID (case-insensitive)
       const imageEntry = zipImagesMap.get(candidateId.toLowerCase());
       if (!imageEntry) {
-        errors.push(`Row ${rowNumber}: Photo missing for ID "${candidateId}" — expected ${candidateId}.jpg / .jpeg / .png inside ZIP.`);
+        errors.push(`Row ${rowNumber} (Candidate: ${candidateNameForError}): Photo missing for ID "${candidateId}" — expected ${candidateId}.jpg / .jpeg / .png inside ZIP.`);
         continue;
       }
 
       // Map optional fields (missing = OK)
       for (const [excelCol, dbField] of Object.entries(optionalFieldsMap)) {
         if (row[excelCol] !== undefined && row[excelCol] !== null && String(row[excelCol]).trim() !== '') {
-          parsedRow[dbField] = String(row[excelCol]).trim();
+          const val = String(row[excelCol]).trim();
+          const lowerVal = val.toLowerCase();
+          const invalidPlaceholders = ['not provided', 'n/a', 'na', 'none', 'null', '-'];
+
+          if (invalidPlaceholders.includes(lowerVal)) {
+            continue; // Skip saving invalid placeholders for optional fields
+          }
+
+          if (dbField === 'pin') {
+            if (!/^\d{6}$/.test(val)) {
+              errors.push(`Row ${rowNumber} (Candidate: ${candidateNameForError}): '${excelCol}' must be a 6-digit number.`);
+              isRowValid = false;
+              break;
+            }
+          }
+
+          parsedRow[dbField] = val;
         }
       }
+      if (!isRowValid) continue;
 
       // Capture dynamic extra columns
       const dynamicFields: Record<string, any> = {};
@@ -238,7 +282,7 @@ export const uploadCandidateExcel = async (req: Request, res: Response): Promise
         validCandidates.push(parsedRow);
       } catch (uploadErr: any) {
         console.error(`Photo upload failed for ${candidateId}:`, uploadErr);
-        errors.push(`Row ${rowNumber}: Photo upload failed for ID "${candidateId}": ${uploadErr.message}`);
+        errors.push(`Row ${rowNumber} (Candidate: ${candidateNameForError}): Photo upload failed for ID "${candidateId}": ${uploadErr.message}`);
       }
     }
 
@@ -397,60 +441,90 @@ export const sendToCenter = async (req: Request, res: Response): Promise<void> =
       return;
     }
 
-    // Extract unique center names from candidates
-    const uniqueCenterNames = [...new Set(candidates.map(c => c.centerName))];
+    // Extract unique center name and code pairs from candidates
+    const uniqueCentersMap = new Map<string, { centerName: string, centreCode?: string }>();
+    for (const c of candidates) {
+      const key = `${c.centerName}_${c.centreCode || ''}`;
+      if (!uniqueCentersMap.has(key)) {
+        uniqueCentersMap.set(key, { centerName: c.centerName, centreCode: c.centreCode });
+      }
+    }
+    const uniqueCandidateCenters = Array.from(uniqueCentersMap.values());
 
     // Find all active centers in the current company
     const activeCenters = await Center.find({ 
-      companyId, 
-      status: CenterStatus.ACTIVE 
+      $or: [
+        { companyId },
+        { accessibleByCompanies: companyId }
+      ],
+      status: { $regex: /^active$/i }
     });
 
     const examObjectId = new mongoose.Types.ObjectId(examId as string);
     const matchedCenterNames = new Set<string>();
     const operations: any[] = [];
 
-    // Match candidate center names (which often include full addresses) with active centers
     const normalizeStr = (str: string) => str.toLowerCase().replace(/[^a-z0-9]/g, '');
     
-    for (const candCenterName of uniqueCenterNames) {
-      const normCandName = normalizeStr(candCenterName);
+    for (const candCenter of uniqueCandidateCenters) {
+      const { centerName: candCenterName, centreCode: candCentreCode } = candCenter;
+      let matchedCenter;
+
+      // 1. Primary Match: Match by Center Code (Exact but case-insensitive)
+      if (candCentreCode && candCentreCode.trim() !== '') {
+        const normCandCode = candCentreCode.trim().toLowerCase();
+        matchedCenter = activeCenters.find(c => c.centerCode && c.centerCode.trim().toLowerCase() === normCandCode);
+      }
       
-      let matchedCenter = activeCenters.find(c => {
-        const normCName = normalizeStr(c.centerName);
-        return normCandName.includes(normCName) || normCName.includes(normCandName);
-      });
-
-      // Fallback: try to match by the first 3 words of the center name
+      // 2. Secondary Match: Match by Center Name (Fuzzy matching)
       if (!matchedCenter) {
+        const normCandName = normalizeStr(candCenterName);
+        
         matchedCenter = activeCenters.find(c => {
-          const cNameWords = c.centerName.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean).slice(0, 3).join('');
-          const candNameWords = candCenterName.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean).slice(0, 3).join('');
-          return cNameWords.includes(candNameWords) || candNameWords.includes(cNameWords);
+          const normCName = normalizeStr(c.centerName);
+          return normCandName.includes(normCName) || normCName.includes(normCandName);
         });
+
+        // Fallback: try to match by the first 3 words of the center name
+        if (!matchedCenter) {
+          matchedCenter = activeCenters.find(c => {
+            const cNameWords = c.centerName.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean).slice(0, 3).join('');
+            const candNameWords = candCenterName.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean).slice(0, 3).join('');
+            return cNameWords.includes(candNameWords) || candNameWords.includes(cNameWords);
+          });
+        }
       }
 
-      // Final fallback: if no match, just assign to the first active center (for testing/robustness)
-      if (!matchedCenter && activeCenters.length > 0) {
-        matchedCenter = activeCenters[0];
-      }
+      // NOTE: Removed the "first active center" fallback to strictly enforce matching
 
       if (matchedCenter) {
         matchedCenterNames.add(candCenterName);
+        
+        const filter: any = { 
+          examId: examObjectId, 
+          centerName: candCenterName, 
+          $and: [
+            { $or: [{ labId: { $exists: false } }, { labId: null }] }
+          ]
+        };
+        
+        if (candCentreCode) {
+          filter.centreCode = candCentreCode;
+        } else {
+          filter.$and.push({ $or: [{ centreCode: { $exists: false } }, { centreCode: null }, { centreCode: '' }] });
+        }
+
         operations.push({
           updateMany: {
-            filter: { 
-              examId: examObjectId, 
-              centerName: candCenterName, 
-              $or: [{ labId: { $exists: false } }, { labId: null }] 
-            },
+            filter: filter,
             update: { $set: { isSentToCenter: true, centerId: matchedCenter._id } }
           }
         });
       }
     }
 
-    const unmatchedCenterNames = uniqueCenterNames.filter(name => !matchedCenterNames.has(name));
+    const uniqueCenterNamesArray = [...new Set(uniqueCandidateCenters.map(c => c.centerName))];
+    const unmatchedCenterNames = uniqueCenterNamesArray.filter((name: string) => !matchedCenterNames.has(name));
     let sentCount = 0;
 
     if (operations.length > 0) {

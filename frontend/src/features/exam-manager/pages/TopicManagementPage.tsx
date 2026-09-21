@@ -69,7 +69,8 @@ type FormValues = z.infer<typeof formSchema>
 
 const isExamLocked = (status?: string) => {
   if (!status) return false
-  return status.toUpperCase() !== 'ACTIVE'
+  const s = status.toUpperCase()
+  return s !== 'ACTIVE' && s !== 'PENDING_EXAM' && s !== 'DRAFT'
 }
 
 const getStatusBadgeConfig = (status?: string) => {

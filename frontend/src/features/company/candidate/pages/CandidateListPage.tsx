@@ -5,9 +5,11 @@ import { CandidateTable } from "../components/CandidateTable";
 import { Button } from "@/shared/components/ui/button";
 import { RefreshCw, Loader2 } from "lucide-react";
 import { useCandidateImportStore } from "@/stores/candidate/candidateImport.store";
+import { useExamStore } from "@/stores/exam/exam.store";
 
 export const CandidateListPage = () => {
   const { importedCandidates, isLoading, fetchImportedCandidates } = useCandidateImportStore();
+  const { exams } = useExamStore();
 
   const [search, setSearch] = useState("");
   const [examFilter, setExamFilter] = useState("all");
@@ -30,9 +32,11 @@ export const CandidateListPage = () => {
 
   const filteredCandidates = useMemo(() => {
     return importedCandidates.filter((c) => {
-      const examStatus = (c.examId?.displayStatus || c.examId?.status || "ACTIVE").toUpperCase();
+      const examIdStr = typeof c.examId === 'string' ? c.examId : c.examId?._id;
+      const fullExam = exams.find(e => e._id === examIdStr);
+      const actualExamStatus = (fullExam?.displayStatus || fullExam?.status || c.examId?.displayStatus || c.examId?.status || "ACTIVE").toUpperCase();
       
-      if (!c.isSentToCompanyAdmin && examStatus !== "COMPLETED") {
+      if (!c.isSentToCompanyAdmin && actualExamStatus !== "COMPLETED") {
         return false;
       }
       
@@ -47,14 +51,13 @@ export const CandidateListPage = () => {
       if (examFilter !== "all" && c.examName !== examFilter) return false;
       if (shiftFilter !== "all" && c.shift !== shiftFilter) return false;
       if (statusFilter !== "all") {
-        const examStatus = c.examId?.displayStatus || c.examId?.status || "ACTIVE";
-        if (examStatus.toUpperCase() !== statusFilter.toUpperCase()) {
+        if (actualExamStatus !== statusFilter.toUpperCase()) {
           return false;
         }
       }
       return true;
     });
-  }, [importedCandidates, search, examFilter, shiftFilter, statusFilter]);
+  }, [importedCandidates, search, examFilter, shiftFilter, statusFilter, exams]);
 
   return (
     <div className="space-y-6 p-6">

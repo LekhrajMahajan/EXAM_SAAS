@@ -121,7 +121,7 @@ const CompanyAdminRequestSchema = new Schema<ICompanyAdminRequest>(
     },
     companyAdminId: {
       type: Schema.Types.ObjectId,
-      ref: "User",
+      ref: "Admin",
       required: true,
     },
     centerId: {

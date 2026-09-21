@@ -65,6 +65,24 @@ export const AssignedExamsPage: React.FC = () => {
         setIsLoading(true);
         const res = await api.get(`/import-center-assign-exam/assigned-exams/center/${targetCenterId}`);
         if (res.data?.success) {
+          const getCenterExamStatusLabel = (coreStatus: string, originalStatus: string) => {
+            if (!coreStatus) return originalStatus || 'Assigned & Active';
+            switch (coreStatus) {
+              case 'PENDING_EXAM':
+                return 'Exam Assigned';
+              case 'ACTIVE':
+                return 'Active';
+              case 'EXAM_STARTED':
+                return 'Exam Started';
+              case 'PENDING_RESULT_GENERATE':
+                return 'Exam Ended';
+              case 'RESULT_GENERATED':
+                return 'Result Generated';
+              default:
+                return coreStatus.replace(/_/g, ' ');
+            }
+          };
+
           const mapped = res.data.data.map((item: any) => ({
             id: item.id,
             examName: item.examId?.examName || item.examId?.examTitle,
@@ -77,7 +95,7 @@ export const AssignedExamsPage: React.FC = () => {
             shiftTime: item.examId?.shiftId?.shiftName || item.examId?.shiftTime || 'TBD',
             startTime: item.examId?.shiftId?.startTime || item.examId?.startTime || 'TBD',
             endTime: item.examId?.shiftId?.endTime || item.examId?.endTime || 'TBD',
-            status: item.status,
+            status: getCenterExamStatusLabel(item.examId?.status, item.status),
             facilities: item.examId?.facilities || [],
             rawExamDate: item.examId?.examDate,
             fullExamDetails: item.examId
@@ -103,26 +121,15 @@ export const AssignedExamsPage: React.FC = () => {
     if (!searchMatch) return false;
     if (examTypeFilter === 'All Type Exam') return true;
 
-    let isEnded = false;
-    if (e.rawExamDate && e.endTime !== 'TBD') {
-      const endDateTime = new Date(e.rawExamDate);
-      const [hours, minutes] = e.endTime.split(':').map(Number);
-      if (!isNaN(hours) && !isNaN(minutes)) {
-        endDateTime.setHours(hours, minutes, 0, 0);
-        if (endDateTime < new Date()) {
-          isEnded = true;
-        }
-      }
-    }
+    if (examTypeFilter === 'All Type Exam') return true;
 
-    if (examTypeFilter === 'Active Exam') return !isEnded;
-    if (examTypeFilter === 'Ended Exam') return isEnded;
+    if (e.status === examTypeFilter) return true;
 
-    return true;
+    return false;
   });
 
   const totalAssignedCandidates = examsList.reduce((acc, e) => acc + (e.assignedCandidatesCount || 0), 0);
-  const activeShifts = examsList.filter(e => e.status === 'Live' || e.status === 'Assigned & Active').length;
+  const activeShifts = examsList.filter(e => e.status === 'Active' || e.status === 'Exam Started').length;
 
   return (
     <div className="min-h-screen bg-background text-foreground p-6 space-y-6 animate-in fade-in duration-300">
@@ -201,8 +208,10 @@ export const AssignedExamsPage: React.FC = () => {
               className="bg-background text-foreground py-2 px-4 text-sm rounded-lg border border-border focus:outline-none focus:border-[#E4FD97] cursor-pointer"
             >
               <option value="All Type Exam">All Type Exam</option>
-              <option value="Active Exam">Active Exam</option>
-              <option value="Ended Exam">Ended Exam</option>
+              <option value="Exam Assigned">Exam Assigned</option>
+              <option value="Active">Active</option>
+              <option value="Exam Started">Exam Started</option>
+              <option value="Exam Ended">Exam Ended</option>
             </select>
           </div>
         </div>

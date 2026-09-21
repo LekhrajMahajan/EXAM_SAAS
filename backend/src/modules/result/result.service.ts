@@ -303,8 +303,8 @@ class ResultService extends BaseService<IResult> {
                         const secLower = (pq.sectionCode || "").toString().toLowerCase().trim();
                         const masterSubjName = (masterQ.subjectId && typeof masterQ.subjectId === 'object' ? (masterQ.subjectId.name || masterQ.subjectId.subjectName || "") : "").toString().toLowerCase().trim();
                         for (const [k, cfg] of examSubjectConfigMap.entries()) {
-                            if ((secLower && String(cfg.subjectName).toLowerCase().trim() === secLower) || 
-                                (masterSubjName && String(cfg.subjectName).toLowerCase().trim() === masterSubjName) || 
+                            if ((secLower && String(cfg.name || cfg.subjectName).toLowerCase().trim() === secLower) || 
+                                (masterSubjName && String(cfg.name || cfg.subjectName).toLowerCase().trim() === masterSubjName) || 
                                 (pqSubId && k === String(pqSubId))) {
                                 mappedCfg = cfg;
                                 break;
@@ -391,8 +391,8 @@ class ResultService extends BaseService<IResult> {
                 const qSecLower = (question.sectionCode || "").toString().toLowerCase().trim();
                 const qSubjName = (question.subjectId && typeof question.subjectId === 'object' ? (question.subjectId.name || question.subjectId.subjectName || "") : "").toString().toLowerCase().trim();
                 for (const [k, cfg] of examSubjectConfigMap.entries()) {
-                    if ((qSecLower && String(cfg.subjectName).toLowerCase().trim() === qSecLower) || 
-                        (qSubjName && String(cfg.subjectName).toLowerCase().trim() === qSubjName) || 
+                    if ((qSecLower && String(cfg.name || cfg.subjectName).toLowerCase().trim() === qSecLower) || 
+                        (qSubjName && String(cfg.name || cfg.subjectName).toLowerCase().trim() === qSubjName) || 
                         (question.subjectId && k === String(question.subjectId._id || question.subjectId))) {
                         subjCfg = cfg;
                         break;
@@ -1343,7 +1343,11 @@ class ResultService extends BaseService<IResult> {
         }
 
         if (generatedCount > 0) {
-            await Exam.findByIdAndUpdate(examId, { isResultGenerated: true });
+            const { ExamStatus } = require("../exam/exam.types");
+            await Exam.findByIdAndUpdate(examId, { 
+                isResultGenerated: true,
+                status: ExamStatus.RESULT_GENERATED 
+            });
         }
 
         return {
@@ -1716,11 +1720,15 @@ class ResultService extends BaseService<IResult> {
                         const pqSubId = masterQ.subjectId?._id || masterQ.subjectId || pq.subjectId;
                         let mappedCfg = pqSubId ? examSubjectConfigMap.get(String(pqSubId)) : null;
                         if (!mappedCfg) {
+                            const secLower = (pq.sectionCode || "").toString().toLowerCase().trim();
                             const masterSubjName = (masterQ.subjectId && typeof masterQ.subjectId === 'object'
                                 ? (masterQ.subjectId.name || masterQ.subjectId.subjectName || '')
                                 : '').toLowerCase().trim();
-                            for (const cfg of examSubjectConfigMap.values()) {
-                                if (masterSubjName && String(cfg.subjectName).toLowerCase().trim() === masterSubjName) {
+                            for (const [k, cfg] of examSubjectConfigMap.entries()) {
+                                const cfgName = String(cfg.name || cfg.subjectName || '').toLowerCase().trim();
+                                if ((secLower && cfgName === secLower) || 
+                                    (masterSubjName && cfgName === masterSubjName) || 
+                                    (pqSubId && k === String(pqSubId))) {
                                     mappedCfg = cfg;
                                     break;
                                 }
@@ -1753,6 +1761,19 @@ class ResultService extends BaseService<IResult> {
             if (!cfg && question?.subjectId) {
                 const subIdStr = String((question.subjectId as any)?._id || question.subjectId);
                 cfg = examSubjectConfigMap.get(subIdStr);
+                
+                if (!cfg) {
+                    const qSubjName = ((question.subjectId as any).name || (question.subjectId as any).subjectName || "").toString().toLowerCase().trim();
+                    if (qSubjName) {
+                        for (const c of examSubjectConfigMap.values()) {
+                            const cName = String(c.name || c.subjectName || "").toLowerCase().trim();
+                            if (cName === qSubjName) {
+                                cfg = c;
+                                break;
+                            }
+                        }
+                    }
+                }
             }
             if (!cfg && examSubjectConfigMap.size > 0) {
                 cfg = Array.from(examSubjectConfigMap.values())[0];
@@ -1775,7 +1796,7 @@ class ResultService extends BaseService<IResult> {
             }).filter(Boolean);
             const questions = await Question.find({ _id: { $in: masterIds } }).populate('subjectId', 'name subjectName').lean();
 
-            questionsDetails = candidateAnswers.map((answer: any) => {
+            questionsDetails = await Promise.all(candidateAnswers.map(async (answer: any) => {
                 const pqMaster = pqIdToMasterQForDetails.get(String(answer.questionId));
                 const masterId = pqMaster ? String(pqMaster._id) : String(answer.questionId);
                 const question = questions.find(q => q._id.toString() === masterId);
@@ -1817,6 +1838,22 @@ class ResultService extends BaseService<IResult> {
                 const configMarks = (subjectCfg?.marks !== undefined && subjectCfg?.marks !== null) ? Number(subjectCfg.marks) : examLevelMarks;
                 const configNeg = (subjectCfg?.negativeMarks !== undefined && subjectCfg?.negativeMarks !== null) ? Number(subjectCfg.negativeMarks) : examLevelNeg;
 
+                let finalSubjectName = subjectCfg?.name || subjectCfg?.subjectName || 'Unknown Subject';
+
+                if (finalSubjectName === 'Unknown Subject' && question && question.subjectId) {
+                    if (typeof question.subjectId === 'object' && ((question.subjectId as any).name || (question.subjectId as any).subjectName)) {
+                        finalSubjectName = (question.subjectId as any).name || (question.subjectId as any).subjectName;
+                    } else if (mongoose.Types.ObjectId.isValid(String(question.subjectId._id || question.subjectId))) {
+                        try {
+                            const subIdStr = String(question.subjectId._id || question.subjectId);
+                            const subjDoc = await mongoose.model("Subject").findById(subIdStr).lean() as any;
+                            if (subjDoc && (subjDoc.name || subjDoc.subjectName)) {
+                                finalSubjectName = subjDoc.name || subjDoc.subjectName;
+                            }
+                        } catch (e) {}
+                    }
+                }
+
                 return {
                     questionId: answer.questionId,
                     questionText: question ? (question.question || 'Q_FOUND_BUT_EMPTY_TEXT') : ('DEBUG_Q_NOT_FOUND: pqMaster=' + !!pqMaster + ' masterId=' + masterId),
@@ -1827,9 +1864,9 @@ class ResultService extends BaseService<IResult> {
                     isCorrect,
                     marks: isCorrect ? configMarks : 0,
                     negativeMarks: (!isCorrect && actuallyAnswered) ? configNeg : 0,
-                    subjectName: subjectCfg?.subjectName || 'Unknown Subject',
+                    subjectName: finalSubjectName,
                 };
-            });
+            }));
         } else if (candAns && candAns.results && Array.isArray(candAns.results)) {
             // Resolve PaperQuestion IDs to master Question IDs
             const resultsData = candAns.results;
@@ -1840,7 +1877,7 @@ class ResultService extends BaseService<IResult> {
             const questionsForPath2 = await Question.find({ _id: { $in: masterIds } }).populate('subjectId', 'name subjectName').lean();
             const questionDocMap2 = new Map<string, any>();
             for (const q of questionsForPath2) questionDocMap2.set(String(q._id), q);
-            questionsDetails = resultsData.map((res: any) => {
+            questionsDetails = await Promise.all(resultsData.map(async (res: any) => {
                 const pqMaster = pqIdToMasterQForDetails.get(String(res.questionId));
                 const masterId = pqMaster ? String(pqMaster._id) : String(res.questionId);
                 const question = questionDocMap2.get(masterId);
@@ -1898,7 +1935,36 @@ class ResultService extends BaseService<IResult> {
 
                 const marks = isCorrect ? configMarks : 0;
                 const negativeMarks = (!isCorrect && isAnswered) ? configNeg : 0;
-                const finalSubjectName = subjectCfg?.subjectName || res.subjectName || 'Unknown Subject';
+                
+                let finalSubjectName = subjectCfg?.name || subjectCfg?.subjectName || res.subjectName || 'Unknown Subject';
+
+                let debugInfo = `questionId: ${res.questionId} | res.subjectName: ${res.subjectName} | subjectCfg?.name: ${subjectCfg?.name} | `;
+
+                if (finalSubjectName === 'Unknown Subject' && question && question.subjectId) {
+                    debugInfo += `typeof subjectId: ${typeof question.subjectId} | `;
+                    if (typeof question.subjectId === 'object' && (question.subjectId.name || question.subjectId.subjectName)) {
+                        finalSubjectName = question.subjectId.name || question.subjectId.subjectName;
+                        debugInfo += `Set from populated: ${finalSubjectName} | `;
+                    } else if (mongoose.Types.ObjectId.isValid(String(question.subjectId._id || question.subjectId))) {
+                        try {
+                            const subIdStr = String(question.subjectId._id || question.subjectId);
+                            const subjDoc = await mongoose.model("Subject").findById(subIdStr).lean() as any;
+                            if (subjDoc && (subjDoc.name || subjDoc.subjectName)) {
+                                finalSubjectName = subjDoc.name || subjDoc.subjectName;
+                                debugInfo += `Set from DB fetch: ${finalSubjectName} | `;
+                            }
+                        } catch (e) {}
+                    }
+                } else {
+                    debugInfo += `No question or question.subjectId | `;
+                }
+
+                // Temporary logging to file
+                try {
+                    const fs = require('fs');
+                    fs.appendFileSync('D:/COMPANY PORJTECS/Exam management folder/Final Exam SaaS Product/backend/subject_debug.log', debugInfo + ` finalSubjectName: ${finalSubjectName}\n`);
+                } catch(e) {}
+
 
                 return {
                     questionId: res.questionId,
@@ -1912,7 +1978,7 @@ class ResultService extends BaseService<IResult> {
                     negativeMarks,
                     subjectName: finalSubjectName,
                 };
-            });
+            }));
         }
 
         // Fix the shuffle misalignment bug by enforcing the paper's original question order

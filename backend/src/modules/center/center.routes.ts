@@ -510,7 +510,7 @@ router.patch(
 router.delete(
   "/:id",
   authenticate,
-  authorize(UserRole.MASTER_ADMIN),
+  authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN),
   deleteCenter,
 );
 

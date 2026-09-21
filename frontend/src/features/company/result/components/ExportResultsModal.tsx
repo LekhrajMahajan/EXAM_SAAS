@@ -42,40 +42,14 @@ export function ExportResultsModal({ open, onOpenChange, uniqueExams }: ExportRe
       
       const examResults = res.data.data;
 
-      const combinedData: Record<string, string | number>[] = [];
-
-      examResults.forEach((r: Record<string, any>) => {
-        const summary = {
-          "Application Number": r.applicationNumber,
-          "Candidate Name": r.candidateName,
-          "Exam": r.exam,
-          "Subject": r.subject,
-          "Shift": r.shift,
-          "Center": r.center,
-          "Marks Obtained": r.marksObtained,
-          "Total Marks": r.totalMarks,
-          "Percentage": `${r.percentage}%`,
-          "Grade": r.grade,
-          "Status": r.status,
-        };
-
-        if (r.answers && r.answers.length > 0) {
-          r.answers.forEach((ans: Record<string, any>, index: number) => {
-            combinedData.push({
-              ...summary,
-              "Q.No": index + 1,
-              "Question Text": ans.questionText?.replace(/<[^>]+>/g, '') || '', // Strip HTML
-              "Candidate Answer": ans.selectedAnswer || 'Not Attempted',
-              "Correct Answer": ans.correctAnswer || '',
-              "Is Correct": ans.isCorrect ? 'Yes' : 'No',
-              "Question Marks": ans.isCorrect ? ans.marks : -(ans.negativeMarks || 0)
-            });
-          });
-        } else {
-          // If no answers exist, at least output the summary row
-          combinedData.push(summary);
-        }
-      });
+      const combinedData: Record<string, string | number>[] = examResults.map((r: Record<string, any>) => ({
+        "Application Number": r.applicationNumber,
+        "Candidate Name": r.candidateName,
+        "Adharcard Number": r.aadharNumber || 'N/A',
+        "Marks Obtain": r.marksObtained,
+        "Total Marks": r.totalMarks,
+        "Status": r.passStatus || 'N/A'
+      }));
 
       const workbook = XLSX.utils.book_new();
       const fileName = `Results_${selectedExam.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().getTime()}`;

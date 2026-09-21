@@ -51,6 +51,10 @@ const startServer = async () => {
 
         // Initialize Workers
         require("./modules/backup/backup.worker");
+        
+        // Initialize Cron Jobs
+        const { initExamStatusCron } = require("./jobs/examStatusCron");
+        initExamStatusCron();
 
         const server = http.createServer(app);
 
@@ -60,6 +64,29 @@ const startServer = async () => {
             console.log(
                 `Server Running : http://localhost:${env.PORT}`
             );
+            // One-time backfill: generate center payments for all ended exams that don't have payments yet
+            setTimeout(async () => {
+                try {
+                    console.log("[Backfill] Generating missing center payments for ended exams...");
+                    const ExamModel = require('./modules/exam/exam.model').default;
+                    const centerPaymentsService = require('./modules/center-payments/centerPayments.service').default;
+                    const CenterPayments = require('./modules/center-payments/centerPayments.model').default;
+                    const endedExams = await ExamModel.find({
+                        status: { $in: ['PENDING_RESULT_GENERATE', 'RESULT_GENERATED'] }
+                    }).lean();
+                    let created = 0;
+                    for (const exam of endedExams) {
+                        const existing = await CenterPayments.findOne({ examId: exam._id });
+                        if (!existing) {
+                            await centerPaymentsService.generatePaymentsForExam(exam._id.toString(), exam.companyId.toString());
+                            created++;
+                        }
+                    }
+                    console.log(`[Backfill] Done. Created payments for ${created} out of ${endedExams.length} ended exams.`);
+                } catch (e) {
+                    console.error('[Backfill] Failed to generate center payments:', e);
+                }
+            }, 3000);
         });
     } catch (error) {
         console.error(error);

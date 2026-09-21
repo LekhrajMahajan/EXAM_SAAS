@@ -100,13 +100,39 @@ export const searchCandidateForEntry = asyncHandler(async (req: Request, res: Re
     isDeleted: false,
   });
 
+  let finalAttendanceStatus = attendance?.attendanceStatus || AttendanceStatus.PENDING;
+
+  if (finalAttendanceStatus === AttendanceStatus.PENDING && seatAllocation?.examId) {
+    const exam = seatAllocation.examId;
+    if (exam.examDate && exam.endTime) {
+      const examDate = new Date(exam.examDate);
+      examDate.setHours(0, 0, 0, 0);
+      
+      const now = new Date();
+      const today = new Date(now);
+      today.setHours(0, 0, 0, 0);
+      
+      if (examDate.getTime() < today.getTime()) {
+        finalAttendanceStatus = AttendanceStatus.ABSENT;
+      } else if (examDate.getTime() === today.getTime()) {
+        const [endH, endM] = exam.endTime.split(':').map(Number);
+        const examEnd = new Date(now);
+        examEnd.setHours(endH, endM, 0, 0);
+        
+        if (now > examEnd) {
+          finalAttendanceStatus = AttendanceStatus.ABSENT;
+        }
+      }
+    }
+  }
+
   return sendResponse(res, HTTP_STATUS.OK, {
     success: true,
     message: "Candidate verified for this center.",
     data: {
       candidate,
       seatAllocation,
-      attendanceStatus: attendance?.attendanceStatus || AttendanceStatus.PENDING,
+      attendanceStatus: finalAttendanceStatus,
       isImported,
     },
   });

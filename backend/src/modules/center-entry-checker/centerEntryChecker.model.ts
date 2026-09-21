@@ -57,7 +57,6 @@ const CenterEntryCheckerSchema = new Schema<ICenterEntryChecker>(
     email: {
       type: String,
       required: true,
-      unique: true,
       lowercase: true,
       trim: true,
       index: true,

@@ -30,6 +30,8 @@ import { useCandidateImportStore } from '../../../../stores/candidate/candidateI
 import { toast } from '@/hooks/use-toast'
 import { getDisplayStatus } from '@/shared/utils/exam-status'
 import { ExamStatusBadge } from '@/shared/components/badges/ExamStatusBadge'
+import { useExamStore } from '@/stores/exam/exam.store'
+import { useEffect } from 'react'
 
 interface CandidateTableProps {
   candidates: ImportedCandidate[]
@@ -43,6 +45,13 @@ export const CandidateTable = ({ candidates }: CandidateTableProps) => {
   const [isWarningModalOpen, setIsWarningModalOpen] = useState(false)
   const [sendingStates, setSendingStates] = useState<Record<string, boolean>>({})
   const { deleteCandidate, sendToCenter, fetchImportedCandidates } = useCandidateImportStore()
+  const { exams, fetchExams } = useExamStore()
+
+  useEffect(() => {
+    if (exams.length === 0) {
+      fetchExams()
+    }
+  }, [exams.length, fetchExams])
 
   const handleSendToCenter = async (examId: string, e: React.MouseEvent, groupKey: string) => {
     e.stopPropagation()
@@ -107,7 +116,17 @@ export const CandidateTable = ({ candidates }: CandidateTableProps) => {
           <Accordion type='multiple' className='w-full space-y-4'>
             {examNames.map((examName) => {
               const examCandidates = groupedCandidates[examName]
-              const populatedExam = examCandidates[0]?.examId
+              let populatedExam = examCandidates[0]?.examId
+              
+              // If populatedExam is unpopulated (string) or missing status, find it in exams store
+              if (typeof populatedExam === 'string' || (populatedExam && !populatedExam.status)) {
+                const examIdStr = typeof populatedExam === 'string' ? populatedExam : populatedExam._id
+                const fullExam = exams.find(e => e._id === examIdStr)
+                if (fullExam) {
+                  populatedExam = fullExam
+                }
+              }
+
               const dynamicColumnKeys = Array.from(new Set(examCandidates.flatMap(c => Object.keys(c.dynamicFields || {}))));
 
               const hasUnsentCandidates = examCandidates.some(c => !c.isSentToCenter);
@@ -128,6 +147,7 @@ export const CandidateTable = ({ candidates }: CandidateTableProps) => {
                         {examCandidates.length} Candidates
                       </span>
                       <Button
+                        asChild
                         size="sm"
                         variant="default"
                         className={`ml-auto shadow-sm ${
@@ -135,30 +155,35 @@ export const CandidateTable = ({ candidates }: CandidateTableProps) => {
                             ? 'opacity-70 cursor-not-allowed pointer-events-none'
                             : ''
                         }`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (populatedExam?._id && hasUnsentCandidates && !sendingStates[examName]) {
-                            handleSendToCenter(populatedExam._id, e, examName);
-                          }
-                        }}
                         disabled={sendingStates[examName] || (!hasUnsentCandidates && !sendingStates[examName])}
                       >
-                        {sendingStates[examName] ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Sending...
-                          </>
-                        ) : !hasUnsentCandidates ? (
-                          <>
-                            <Check className='mr-2 h-4 w-4' />
-                            Sended
-                          </>
-                        ) : (
-                          <>
-                            <Send className='mr-2 h-4 w-4' />
-                            Send to Center
-                          </>
-                        )}
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (populatedExam?._id && hasUnsentCandidates && !sendingStates[examName]) {
+                              handleSendToCenter(populatedExam._id, e, examName);
+                            }
+                          }}
+                        >
+                          {sendingStates[examName] ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Sending...
+                            </>
+                          ) : !hasUnsentCandidates ? (
+                            <>
+                              <Check className='mr-2 h-4 w-4' />
+                              Sended
+                            </>
+                          ) : (
+                            <>
+                              <Send className='mr-2 h-4 w-4' />
+                              Send to Center
+                            </>
+                          )}
+                        </div>
                       </Button>
                     </div>
                   </AccordionTrigger>

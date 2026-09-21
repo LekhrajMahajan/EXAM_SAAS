@@ -468,4 +468,16 @@ router.patch(
   restoreResult,
 );
 
+// TEMPORARY ROUTE TO FIX EVALUATION BUG
+router.get("/fix-evaluate/:id", async (req: any, res: any, next: any) => {
+    try {
+        const { ResultService } = require('./result.service');
+        const srv = new ResultService();
+        const r = await srv.evaluate(req.params.id);
+        res.json({ success: true, message: "Result re-evaluated successfully!" });
+    } catch (e) {
+        next(e);
+    }
+});
+
 export default router;

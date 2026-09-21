@@ -4,7 +4,7 @@ import CompanyAdminRequest, {
   ICompanyAdminRequest,
 } from "./companyAdminRequest.model";
 import Center from "./center.model";
-import User from "../auth/user.model";
+import Admin from "../admin/admin.model";
 import Company from "../company/company.model";
 import emailService from "../email/email.service";
 import ApiError from "../../utils/ApiError";
@@ -111,24 +111,24 @@ class CompanyAdminRequestService {
 
     // Notify Center Manager via email
     const center: any = await Center.findById(centerId).lean();
-    const adminUser: any = await User.findById(companyAdminId).lean();
+    const adminUser: any = await Admin.findById(companyAdminId).lean();
     const company: any = await Company.findById(companyId).lean();
 
     if (center?.email) {
       await emailService
         .send({
           to: center.email,
-          subject: `New Company Admin Connection Request - ${company?.name || "A Company"}`,
+          subject: `New Company Admin Connection Request - ${company?.companyName || "A Company"}`,
           html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
             <h2 style="color: #059669; margin-top: 0;">New Connection Request</h2>
             <p>Hello <strong>${center.managerName || "Center Manager"}</strong>,</p>
-            <p>A Company Admin from <strong>${company?.name || "a Company"}</strong> wants to assign your center for their examination.</p>
+            <p>A Company Admin from <strong>${company?.companyName || "a Company"}</strong> wants to assign your center for their examination.</p>
             <div style="background: #f0fdf4; padding: 15px; border-radius: 6px; border-left: 4px solid #10b981; margin: 20px 0;">
               <p style="margin: 0 0 8px;"><strong>Request Details:</strong></p>
               <p style="margin: 4px 0;"><b>Company Admin Name:</b> ${adminUser?.firstName || ""} ${adminUser?.lastName || ""}</p>
               <p style="margin: 4px 0;"><b>Company Admin Email:</b> ${adminUser?.email || ""}</p>
-              <p style="margin: 4px 0;"><b>Company:</b> ${company?.name || "N/A"}</p>
+              <p style="margin: 4px 0;"><b>Company:</b> ${company?.companyName || "N/A"}</p>
             </div>
             <p>Please log in to your dashboard, go to <b>"Company Admin Request"</b> in the sidebar, and upload the required documents.</p>
             <p style="color: #6b7280; font-size: 12px;">ExamGuard Pro | Automated Notification</p>
@@ -283,7 +283,7 @@ class CompanyAdminRequestService {
 
     // Notify Company Admin
     const company: any = await Company.findById(request.companyId).lean();
-    const adminUser: any = await User.findById(request.companyAdminId).lean();
+    const adminUser: any = await Admin.findById(request.companyAdminId).lean();
     const center: any = await Center.findById(request.centerId).lean();
 
     if (adminUser?.email) {
@@ -483,20 +483,20 @@ class CompanyAdminRequestService {
 
     const center: any = await Center.findById(request.centerId).lean();
     const company: any = await Company.findById(request.companyId).lean();
-    const adminUser: any = await User.findById(request.companyAdminId).lean();
+    const adminUser: any = await Admin.findById(request.companyAdminId).lean();
 
     if (center?.email) {
       await emailService
         .send({
           to: center.email,
-          subject: `🎉 Successfully Connected with ${company?.name || "Company"}!`,
+          subject: `🎉 Successfully Connected with ${company?.companyName || "Company"}!`,
           html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #d1fae5; border-radius: 8px;">
             <h2 style="color: #059669; margin-top: 0;">✅ Connection Approved!</h2>
             <p>Hello <strong>${center.managerName || "Center Manager"}</strong>,</p>
-            <p>Congratulations! Your center <strong>${center.centerName}</strong> has been successfully verified and connected with <strong>${company?.name || "the Company"}</strong>.</p>
+            <p>Congratulations! Your center <strong>${center.centerName}</strong> has been successfully verified and connected with <strong>${company?.companyName || "the Company"}</strong>.</p>
             <div style="background: #f0fdf4; padding: 15px; border-radius: 6px; border-left: 4px solid #10b981; margin: 20px 0;">
-              <p style="margin: 4px 0;"><b>Company:</b> ${company?.name || "N/A"}</p>
+              <p style="margin: 4px 0;"><b>Company:</b> ${company?.companyName || "N/A"}</p>
               <p style="margin: 4px 0;"><b>Company Admin:</b> ${adminUser?.firstName || ""} ${adminUser?.lastName || ""} (${adminUser?.email || ""})</p>
               <p style="margin: 4px 0;"><b>Status:</b> ✅ APPROVED</p>
               <p style="margin: 4px 0;"><b>Effective Date:</b> ${new Date().toLocaleDateString("en-IN")}</p>
@@ -541,12 +541,12 @@ class CompanyAdminRequestService {
       await emailService
         .send({
           to: center.email,
-          subject: `Connection Request Declined — ${company?.name || "Company"}`,
+          subject: `Connection Request Declined — ${company?.companyName || "Company"}`,
           html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #fef2f2; border-radius: 8px;">
             <h2 style="color: #dc2626; margin-top: 0;">Connection Request Declined</h2>
             <p>Hello <strong>${center.managerName || "Center Manager"}</strong>,</p>
-            <p>Unfortunately, your connection request with <strong>${company?.name || "the Company"}</strong> has been declined.</p>
+            <p>Unfortunately, your connection request with <strong>${company?.companyName || "the Company"}</strong> has been declined.</p>
             <div style="background: #fef2f2; padding: 15px; border-radius: 6px; border-left: 4px solid #dc2626; margin: 20px 0;">
               <p style="margin: 4px 0;"><b>Reason:</b> ${remarks || "Not specified by admin."}</p>
             </div>

@@ -42,7 +42,7 @@ export function ImportCenterModalGovt({ onSuccess }: { onSuccess?: (importId: st
         const res = await examApi.getAll({ limit: 100 });
         if (res.success) {
           const activeOnlineExams = res.data.exams.filter(
-            (exam: Exam) => getDisplayStatus(exam) === 'ACTIVE' && exam.examMode === 'ONLINE'
+            (exam: Exam) => ['ACTIVE', 'PENDING_EXAM'].includes(getDisplayStatus(exam)) && exam.examMode === 'ONLINE'
           );
           setExams(activeOnlineExams);
         }

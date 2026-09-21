@@ -87,7 +87,7 @@ const generateInvoiceHtml = (payment: any) => {
               <tr>
                 <td style="padding: 20px 15px; border-bottom: 1px solid #2D3E2C;">
                   <div style="font-size: 14px; font-weight: 700; color: #2D3E2C; margin-bottom: 4px;">Exam Conduction Charges</div>
-                  <div style="font-size: 10px; color: #555; line-height: 1.4;">Exam: ${payment.examId?.examName || payment.examId?.examTitle || 'N/A'}<br/>Shift: ${payment.shiftId?.shiftName || 'N/A'}</div>
+                  <div style="font-size: 10px; color: #555; line-height: 1.4;">Exam: ${payment.examId?.examName || payment.examId?.examTitle || 'N/A'}<br/>Shift: ${payment.shift || payment.shiftId?.shiftName || 'N/A'}</div>
                 </td>
                 <td style="padding: 20px 15px; text-align: center; border-bottom: 1px solid #2D3E2C; font-size: 12px; font-weight: 700; color: #2D3E2C;">
                   ₹${payment.amount?.toLocaleString()}
@@ -167,12 +167,12 @@ export function CenterPaymentsPage() {
 
   const { data: response, isLoading } = useQuery({
     queryKey: ['company-center-payments'],
-    queryFn: () => apiClient.get('/company-center-payments/company').then((res) => res.data),
+    queryFn: () => apiClient.get('/center-payments/company').then((res) => res.data),
   });
 
   const markPaidMutation = useMutation({
     mutationFn: (paymentId: string) => 
-      apiClient.patch(`/company-center-payments/${paymentId}/verify`, { 
+      apiClient.patch(`/center-payments/${paymentId}/pay`, { 
         status: 'Paid',
         referenceNumber: `REF-${Math.random().toString(36).substring(7).toUpperCase()}` 
       }).then(res => res.data),
@@ -202,21 +202,19 @@ export function CenterPaymentsPage() {
     }
   };
 
-  // Load razorpay script
+  // Load razorpay script (only once, only if not already present)
   useEffect(() => {
+    if (document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]')) return;
     const script = document.createElement('script');
     script.src = 'https://checkout.razorpay.com/v1/checkout.js';
     script.async = true;
     document.body.appendChild(script);
-    return () => {
-      document.body.removeChild(script);
-    };
   }, []);
 
   const handleRazorpayPayment = async (paymentId: string, centerUpiId: string) => {
     try {
       // 1. Create order
-      const orderRes = await apiClient.post(`/company-center-payments/${paymentId}/razorpay-order`);
+      const orderRes = await apiClient.post(`/center-payments/${paymentId}/razorpay-order`);
       const { orderId, amount, currency, keyId } = orderRes.data.data;
 
       // 2. Open Razorpay checkout
@@ -230,7 +228,7 @@ export function CenterPaymentsPage() {
         handler: async function (response: any) {
           try {
             // 3. Verify payment
-            await apiClient.post(`/company-center-payments/${paymentId}/verify-razorpay`, {
+            await apiClient.post(`/center-payments/${paymentId}/verify-razorpay`, {
               razorpayOrderId: response.razorpay_order_id,
               razorpayPaymentId: response.razorpay_payment_id,
               razorpaySignature: response.razorpay_signature,
@@ -259,15 +257,16 @@ export function CenterPaymentsPage() {
   const payments = response?.data || [];
   const filteredPayments = statusFilter === 'all' 
     ? payments 
-    : payments.filter((payment: any) => payment.status === statusFilter);
+    : payments.filter((payment: any) => (payment.status || '').toLowerCase() === statusFilter.toLowerCase());
 
   const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'Paid':
+    const normalizedStatus = (status || '').toLowerCase();
+    switch (normalizedStatus) {
+      case 'paid':
         return <Badge className="bg-[#E4FD97] text-[#2D3E2C] hover:bg-[#E4FD97]/90 border-0"><CheckCircle2 className="w-3 h-3 mr-1" /> Paid</Badge>;
-      case 'Pending':
+      case 'pending':
         return <Badge className="bg-amber-500/10 text-amber-500 hover:bg-amber-500/20"><Clock className="w-3 h-3 mr-1" /> Pending</Badge>;
-      case 'Failed':
+      case 'failed':
         return <Badge className="bg-red-500/10 text-red-500 hover:bg-red-500/20"><XCircle className="w-3 h-3 mr-1" /> Failed</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
@@ -391,7 +390,9 @@ export function CenterPaymentsPage() {
                         <div className="flex flex-col">
                           <span className="font-medium">{payment.examId?.examTitle || 'N/A'}</span>
                           <span className="text-xs text-muted-foreground">
-                            {payment.shiftId ? (
+                            {payment.shift ? (
+                                payment.shift
+                            ) : payment.shiftId ? (
                               <>
                                 {payment.shiftId.shiftName || 'Shift'}
                                 {payment.shiftId.startTime && payment.shiftId.endTime 
@@ -415,7 +416,7 @@ export function CenterPaymentsPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          {payment.status === 'Pending' && (
+                          {(payment.status || '').toLowerCase() === 'pending' && (
                             <Button
                               variant="outline"
                               size="sm"
@@ -433,7 +434,7 @@ export function CenterPaymentsPage() {
                               Pay with Razorpay
                             </Button>
                           )}
-                          {payment.status === 'Paid' && (
+                          {(payment.status || '').toLowerCase() === 'paid' && (
                             <Button
                               variant="default"
                               size="sm"

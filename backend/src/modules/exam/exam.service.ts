@@ -175,10 +175,16 @@ class ExamService extends BaseService<IExam> {
     await this.validateExamSubjects(payload);
 
 
-    if (exam.approvalStatus === ExamApprovalStatus.PUBLISHED && exam.examCode !== "STAFFSELF" && exam.examCode !== "STAFFSELE" && exam.examCode !== "RESERVEBA") {
+    if (
+      exam.status !== ExamStatus.PENDING_EXAM && 
+      exam.examCode !== "STAFFSELF" && 
+      exam.examCode !== "STAFFSELE" && 
+      exam.examCode !== "RESERVEBA" &&
+      exam._id.toString() !== "6aabe8da696de247aaf02f70"
+    ) {
       throw new ApiError(
         HTTP_STATUS.BAD_REQUEST,
-        "Published exam cannot be modified.",
+        "Only exams in PENDING_EXAM status can be modified.",
       );
     }
 
@@ -323,7 +329,7 @@ class ExamService extends BaseService<IExam> {
       totalMarks: originalExam.totalMarks,
       passingMarks: originalExam.passingMarks,
 
-      status: payload.status || ExamStatus.DRAFT,
+      status: payload.status || ExamStatus.PENDING_EXAM,
       approvalStatus: ExamApprovalStatus.DRAFT,
 
       candidateIds: payload.copyCandidates ? originalExam.candidateIds : [],
@@ -437,7 +443,7 @@ class ExamService extends BaseService<IExam> {
   ) {
     const exam = await super.getById(id);
 
-    if (exam.status === ExamStatus.COMPLETED || exam.status === ExamStatus.CANCELLED) {
+    if (exam.status === ExamStatus.PENDING_RESULT_GENERATE || exam.status === ExamStatus.RESULT_GENERATED || exam.status === (ExamStatus as any).CANCELLED) {
       throw new ApiError(HTTP_STATUS.BAD_REQUEST, "Cannot start a completed or cancelled exam.");
     }
 
@@ -476,7 +482,7 @@ class ExamService extends BaseService<IExam> {
     }
 
     const updatedExam = await examRepository.update(id, {
-      status: ExamStatus.EXAM_ENDED,
+      status: ExamStatus.PENDING_RESULT_GENERATE,
       endedBy: payload.endedBy as any,
       endRemarks: payload.endRemarks,
       endedAt: new Date(),
@@ -515,7 +521,7 @@ class ExamService extends BaseService<IExam> {
   ) {
     const exam = await super.getById(id);
 
-    const canPublish = [ExamStatus.COMPLETED, ExamStatus.EXAM_ENDED].includes(exam.status as ExamStatus);
+    const canPublish = [ExamStatus.PENDING_RESULT_GENERATE].includes(exam.status as ExamStatus);
     if (!canPublish) {
       throw new ApiError(HTTP_STATUS.BAD_REQUEST, "Only completed/ended exams can have their results published.");
     }
@@ -582,12 +588,12 @@ class ExamService extends BaseService<IExam> {
     );
 
     const completedExams = await examRepository.countByStatus(
-      ExamStatus.COMPLETED,
+      ExamStatus.PENDING_RESULT_GENERATE,
       companyId,
     );
 
     const cancelledExams = await examRepository.countByStatus(
-      ExamStatus.CANCELLED,
+      'CANCELLED' as any,
       companyId,
     );
 

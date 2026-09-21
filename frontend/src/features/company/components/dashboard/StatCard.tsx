@@ -84,7 +84,7 @@ export const StatCard = ({ title, value, icon: Icon, description, trend, accent 
               </p>
             )}
           </div>
-          <div className="p-1.5 rounded-md bg-[#E4FD97] text-[#2D3E2C] shrink-0">
+          <div className="p-1.5 rounded-md bg-[#E4FD97] text-black shrink-0">
             <Icon className="w-4 h-4" />
           </div>
         </div>

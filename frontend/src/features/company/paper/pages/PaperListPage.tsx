@@ -82,14 +82,11 @@ export const PaperListPage = () => {
   }, [uploadedBatches, search, examFilter, statusFilter]);
 
   const examStatuses = [
+    { value: "PENDING_EXAM", label: "Pending Exam" },
     { value: "ACTIVE", label: "Active" },
-    { value: "DRAFT", label: "Draft" },
     { value: "EXAM_STARTED", label: "Exam Started" },
-    { value: "EXAM_ENDED", label: "Exam Ended" },
-    { value: "COMPLETED", label: "Completed" },
+    { value: "PENDING_RESULT_GENERATE", label: "Pending Result Generate" },
     { value: "RESULT_GENERATED", label: "Result Generated" },
-    { value: "CANCELLED", label: "Cancelled" },
-    { value: "INACTIVE", label: "Inactive" }
   ];
 
   const toggleRow = (importId: string) => {

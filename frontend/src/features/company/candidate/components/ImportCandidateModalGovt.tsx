@@ -143,14 +143,14 @@ export function ImportCandidateModalGovt ({ onSuccess }: { onSuccess?: () => voi
       </DialogTrigger>
       <DialogContent className='sm:max-w-lg'>
         <DialogHeader>
-          <div className="flex flex-wrap items-center justify-between gap-2 pr-6">
+          <div className='flex flex-wrap items-center justify-between gap-2 pr-6'>
             <DialogTitle>Import Candidates via ZIP</DialogTitle>
-            <a 
-              href="/Import_Candidates_Blank_Template.xlsx" 
-              download="Import_Candidates_Blank_Template.xlsx"
-              className="bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-md shadow-sm transition-colors"
+            <a
+              href='/Import_Candidates_Blank_Template.xlsx'
+              download='Import_Candidates_Blank_Template.xlsx'
+              className='bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-md shadow-sm transition-colors'
             >
-              <Download className="w-3 h-3" />
+              <Download className='w-3 h-3' />
               Download Template
             </a>
           </div>
@@ -184,9 +184,7 @@ export function ImportCandidateModalGovt ({ onSuccess }: { onSuccess?: () => voi
 
           {/* Single ZIP Upload */}
           <div className='grid w-full items-center gap-1.5'>
-            <Label htmlFor='zip-file'>
-              Upload ZIP File (.zip)
-            </Label>
+            <Label htmlFor='zip-file'>Upload ZIP File (.zip)</Label>
             <Input
               id='zip-file'
               type='file'
@@ -201,16 +199,36 @@ export function ImportCandidateModalGovt ({ onSuccess }: { onSuccess?: () => voi
             <p className='font-semibold mb-1 text-foreground'>📦 ZIP File Structure:</p>
             <div className='bg-muted rounded p-2 font-mono text-xs mb-3 space-y-0.5'>
               <p>candidates.zip</p>
-              <p className='pl-3'>├── candidates.xlsx <span className='text-muted-foreground font-sans'>(candidate data)</span></p>
-              <p className='pl-3'>├── 1023.jpg <span className='text-muted-foreground font-sans'>(Candidate ID = 1023)</span></p>
+              <p className='pl-3'>
+                ├── candidates.xlsx{' '}
+                <span className='text-muted-foreground font-sans'>(candidate data)</span>
+              </p>
+              <p className='pl-3'>
+                ├── 1023.jpg{' '}
+                <span className='text-muted-foreground font-sans'>(Candidate ID = 1023)</span>
+              </p>
               <p className='pl-3'>├── 1024.png</p>
               <p className='pl-3'>└── 1025.jpeg</p>
             </div>
-            <p className='font-medium mb-1'>Photo Rules:</p>
-            <ul className='list-disc list-inside space-y-0.5 text-xs mb-3'>
-              <li>Photo filename must exactly match the <strong>Candidate ID</strong></li>
-              <li>Supported formats: <code>.jpg</code>, <code>.jpeg</code>, <code>.png</code></li>
-              <li>Optional fields in Excel can be left blank</li>
+            <p className='font-medium mb-1 text-red-600 dark:text-red-400'>Photo Rules:</p>
+            <ul className='list-disc list-inside space-y-0.5 text-xs mb-3 text-red-600 dark:text-red-400 font-medium'>
+              <li>
+                Photo filename must exactly match the <strong>Candidate ID</strong>
+              </li>
+              <li>
+                Supported formats: <code>.jpg</code>, <code>.jpeg</code>, <code>.png</code>
+              </li>
+            </ul>
+            <p className='font-medium mb-1 text-red-600 dark:text-red-400'>Excel File Rules:</p>
+            <ul className='list-disc list-inside space-y-0.5 text-xs mb-3 text-red-600 dark:text-red-400 font-medium'>
+              <li>
+                <strong>Required columns</strong> must be filled with valid details.
+              </li>
+              <li>
+                For <strong>optional fields</strong>, if details are not available, leave them{' '}
+                <strong>completely blank</strong> (do not write &quot;N/A&quot; or &apos;NOT
+                PROVIDED&apos;).
+              </li>
             </ul>
             <p className='font-medium mb-1'>Required Excel Columns:</p>
             <ul className='list-disc list-inside space-y-0.5 text-xs'>
@@ -275,7 +293,9 @@ export function ImportCandidateModalGovt ({ onSuccess }: { onSuccess?: () => voi
                 <AlertDescription>
                   <strong>{report.successCount}</strong> candidate(s) imported successfully.
                   {report.errorCount > 0 && (
-                    <span className='text-orange-600 ml-1'><strong>{report.errorCount}</strong> skipped.</span>
+                    <span className='text-orange-600 ml-1'>
+                      <strong>{report.errorCount}</strong> skipped.
+                    </span>
                   )}
                 </AlertDescription>
               </Alert>
@@ -286,7 +306,9 @@ export function ImportCandidateModalGovt ({ onSuccess }: { onSuccess?: () => voi
                   </p>
                   <ul className='space-y-0.5'>
                     {report.errors.map((e, idx) => (
-                      <li key={idx} className='text-xs text-orange-600 dark:text-orange-400'>{e}</li>
+                      <li key={idx} className='text-xs text-orange-600 dark:text-orange-400'>
+                        {e}
+                      </li>
                     ))}
                   </ul>
                 </div>

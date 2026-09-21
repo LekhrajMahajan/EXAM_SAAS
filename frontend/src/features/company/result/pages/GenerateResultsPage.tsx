@@ -48,7 +48,7 @@ export function GenerateResultsPage() {
         
         const endedExams = allExams.filter((ex: Exam) => {
           const status = getDisplayStatus(ex);
-          return ['PENDING_RESULT_GENERATE', 'PENDING_PUBLISH_RESULT', 'RESULT_PUBLISHED', 'COMPLETED', 'EXAM_ENDED'].includes(status);
+          return ['PENDING_EXAM', 'ONGOING_EXAM', 'PENDING_RESULT_GENERATE', 'RESULT_GENERATED', 'PENDING_PUBLISH_RESULT', 'RESULT_PUBLISHED', 'COMPLETED', 'EXAM_ENDED'].includes(status);
         });
 
         const examsWithFlags = endedExams.map((ex: Exam) => {

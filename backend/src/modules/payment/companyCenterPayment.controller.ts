@@ -120,6 +120,7 @@ export const getCompanyPayments = asyncHandler(async (req: any, res: Response) =
     ]
   })
     .populate("centerId", "centerName centerCode paymentDetails upiId")
+    .populate("examId", "examTitle examCode shift examDate")
     .sort({ createdAt: -1 });
 
   return sendResponse(res, HTTP_STATUS.OK, {

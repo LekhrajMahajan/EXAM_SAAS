@@ -49,12 +49,14 @@ export function ExamInstructionsPage () {
   const [savingPartOrder, setSavingPartOrder] = useState(false)
 
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null)
+  const [examTimeLeft, setExamTimeLeft] = useState<number | null>(null)
   const [isFaceCaptureMode, setIsFaceCaptureMode] = useState(false)
   const [snapshotBase64, setSnapshotBase64] = useState<string | null>(null)
   const [capturedImage, setCapturedImage] = useState<string | null>(null)
   const [faceApiLoaded, setFaceApiLoaded] = useState(false)
   const [isScanning, setIsScanning] = useState(false)
   const [faceCaptureStatus, setFaceCaptureStatus] = useState('Loading camera...')
+  const [originalFaceDescriptor, setOriginalFaceDescriptor] = useState<Float32Array | null>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
 
   const [agreements, setAgreements] = useState({
@@ -134,6 +136,32 @@ export function ExamInstructionsPage () {
           faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
         ])
         setFaceApiLoaded(true)
+
+        // Pre-compute original profile photo face descriptor for faster verification
+        if (cInfo.photo) {
+          try {
+            const imgElement = document.createElement('img')
+            imgElement.crossOrigin = 'anonymous'
+            imgElement.src = cInfo.photo
+            await new Promise((resolve, reject) => {
+              imgElement.onload = resolve
+              imgElement.onerror = reject
+            })
+            // Wrap in setTimeout to avoid blocking main thread immediately after loading
+            setTimeout(async () => {
+              const originalDetection = await faceapi
+                .detectSingleFace(imgElement, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.3 }))
+                .withFaceLandmarks()
+                .withFaceDescriptor()
+              
+              if (originalDetection) {
+                setOriginalFaceDescriptor(originalDetection.descriptor)
+              }
+            }, 500)
+          } catch (e) {
+            console.error("Failed to pre-compute profile face descriptor", e)
+          }
+        }
       } catch (err: any) {
         console.error('Failed to load exam instructions', err)
         setError(err.response?.data?.message || err.message || 'Failed to load exam details')
@@ -147,9 +175,9 @@ export function ExamInstructionsPage () {
 
   // Countdown Timer Logic
   useEffect(() => {
-    if (!examMeta || !examMeta.examDate || !examMeta.startTime) return
+    if (!examMeta || !examMeta.examDate || !examMeta.startTime || !examMeta.duration) return
 
-    const calculateRemaining = () => {
+    const calculateTime = () => {
       const now = new Date()
       // Use today's date and just apply the exam start time
       // This ensures the countdown works perfectly even if the exam was created on a different day
@@ -158,16 +186,25 @@ export function ExamInstructionsPage () {
       examDateTime.setHours(hours, minutes, 0, 0)
 
       const diff = examDateTime.getTime() - now.getTime()
-      return Math.max(0, Math.floor(diff / 1000))
+      const remainingToStart = Math.max(0, Math.floor(diff / 1000))
+      setTimeRemaining(remainingToStart)
+
+      if (remainingToStart === 0) {
+        const endDateTime = new Date(examDateTime.getTime() + examMeta.duration * 60000)
+        const endDiff = endDateTime.getTime() - now.getTime()
+        setExamTimeLeft(Math.max(0, Math.floor(endDiff / 1000)))
+      } else {
+        setExamTimeLeft(null)
+      }
     }
 
     // Avoid calling setState synchronously during the effect
     const timeoutId = setTimeout(() => {
-      setTimeRemaining(calculateRemaining())
+      calculateTime()
     }, 0)
 
     const intervalId = setInterval(() => {
-      setTimeRemaining(calculateRemaining())
+      calculateTime()
     }, 1000)
 
     return () => {
@@ -230,35 +267,40 @@ export function ExamInstructionsPage () {
         }
 
         setFaceCaptureStatus('Verifying against profile photo...')
-        
-        const imgElement = document.createElement('img')
-        imgElement.crossOrigin = 'anonymous'
-        imgElement.src = candidateInfo.photo
-        
-        await new Promise((resolve, reject) => {
-          imgElement.onload = resolve
-          imgElement.onerror = reject
-        })
 
-        // Allow UI to update before second heavy operation
-        await new Promise(resolve => setTimeout(resolve, 100))
+        let profileDescriptor = originalFaceDescriptor;
 
-        const originalDetection = await faceapi
-          .detectSingleFace(imgElement, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.3 }))
-          .withFaceLandmarks()
-          .withFaceDescriptor()
+        if (!profileDescriptor) {
+          const imgElement = document.createElement('img')
+          imgElement.crossOrigin = 'anonymous'
+          imgElement.src = candidateInfo.photo
+          
+          await new Promise((resolve, reject) => {
+            imgElement.onload = resolve
+            imgElement.onerror = reject
+          })
 
-        if (!originalDetection) {
-          setFaceCaptureStatus('Could not detect face in profile photo. Verification failed.')
-          setIsScanning(false)
-          return
-        } else {
-          const distance = faceapi.euclideanDistance(originalDetection.descriptor, liveDetections[0].descriptor)
-          if (distance > 0.6) {
-            setFaceCaptureStatus(`Verification failed. Face does not match profile photo. Please try again.`)
+          // Allow UI to update before second heavy operation
+          await new Promise(resolve => setTimeout(resolve, 100))
+
+          const originalDetection = await faceapi
+            .detectSingleFace(imgElement, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.3 }))
+            .withFaceLandmarks()
+            .withFaceDescriptor()
+
+          if (!originalDetection) {
+            setFaceCaptureStatus('Could not detect face in profile photo. Verification failed.')
             setIsScanning(false)
             return
           }
+          profileDescriptor = originalDetection.descriptor;
+        }
+
+        const distance = faceapi.euclideanDistance(profileDescriptor, liveDetections[0].descriptor)
+        if (distance > 0.45) { // Stricter threshold (was 0.6)
+          setFaceCaptureStatus(`Verification failed. Face does not match profile photo. Please try again.`)
+          setIsScanning(false)
+          return
         }
 
         setFaceCaptureStatus('Face verified successfully!')
@@ -717,18 +759,25 @@ export function ExamInstructionsPage () {
 
 
 
-            <Button
-              onClick={handleStartExamClick}
-              disabled={(timeRemaining !== null && timeRemaining > 0) || !capturedImage || !allAgreed || (partWiseEnabled && !selectedPart) || savingPartOrder}
-              size='lg'
-              className='w-full text-base h-12 font-bold shadow-md transition-all mt-auto'
-            >
-              {savingPartOrder
-                ? 'Saving...'
-                : timeRemaining !== null && timeRemaining > 0
-                ? `Starts in ${formatTime(timeRemaining)}`
-                : 'I am ready to begin'}
-            </Button>
+            <div className="mt-auto space-y-2">
+              <Button
+                onClick={handleStartExamClick}
+                disabled={(timeRemaining !== null && timeRemaining > 0) || !capturedImage || !allAgreed || (partWiseEnabled && !selectedPart) || savingPartOrder}
+                size='lg'
+                className='w-full text-base h-12 font-bold shadow-md transition-all'
+              >
+                {savingPartOrder
+                  ? 'Saving...'
+                  : timeRemaining !== null && timeRemaining > 0
+                  ? `Starts in ${formatTime(timeRemaining)}`
+                  : 'I am ready to begin'}
+              </Button>
+              {timeRemaining === 0 && examTimeLeft !== null && (
+                <p className="text-center text-sm font-semibold text-destructive animate-pulse">
+                  Exam has already started! Time left: {formatTime(examTimeLeft)}
+                </p>
+              )}
+            </div>
           </div>
         </div>
       </div>

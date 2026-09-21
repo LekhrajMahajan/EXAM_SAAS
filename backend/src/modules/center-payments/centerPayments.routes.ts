@@ -8,26 +8,78 @@ const router = Router();
 router.get('/debug-count', async (req, res) => {
     try {
         const CenterPayments = require('./centerPayments.model').default;
+        const allPayments = await CenterPayments.find({}).lean();
+        res.json({ allPayments });
+    } catch (e) {
+        res.status(500).json({ error: String(e) });
+    }
+});
+
+// Debug: show what companyId is in the token and whether payments match
+router.get('/debug-auth', async (req: any, res: any) => {
+    try {
         const mongoose = require('mongoose');
-        const count = await CenterPayments.countDocuments();
+        const jwt = require('jsonwebtoken');
+        const authHeader = req.headers.authorization || '';
+        const token = authHeader.replace('Bearer ', '');
+        let decoded: any = {};
+        try { decoded = jwt.decode(token); } catch (_) {}
         
-        const payments = await CenterPayments.find({ shiftId: { $exists: false } }).limit(5);
-        for (let p of payments) {
-            const shiftCount = await mongoose.model("Shift").countDocuments({ examId: p.examId });
-            if (shiftCount === 0) {
-                // Create a dummy shift
-                await mongoose.model("Shift").create({
-                    examId: p.examId,
-                    shiftName: "Morning Shift",
-                    startTime: "09:00",
-                    endTime: "12:00",
-                    date: new Date(),
-                    centerCapacity: []
-                });
-            }
+        const companyIdFromToken = decoded?.companyId;
+        const userIdFromToken = decoded?.userId;
+        
+        const CenterPayments = require('./centerPayments.model').default;
+        
+        // Try querying with the token's companyId
+        let byCompanyId: any[] = [];
+        if (companyIdFromToken) {
+            byCompanyId = await CenterPayments.find({ companyId: new mongoose.Types.ObjectId(companyIdFromToken) }).lean();
         }
         
-        res.json({ count, msg: "Dummy shifts created if missing" });
+        // Also try by userId in case companyId is actually userId
+        let byUserId: any[] = [];
+        if (userIdFromToken) {
+            byUserId = await CenterPayments.find({ companyId: new mongoose.Types.ObjectId(userIdFromToken) }).lean();
+        }
+        
+        const allPayments = await CenterPayments.find({}).select('companyId').lean();
+        
+        res.json({ 
+            tokenCompanyId: companyIdFromToken,
+            tokenUserId: userIdFromToken,
+            byCompanyIdCount: byCompanyId.length,
+            byUserIdCount: byUserId.length,
+            allPaymentsCompanyIds: allPayments.map((p: any) => p.companyId?.toString())
+        });
+    } catch (e) {
+        res.status(500).json({ error: String(e) });
+    }
+});
+
+// One-time utility: generate payments for all ended exams that have a centerId but no payment yet
+router.get('/generate-missing', async (req, res) => {
+    try {
+        const mongoose = require('mongoose');
+        const Exam = mongoose.model('Exam');
+        const CenterPayments = require('./centerPayments.model').default;
+        
+        const endedExams = await Exam.find({ 
+            status: { $in: ['PENDING_RESULT_GENERATE', 'RESULT_GENERATED'] },
+            centerId: { $exists: true, $ne: null }
+        }).lean();
+        
+        await CenterPayments.deleteMany({});
+        
+        let created = 0;
+        const centerPaymentsService = require('./centerPayments.service').default;
+        for (const exam of endedExams) {
+            const existing = await CenterPayments.findOne({ examId: exam._id, centerId: exam.centerId });
+            if (!existing) {
+                await centerPaymentsService.generatePaymentsForExam(exam._id, exam.companyId);
+                created++;
+            }
+        }
+        res.json({ message: `Attempted to generate ${created} missing payments for ${endedExams.length} ended exams.` });
     } catch (e) {
         res.status(500).json({ error: String(e) });
     }

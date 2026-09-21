@@ -34,7 +34,7 @@ export const AddSeatAllocationModal = ({ isOpen, onClose, onSuccess }: AddSeatAl
           const res = await api.get(`/import-center-assign-exam/assigned-exams/center/${user.centerId}`);
           if (res.data?.success) {
             const activeExams = res.data.data
-              .filter((item: any) => item.examId?.status === 'ACTIVE')
+              .filter((item: any) => item.examId?.status === 'ACTIVE' || item.examId?.status === 'PENDING_EXAM')
               .map((item: any) => item.examId);
             setAssignedExams(activeExams);
           }

@@ -15,6 +15,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/shared/components/ui/dialog";
 import { 
   MoreHorizontal, 
   Edit, 
@@ -36,14 +44,17 @@ import {
   AlertCircle,
   Clock,
   XCircle,
-  X
+  X,
+  Trash2,
+  Power
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { CenterStatusBadge } from "./CenterStatusBadge";
 import type { Center } from "../types/center.types";
 import { useVerifyCenterSetup } from "../hooks/center.hooks";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
-
+import { Switch } from "@/shared/components/ui/switch";
 interface CenterTableProps {
   centers: Center[];
 }
@@ -62,9 +73,39 @@ interface DocItem {
 
 export const CenterTable = ({ centers }: CenterTableProps) => {
   const [selectedCenter, setSelectedCenter] = useState<Center | null>(null);
+  const [centerToDelete, setCenterToDelete] = useState<string | null>(null);
   const [docsList, setDocsList] = useState<DocItem[]>([]);
+  const queryClient = useQueryClient();
 
   const verifyMutation = useVerifyCenterSetup();
+
+  const statusUpdateMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string, status: string }) => {
+      const res = await apiClient.patch(`/centers/${id}/status`, { status });
+      return res.data;
+    },
+    onSuccess: () => {
+      toast({ title: "Status Updated", description: "Center status has been updated successfully.", variant: "success" });
+      queryClient.invalidateQueries({ queryKey: ["centers"] });
+    },
+    onError: () => {
+      toast({ title: "Update Failed", description: "Could not update center status.", variant: "destructive" });
+    }
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await apiClient.delete(`/centers/${id}`);
+      return res.data;
+    },
+    onSuccess: () => {
+      toast({ title: "Center Deleted", description: "Center has been permanently deleted.", variant: "success" });
+      queryClient.invalidateQueries({ queryKey: ["centers"] });
+    },
+    onError: () => {
+      toast({ title: "Delete Failed", description: "Could not delete center.", variant: "destructive" });
+    }
+  });
 
   const handleOpenVerification = async (center: Center) => {
     setSelectedCenter(center);
@@ -229,11 +270,12 @@ export const CenterTable = ({ centers }: CenterTableProps) => {
             const centerObj = center as unknown as Record<string, unknown>;
             const centerId = center.id || center._id || `center-${idx}`;
 
+            const isApproved = String(center.approvalStatus).toLowerCase() === 'approved' || String(centerObj.setupStatus).toUpperCase() === 'ACTIVE';
+            const statusVal = isApproved ? 'ACTIVE' : 'Pending Verification';
+            const approvalVal = isApproved ? 'Approved' : 'Pending';
+            
             const rooms = centerObj.totalLabs ?? center.capacity?.maxRooms ?? 1;
             const systems = centerObj.totalSystems ?? center.capacity?.maxSystems ?? (typeof center.capacity === 'number' ? center.capacity : null) ?? 20;
-            const statusVal = center.status || (centerObj.setupStatus === 'ACTIVE' ? 'Active' : 'Inactive');
-            const approvalVal = center.approvalStatus || (centerObj.setupStatus === 'ACTIVE' ? 'Approved' : 'Pending');
-            const isApproved = String(approvalVal).toLowerCase() === 'approved' || centerObj.setupStatus === 'ACTIVE';
             const hasSubmittedDocuments = String(centerObj.setupStatus).toUpperCase() === 'SUBMITTED' || 
                                           String(centerObj.setupStatus).toUpperCase() === 'PENDING_VERIFICATION' || 
                                           (typeof centerObj.setupCurrentStep === 'number' && centerObj.setupCurrentStep >= 8) || 
@@ -263,12 +305,13 @@ export const CenterTable = ({ centers }: CenterTableProps) => {
                   </div>
                 </TableCell>
                 <TableCell className="py-3.5">
-                  <CenterStatusBadge status={statusVal as 'Active' | 'Inactive'} />
+                  <CenterStatusBadge status={statusVal as any} />
                 </TableCell>
                 <TableCell className="py-3.5">
-                  <div className="flex items-center">
+                  <div className="flex items-center gap-2">
+
                     {isApproved ? (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#E4FD97] border-0 text-[#2D3E2C]">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-secondary border-0 text-[#2D3E2C]">
                         <CheckCircle2 className="h-3.5 w-3.5 text-[#2D3E2C]" />
                         Approved & Unlocked
                       </span>
@@ -277,15 +320,26 @@ export const CenterTable = ({ centers }: CenterTableProps) => {
                         variant="outline"
                         size="sm"
                         onClick={() => handleOpenVerification(center)}
-                        className="h-8 text-xs px-3.5 border-indigo-500/50 bg-indigo-600 hover:bg-indigo-500 text-white flex items-center gap-1.5 rounded-lg shadow-sm transition-all font-semibold"
+                        className="h-8 text-xs px-3.5 border-[#2D3E2C] bg-white text-[#2D3E2C] flex items-center gap-1.5 rounded-lg shadow-sm font-semibold"
                       >
-                        <FileCheck className="h-3.5 w-3.5 text-indigo-300" />
+                        <FileCheck className="h-3.5 w-3.5" />
                         Verify Documents
                       </Button>
                     )}
                   </div>
                 </TableCell>
-                <TableCell className="text-right py-3.5">
+                <TableCell className="text-right py-3.5 flex items-center justify-end gap-2">
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                    onClick={() => {
+                      setCenterToDelete(centerId);
+                    }}
+                    disabled={deleteMutation.isPending && deleteMutation.variables === centerId}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-muted">
@@ -293,71 +347,93 @@ export const CenterTable = ({ centers }: CenterTableProps) => {
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="bg-popover border-border text-popover-foreground shadow-xl">
+                    <DropdownMenuContent align="end" className="bg-popover border-border text-popover-foreground shadow-xl max-h-[280px] overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-transparent hover:[&::-webkit-scrollbar-thumb]:bg-slate-200/50 dark:hover:[&::-webkit-scrollbar-thumb]:bg-slate-700/50 [&::-webkit-scrollbar-thumb]:rounded-full">
                       <Link to={`/company/centers/${centerId}`}>
-                        <DropdownMenuItem className="cursor-pointer hover:bg-muted">
-                          <Eye className="mr-2 h-4 w-4 text-slate-500" />
-                          View Details
+                        <DropdownMenuItem className="cursor-pointer hover:bg-secondary/10 flex items-center gap-2.5 py-2">
+                          <div className="p-1.5 rounded-lg bg-slate-100 text-slate-900 border border-slate-200 shadow-sm">
+                            <Eye className="h-3.5 w-3.5" />
+                          </div>
+                          <span className="font-medium text-foreground">View Details</span>
                         </DropdownMenuItem>
                       </Link>
                       <Link to={`/company/centers/${centerId}/edit`}>
-                        <DropdownMenuItem className="cursor-pointer hover:bg-muted">
-                          <Edit className="mr-2 h-4 w-4 text-slate-500" />
-                          Edit Info
+                        <DropdownMenuItem className="cursor-pointer hover:bg-secondary/10 flex items-center gap-2.5 py-2">
+                          <div className="p-1.5 rounded-lg bg-slate-100 text-slate-900 border border-slate-200 shadow-sm">
+                            <Edit className="h-3.5 w-3.5" />
+                          </div>
+                          <span className="font-medium text-foreground">Edit Info</span>
                         </DropdownMenuItem>
                       </Link>
                       <Link to={`/company/centers/${centerId}/staff`}>
-                        <DropdownMenuItem className="cursor-pointer hover:bg-muted">
-                          <Users className="mr-2 h-4 w-4 text-slate-500" />
-                          Center Staff Add
+                        <DropdownMenuItem className="cursor-pointer hover:bg-secondary/10 flex items-center gap-2.5 py-2">
+                          <div className="p-1.5 rounded-lg bg-slate-100 text-slate-900 border border-slate-200 shadow-sm">
+                            <Users className="h-3.5 w-3.5" />
+                          </div>
+                          <span className="font-medium text-foreground">Center Staff Add</span>
                         </DropdownMenuItem>
                       </Link>
                       <Link to={`/company/centers/${centerId}/labs`}>
-                        <DropdownMenuItem className="cursor-pointer hover:bg-muted">
-                          <Monitor className="mr-2 h-4 w-4 text-slate-500" />
-                          Center Lab Add
+                        <DropdownMenuItem className="cursor-pointer hover:bg-secondary/10 flex items-center gap-2.5 py-2">
+                          <div className="p-1.5 rounded-lg bg-slate-100 text-slate-900 border border-slate-200 shadow-sm">
+                            <Monitor className="h-3.5 w-3.5" />
+                          </div>
+                          <span className="font-medium text-foreground">Center Lab Add</span>
                         </DropdownMenuItem>
                       </Link>
                       <Link to={`/company/centers/${centerId}/assigned-exams`}>
-                        <DropdownMenuItem className="cursor-pointer hover:bg-muted">
-                          <ClipboardList className="mr-2 h-4 w-4 text-slate-500" />
-                          Assigned Exams
+                        <DropdownMenuItem className="cursor-pointer hover:bg-secondary/10 flex items-center gap-2.5 py-2">
+                          <div className="p-1.5 rounded-lg bg-slate-100 text-slate-900 border border-slate-200 shadow-sm">
+                            <ClipboardList className="h-3.5 w-3.5" />
+                          </div>
+                          <span className="font-medium text-foreground">Assigned Exams</span>
                         </DropdownMenuItem>
                       </Link>
                       <Link to={`/company/centers/${centerId}/infrastructure`}>
-                        <DropdownMenuItem className="cursor-pointer hover:bg-muted">
-                          <Upload className="mr-2 h-4 w-4 text-slate-500" />
-                          Center Infrastructure
+                        <DropdownMenuItem className="cursor-pointer hover:bg-secondary/10 flex items-center gap-2.5 py-2">
+                          <div className="p-1.5 rounded-lg bg-slate-100 text-slate-900 border border-slate-200 shadow-sm">
+                            <Upload className="h-3.5 w-3.5" />
+                          </div>
+                          <span className="font-medium text-foreground">Center Infrastructure</span>
                         </DropdownMenuItem>
                       </Link>
                       <Link to={`/company/centers/${centerId}/photos`}>
-                        <DropdownMenuItem className="cursor-pointer hover:bg-muted">
-                          <ImageIcon className="mr-2 h-4 w-4 text-slate-500" />
-                          Center Photos
+                        <DropdownMenuItem className="cursor-pointer hover:bg-secondary/10 flex items-center gap-2.5 py-2">
+                          <div className="p-1.5 rounded-lg bg-slate-100 text-slate-900 border border-slate-200 shadow-sm">
+                            <ImageIcon className="h-3.5 w-3.5" />
+                          </div>
+                          <span className="font-medium text-foreground">Center Photos</span>
                         </DropdownMenuItem>
                       </Link>
                       <Link to={`/company/centers/${centerId}/location`}>
-                        <DropdownMenuItem className="cursor-pointer hover:bg-muted">
-                          <MapPin className="mr-2 h-4 w-4 text-slate-500" />
-                          Center Location
+                        <DropdownMenuItem className="cursor-pointer hover:bg-secondary/10 flex items-center gap-2.5 py-2">
+                          <div className="p-1.5 rounded-lg bg-slate-100 text-slate-900 border border-slate-200 shadow-sm">
+                            <MapPin className="h-3.5 w-3.5" />
+                          </div>
+                          <span className="font-medium text-foreground">Center Location</span>
                         </DropdownMenuItem>
                       </Link>
                       <Link to={`/company/centers/${centerId}/system-network`}>
-                        <DropdownMenuItem className="cursor-pointer hover:bg-muted">
-                          <Network className="mr-2 h-4 w-4 text-slate-500" />
-                          System Network
+                        <DropdownMenuItem className="cursor-pointer hover:bg-secondary/10 flex items-center gap-2.5 py-2">
+                          <div className="p-1.5 rounded-lg bg-slate-100 text-slate-900 border border-slate-200 shadow-sm">
+                            <Network className="h-3.5 w-3.5" />
+                          </div>
+                          <span className="font-medium text-foreground">System Network</span>
                         </DropdownMenuItem>
                       </Link>
                       <Link to={`/company/centers/${centerId}/assign-exam-staff`}>
-                        <DropdownMenuItem className="cursor-pointer hover:bg-muted">
-                          <UserPlus className="mr-2 h-4 w-4 text-slate-500" />
-                          Assign Exam Staff
+                        <DropdownMenuItem className="cursor-pointer hover:bg-secondary/10 flex items-center gap-2.5 py-2">
+                          <div className="p-1.5 rounded-lg bg-slate-100 text-slate-900 border border-slate-200 shadow-sm">
+                            <UserPlus className="h-3.5 w-3.5" />
+                          </div>
+                          <span className="font-medium text-foreground">Assign Exam Staff</span>
                         </DropdownMenuItem>
                       </Link>
                       <Link to={`/company/centers/${centerId}/assigned-candidate-attendance`}>
-                        <DropdownMenuItem className="cursor-pointer hover:bg-muted">
-                          <Users className="mr-2 h-4 w-4 text-slate-500" />
-                          Assigned Candidate Attendance
+                        <DropdownMenuItem className="cursor-pointer hover:bg-secondary/10 flex items-center gap-2.5 py-2">
+                          <div className="p-1.5 rounded-lg bg-slate-100 text-slate-900 border border-slate-200 shadow-sm">
+                            <Users className="h-3.5 w-3.5" />
+                          </div>
+                          <span className="font-medium text-foreground">Assigned Candidate Attendance</span>
                         </DropdownMenuItem>
                       </Link>
                     </DropdownMenuContent>
@@ -378,29 +454,29 @@ export const CenterTable = ({ centers }: CenterTableProps) => {
 
       {/* DOCUMENT VERIFICATION MODAL */}
       {selectedCenter && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in-0 duration-200">
-          <div className="bg-[#0D121F] border border-slate-800 rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden text-slate-100">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in-0 duration-200">
+          <div className="bg-card border border-border rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-xl overflow-hidden text-foreground">
             {/* Modal Header */}
-            <div className="px-6 py-5 bg-gradient-to-r from-[#141B2D] to-[#0F1626] border-b border-slate-800/80 flex items-center justify-between">
+            <div className="px-6 py-5 bg-muted/30 border-b border-border flex items-center justify-between">
               <div>
                 <div className="flex items-center gap-2">
-                  <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                  <div className="p-2.5 rounded-xl bg-secondary text-secondary-foreground border border-secondary/10 shadow-sm">
                     <FileCheck className="h-5 w-5" />
                   </div>
-                  <h3 className="text-lg font-bold text-white tracking-wide">
+                  <h3 className="text-lg font-bold text-foreground tracking-wide">
                     Center Document Verification
                   </h3>
-                  <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
+                  <span className="px-3 py-1 rounded-full text-[11px] font-bold tracking-wide bg-secondary text-secondary-foreground shadow-sm uppercase">
                     {selectedCenter.centerCode}
                   </span>
                 </div>
-                <p className="text-xs text-slate-400 mt-1">
-                  Review all statutory & legal documents submitted by center manager for <span className="text-white font-semibold">{selectedCenter.centerName}</span>.
+                <p className="text-xs text-muted-foreground mt-1">
+                  Review all statutory & legal documents submitted by center manager for <span className="text-foreground font-semibold">{selectedCenter.centerName}</span>.
                 </p>
               </div>
               <button 
                 onClick={() => setSelectedCenter(null)}
-                className="p-2 rounded-lg bg-slate-800/60 hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
+                className="p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -409,18 +485,20 @@ export const CenterTable = ({ centers }: CenterTableProps) => {
             {/* Modal Body */}
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
               {/* Alert guidance */}
-              <div className={`p-4 rounded-xl border flex items-center gap-3.5 transition-colors ${
+              <div className={`p-4 rounded-xl border flex items-center gap-4 transition-all shadow-sm ${
                 allViewed 
-                  ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300" 
-                  : "bg-amber-500/10 border-amber-500/30 text-amber-300"
+                  ? "bg-emerald-50/80 border-emerald-200 text-emerald-800" 
+                  : "bg-secondary/10 border-secondary/15 text-[#2D3E2C]"
               }`}>
-                {allViewed ? (
-                  <CheckCircle2 className="h-6 w-6 text-emerald-400 shrink-0" />
-                ) : (
-                  <AlertCircle className="h-6 w-6 text-amber-400 shrink-0 animate-bounce" />
-                )}
+                <div className={`p-2.5 rounded-xl ${allViewed ? "bg-emerald-100 text-emerald-700" : "bg-secondary text-[#2D3E2C] shadow-sm"}`}>
+                  {allViewed ? (
+                    <CheckCircle2 className="h-5 w-5 shrink-0" />
+                  ) : (
+                    <AlertCircle className="h-5 w-5 shrink-0 animate-bounce" />
+                  )}
+                </div>
                 <div className="text-sm">
-                  <p className="font-semibold text-white">
+                  <p className="font-semibold">
                     {allViewed 
                       ? "All submitted documents have been inspected!" 
                       : "Action Required: View & inspect all documents to enable approval."
@@ -433,30 +511,32 @@ export const CenterTable = ({ centers }: CenterTableProps) => {
                     }
                   </p>
                 </div>
-                <div className="ml-auto font-bold text-sm tracking-wider px-3 py-1 bg-black/30 rounded-lg border border-white/10">
+                <div className="ml-auto font-bold text-sm tracking-wider px-3 py-1 bg-white rounded-lg border border-border shadow-sm">
                   {docsList.filter(d => d.status !== 'pending').length} / {docsList.length} Viewed
                 </div>
               </div>
 
               {/* Documents Grid / Table */}
               <div className="space-y-3">
-                <h4 className="text-sm font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-indigo-400" />
-                  Uploaded Statutory Documents (5/5 Received)
+                <h4 className="text-sm font-bold text-[#2D3E2C] uppercase tracking-wider flex items-center gap-2.5">
+                  <div className="p-1.5 rounded-lg bg-secondary text-[#2D3E2C] shadow-sm">
+                    <FileText className="h-4 w-4" />
+                  </div>
+                  Uploaded Statutory Documents ({docsList.filter(d => d.url).length}/{docsList.length} Received)
                 </h4>
                 
-                <div className="border border-slate-800 rounded-xl divide-y divide-slate-800/80 bg-[#111726]/50 overflow-hidden">
+                <div className="border border-border rounded-xl divide-y divide-border bg-card overflow-hidden">
                   {docsList.map((doc) => {
                     const isViewed = doc.status !== 'pending';
                     return (
-                      <div key={doc.id} className="p-4 flex flex-col items-start gap-4 hover:bg-slate-800/30 transition-colors">
+                      <div key={doc.id} className="p-4 flex flex-col items-start gap-4 hover:bg-muted/50 transition-colors">
                         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between w-full gap-4">
                           <div className="flex items-center gap-3.5">
                             <div className={`p-2.5 rounded-lg border ${
-                              doc.status === 'approved' ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" :
-                              doc.status === 'rejected' ? "bg-rose-500/10 border-rose-500/30 text-rose-400" :
-                              isViewed ? "bg-blue-500/10 border-blue-500/30 text-blue-400" : 
-                              "bg-slate-800/80 border-slate-700 text-slate-400"
+                              doc.status === 'approved' ? "bg-emerald-50 border-emerald-200 text-emerald-600" :
+                              doc.status === 'rejected' ? "bg-rose-50 border-rose-200 text-rose-600" :
+                              isViewed ? "bg-secondary/10 border-secondary/20 text-[#2D3E2C]" : 
+                              "bg-slate-100 border-slate-200 text-slate-500"
                             }`}>
                               {doc.status === 'approved' ? <CheckCircle2 className="h-5 w-5" /> :
                                doc.status === 'rejected' ? <XCircle className="h-5 w-5" /> :
@@ -464,33 +544,33 @@ export const CenterTable = ({ centers }: CenterTableProps) => {
                             </div>
                             <div>
                               <div className="flex items-center gap-2">
-                                <h5 className="font-bold text-sm text-slate-200">{doc.name}</h5>
+                                <h5 className="font-bold text-sm text-foreground">{doc.name}</h5>
                                 {doc.fileName === "Pending Upload" || !doc.url ? (
-                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-slate-500/15 text-slate-400 border border-slate-500/30">
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-slate-100 text-slate-600 border border-slate-200">
                                     Not Uploaded
                                   </span>
                                 ) : doc.status === 'approved' ? (
-                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-emerald-50 text-emerald-700 border border-emerald-200">
                                     <Check className="h-2.5 w-2.5" /> Approved
                                   </span>
                                 ) : doc.status === 'rejected' ? (
-                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-rose-500/15 text-rose-400 border border-rose-500/30">
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-rose-50 text-rose-700 border border-rose-200">
                                     <X className="h-2.5 w-2.5" /> Rejected
                                   </span>
                                 ) : isViewed ? (
-                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-blue-500/15 text-blue-400 border border-blue-500/30">
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-[#2D3E2C] text-[#E4FD97] border border-[#2D3E2C]">
                                     <Eye className="h-2.5 w-2.5" /> Viewed
                                   </span>
                                 ) : (
-                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-slate-100 text-slate-600 border border-slate-200">
                                     Unviewed
                                   </span>
                                 )}
                               </div>
-                              <p className="text-xs text-slate-400 mt-1 flex items-center gap-3">
-                                <span>File: <strong className="text-slate-300">{doc.fileName}</strong></span>
-                                <span>Size: <strong className="text-slate-300">{doc.fileSize}</strong></span>
-                                <span>Uploaded: <strong className="text-slate-300">{doc.uploadDate}</strong></span>
+                              <p className="text-xs text-muted-foreground mt-1 flex items-center gap-3">
+                                <span>File: <strong className="text-foreground">{doc.fileName}</strong></span>
+                                <span>Size: <strong className="text-foreground">{doc.fileSize}</strong></span>
+                                <span>Uploaded: <strong className="text-foreground">{doc.uploadDate}</strong></span>
                               </p>
                             </div>
                           </div>
@@ -510,7 +590,7 @@ export const CenterTable = ({ centers }: CenterTableProps) => {
                                       toast({ title: "Failed to approve", variant: "destructive" });
                                     }
                                   }}
-                                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold shadow-xs h-8 px-3"
+                                  className="bg-[#2D3E2C] hover:bg-[#2D3E2C]/90 text-white font-semibold shadow-sm h-8 px-4"
                                 >
                                   Approve
                                 </Button>
@@ -518,7 +598,7 @@ export const CenterTable = ({ centers }: CenterTableProps) => {
                                   size="sm"
                                   variant="outline"
                                   onClick={() => setDocsList(prev => prev.map(d => d.id === doc.id ? { ...d, status: 'rejected' } : d))}
-                                  className="border-rose-500/50 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-semibold shadow-xs h-8 px-3"
+                                  className="border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold shadow-sm h-8 px-3"
                                 >
                                   Reject
                                 </Button>
@@ -530,10 +610,10 @@ export const CenterTable = ({ centers }: CenterTableProps) => {
                                 size="sm"
                                 variant="outline"
                                 onClick={() => handleViewDoc(doc.id)}
-                                className={`text-xs px-3.5 py-1.5 h-8 font-semibold rounded-lg shadow-xs border transition-all ${
+                                className={`text-xs px-3.5 py-1.5 h-8 font-semibold rounded-lg shadow-sm border transition-all ${
                                   isViewed 
-                                    ? "bg-slate-800/60 border-slate-700 text-slate-300 hover:bg-slate-700" 
-                                    : "bg-blue-600 hover:bg-blue-500 text-white border-blue-500 shadow-blue-500/20"
+                                    ? "bg-white border-border text-foreground hover:bg-muted" 
+                                    : "bg-secondary hover:bg-secondary/90 text-secondary-foreground border-secondary"
                                 }`}
                               >
                                 <Eye className="h-3.5 w-3.5 mr-1.5" />
@@ -545,21 +625,21 @@ export const CenterTable = ({ centers }: CenterTableProps) => {
 
                         {/* Document-specific Rejection Input */}
                         {doc.status === 'rejected' && (
-                          <div className="w-full mt-2 p-3 bg-rose-500/5 border border-rose-500/20 rounded-lg">
-                            <h6 className="text-xs font-bold text-rose-400 mb-2">Rejection Reason for {doc.name}</h6>
+                          <div className="w-full mt-2 p-3 bg-rose-50/50 border border-rose-200 rounded-lg">
+                            <h6 className="text-xs font-bold text-rose-700 mb-2">Rejection Reason for {doc.name}</h6>
                             <textarea
                               rows={2}
                               value={doc.rejectionReason || ""}
                               onChange={(e) => setDocsList(prev => prev.map(d => d.id === doc.id ? { ...d, rejectionReason: e.target.value } : d))}
                               placeholder="E.g., Document is blurry, signature is missing, etc."
-                              className="w-full bg-[#0A0D14] border border-rose-500/30 rounded p-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-rose-500"
+                              className="w-full bg-white border border-rose-200 rounded p-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-rose-400 focus:ring-1 focus:ring-rose-400"
                             />
                             <div className="mt-2 text-right">
                               <Button
                                 size="sm"
                                 variant="outline"
                                 onClick={() => setDocsList(prev => prev.map(d => d.id === doc.id ? { ...d, status: 'viewed', rejectionReason: "" } : d))}
-                                className="h-6 px-2 text-[10px] bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700"
+                                className="h-6 px-2 text-[10px] bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
                               >
                                 Cancel Rejection
                               </Button>
@@ -574,14 +654,14 @@ export const CenterTable = ({ centers }: CenterTableProps) => {
             </div>
 
             {/* Modal Footer (Dynamic Submit Button) */}
-            <div className="px-6 py-4 bg-[#141A29] border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="text-xs text-slate-400 flex items-center gap-2">
+            <div className="px-6 py-4 bg-muted/30 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="text-xs flex items-center gap-2">
                 {docsList.length > 0 && docsList.every(d => d.status === 'approved' || d.status === 'rejected') ? (
-                  <span className="flex items-center gap-1.5 text-emerald-400 font-medium">
+                  <span className="flex items-center gap-2 text-emerald-700 font-semibold bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100">
                     <CheckCircle2 className="h-4 w-4" /> All documents reviewed. You can now submit verifications.
                   </span>
                 ) : (
-                  <span className="flex items-center gap-1.5 text-amber-400 font-medium">
+                  <span className="flex items-center gap-2 text-[#2D3E2C] font-semibold bg-secondary/50 px-3 py-1.5 rounded-lg border border-secondary">
                     <AlertCircle className="h-4 w-4" /> View and explicitly approve/reject every document to proceed.
                   </span>
                 )}
@@ -591,10 +671,10 @@ export const CenterTable = ({ centers }: CenterTableProps) => {
                 <Button
                   onClick={handleSubmitVerifications}
                   disabled={!docsList.every(d => d.status === 'approved' || d.status === 'rejected') || verifyMutation.isPending}
-                  className={`font-bold px-5 shadow-lg transition-all flex items-center gap-2 ${
+                  className={`font-bold px-5 shadow-sm transition-all flex items-center gap-2 ${
                     docsList.length > 0 && docsList.every(d => d.status === 'approved' || d.status === 'rejected')
-                      ? "bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white shadow-indigo-500/25 scale-102 cursor-pointer" 
-                      : "bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed opacity-50"
+                      ? "bg-[#2D3E2C] hover:bg-[#2D3E2C]/90 text-white cursor-pointer" 
+                      : "bg-muted text-muted-foreground border border-border cursor-not-allowed opacity-70"
                   }`}
                 >
                   <FileCheck className="h-4 w-4" />
@@ -605,6 +685,28 @@ export const CenterTable = ({ centers }: CenterTableProps) => {
           </div>
         </div>
       )}
+
+      <Dialog open={!!centerToDelete} onOpenChange={(open) => !open && setCenterToDelete(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Are you absolutely sure?</DialogTitle>
+            <DialogDescription>
+              This action cannot be undone. This will permanently delete the center and all associated data from our servers.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCenterToDelete(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={() => {
+              if (centerToDelete) {
+                deleteMutation.mutate(centerToDelete);
+                setCenterToDelete(null);
+              }
+            }}>
+              {deleteMutation.isPending ? "Deleting..." : "Delete Center"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

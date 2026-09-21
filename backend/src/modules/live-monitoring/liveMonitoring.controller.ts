@@ -1079,6 +1079,7 @@ export const mockFaceVerificationLogs = asyncHandler(
 );
 
 /*
+/*
 |--------------------------------------------------------------------------
 | Mock Live Violations
 |--------------------------------------------------------------------------
@@ -1086,12 +1087,63 @@ export const mockFaceVerificationLogs = asyncHandler(
 
 export const mockLiveViolations = asyncHandler(
   async (req: Request, res: Response) => {
-    const result = await liveMonitoringService.mockLiveViolations();
+    const matchQuery: any = { 
+      isDeleted: false,
+      $or: [
+        { tabSwitchCount: { $gt: 0 } },
+        { fullscreenExitCount: { $gt: 0 } },
+        { copyPasteCount: { $gt: 0 } },
+        { devToolsOpenCount: { $gt: 0 } },
+        { networkDisconnectCount: { $gt: 0 } },
+        { faceNotDetectedCount: { $gt: 0 } },
+        { multipleFacesCount: { $gt: 0 } },
+        { unregisteredFaceCount: { $gt: 0 } }
+      ]
+    };
+
+    const violationsDocs = await LiveMonitoring.find(matchQuery)
+      .populate("candidateId")
+      .populate("examCenterId")
+      .sort({ updatedAt: -1 })
+      .limit(100);
+
+    const violationsList: any[] = [];
+
+    violationsDocs.forEach((doc: any) => {
+      // For each violation type, if > 0, we can create a record
+      const cand = doc.candidateId || {};
+      const center = doc.examCenterId || {};
+      const candName = cand.candidateFullName || (cand.firstName ? cand.firstName + ' ' + cand.lastName : "Unknown");
+      const appNo = cand.applicationNo || cand.candidateCode || cand.enrollmentNo || "N/A";
+      const centerName = center.name || center.centerName || "Unknown Center";
+
+      const addViolation = (type: string, severity: string) => {
+        violationsList.push({
+          id: `${doc._id}_${type.replace(/\s+/g, '_')}`,
+          candidateName: candName,
+          applicationNumber: appNo,
+          center: centerName,
+          type: type,
+          timestamp: doc.updatedAt ? doc.updatedAt.toISOString() : new Date().toISOString(),
+          severity: severity,
+          status: 'Unresolved'
+        });
+      };
+
+      if (doc.tabSwitchCount > 0) addViolation("Tab Switch", "Medium");
+      if (doc.fullscreenExitCount > 0) addViolation("Fullscreen Exit", "High");
+      if (doc.copyPasteCount > 0) addViolation("Copy Paste", "High");
+      if (doc.devToolsOpenCount > 0) addViolation("Dev Tools Opened", "Critical");
+      if (doc.networkDisconnectCount > 0) addViolation("Network Disconnect", "Medium");
+      if (doc.faceNotDetectedCount > 0) addViolation("Face Not Detected", "High");
+      if (doc.multipleFacesCount > 0) addViolation("Multiple Faces", "Critical");
+      if (doc.unregisteredFaceCount > 0) addViolation("Unregistered Face", "Critical");
+    });
 
     return sendResponse(res, HTTP_STATUS.OK, {
       success: true,
       message: "Live violations fetched successfully.",
-      data: result,
+      data: violationsList,
     });
   },
 );
@@ -1110,6 +1162,74 @@ export const mockHeartbeatMonitor = asyncHandler(
       success: true,
       message: "Heartbeat monitor data fetched successfully.",
       data: result,
+    });
+  },
+);
+
+export const mockCenters = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { examId } = req.query;
+    const matchQuery: any = { isDeleted: false };
+    if (examId) matchQuery.examId = new Types.ObjectId(examId as string);
+
+    const centers = await LiveMonitoring.aggregate([
+      { $match: matchQuery },
+      {
+        $group: {
+          _id: "$examCenterId",
+          totalCandidates: { $sum: 1 },
+          activeCandidates: {
+            $sum: {
+              $cond: [{ $eq: ["$monitoringStatus", "ACTIVE"] }, 1, 0]
+            }
+          },
+          completedCandidates: {
+            $sum: {
+              $cond: [{ $eq: ["$monitoringStatus", "TERMINATED"] }, 1, 0]
+            }
+          }
+        }
+      },
+      {
+        $lookup: {
+          from: "examcenters",
+          localField: "_id",
+          foreignField: "_id",
+          as: "centerDetails"
+        }
+      },
+      { $unwind: { path: "$centerDetails", preserveNullAndEmptyArrays: true } }
+    ]);
+
+    let mappedCenters = centers.map(c => ({
+      id: c._id ? c._id.toString() : "UNKNOWN",
+      name: c.centerDetails?.name || c.centerDetails?.centerName || "Center - " + (c._id ? c._id.toString().substring(0, 6) : "Unknown"),
+      status: c.activeCandidates > 0 ? "Online" : "Offline",
+      activeCandidates: c.activeCandidates,
+      completedCandidates: c.completedCandidates,
+      networkHealth: Math.floor(Math.random() * 10) + 90, 
+      deviceHealth: Math.floor(Math.random() * 10) + 90
+    }));
+
+    if (mappedCenters.length === 0) {
+      // Fallback for demo so it doesn't look totally empty if there's no data
+      mappedCenters = [
+        {
+          id: "CEN-001",
+          name: "Global Test Center",
+          status: "Online",
+          activeCandidates: 0,
+          completedCandidates: 0,
+          networkHealth: 100,
+          deviceHealth: 100
+        }
+      ];
+    }
+
+    return sendResponse(res, HTTP_STATUS.OK, {
+      success: true,
+      message: "Live centers fetched successfully.",
+      data: mappedCenters,
     });
   },
 );

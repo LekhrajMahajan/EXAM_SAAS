@@ -4,8 +4,10 @@ import { CheckCircle2, ChevronRight, Download, UploadCloud, ShieldCheck, Clock, 
 import apiClient from "@/core/api/http/axios-client";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/shared/components/ui/card";
+import { Checkbox } from "@/shared/components/ui/checkbox";
 import { useAuthStore } from "@/features/auth/store/useAuthStore";
 import { toast } from "react-hot-toast";
+import { handleViewOrDownloadFile } from "@/utils/fileUtils";
 import { logout } from '@/features/auth/api/auth.api';
 
 const REQUIRED_DOCUMENTS = [
@@ -194,12 +196,12 @@ export function CenterOnboarding() {
       </div>
 
 
-      <div className="bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800 rounded-lg p-5 mb-8">
-        <h3 className="flex items-center gap-2 font-semibold text-indigo-900 dark:text-indigo-300 mb-2">
-          <ShieldCheck className="h-5 w-5" />
+      <div className="bg-slate-50 dark:bg-slate-900/30 border border-slate-200 dark:border-slate-800 rounded-lg p-5 mb-8">
+        <h3 className="flex items-center gap-2 font-semibold text-slate-800 dark:text-slate-300 mb-2">
+          <ShieldCheck className="h-5 w-5 text-slate-600 dark:text-slate-400" />
           Important Instructions for Onboarding
         </h3>
-        <ul className="list-disc list-inside space-y-1 text-sm text-indigo-800 dark:text-indigo-400">
+        <ul className="list-disc list-inside space-y-1 text-sm text-slate-700 dark:text-slate-400">
           <li>Please <strong>download</strong> the MOU sent to you from here. Affix your seal/stamp, sign it, and upload it back.</li>
           <li>In addition, uploading 4 essential documents <strong>(PAN CARD, AADHAR CARD, GSTIN, and CANCELLED CHEQUE)</strong> is mandatory.</li>
           <li>Your <strong>Dashboard and Sidebar Menu will not unlock</strong> until you upload all the documents and accept the pricing terms.</li>
@@ -283,17 +285,17 @@ export function CenterOnboarding() {
             </div>
           )}
 
-          <div className="flex items-center gap-3 p-4 border rounded-lg bg-blue-50/50">
-             <input 
-               type="checkbox" 
+          <div className="flex items-start space-x-3 p-4 border rounded-lg bg-muted/20">
+             <Checkbox 
                id="accept-pricing" 
-               className="w-5 h-5 text-primary rounded" 
                checked={isPricingAccepted}
-               onChange={(e) => setIsPricingAccepted(e.target.checked)}
+               onCheckedChange={(checked) => setIsPricingAccepted(checked as boolean)}
              />
-             <label htmlFor="accept-pricing" className="text-sm font-medium cursor-pointer">
-               I have reviewed and accept the commercial shift pricing terms assigned by the Company Admin.
-             </label>
+             <div className="space-y-1 leading-none">
+               <label htmlFor="accept-pricing" className="text-sm font-medium cursor-pointer">
+                 I have reviewed and accept the commercial shift pricing terms assigned by the Company Admin.
+               </label>
+             </div>
           </div>
         </CardContent>
       </Card>
@@ -310,25 +312,37 @@ export function CenterOnboarding() {
               <h4 className="font-semibold text-sm">Download MOU Template</h4>
               <p className="text-xs text-muted-foreground">Download, sign, stamp, and re-upload the MOU below.</p>
             </div>
-            {centerData?.mouFileName || centerData?.mouPdfUrl ? (
+            {centerData?.mouFileName || centerData?.mouPdfUrl || centerData?.mouFileUrl ? (
               <Button 
                 variant="outline" 
                 size="sm" 
                 type="button"
                   onClick={(e) => {
                     e.preventDefault();
-                    const url = centerData?.mouPdfUrl;
-                    let dlUrl = '/mou_template.pdf';
+                    const url = centerData?.mouPdfUrl || centerData?.mouFileUrl;
+                    
                     if (url) {
-                      dlUrl = url;
+                      if (url.startsWith('data:')) {
+                        handleViewOrDownloadFile(url, true);
+                      } else {
+                        const dlUrl = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1'}/files/proxy?url=${encodeURIComponent(url)}&download=true`;
+                        const link = document.createElement('a');
+                        link.href = dlUrl;
+                        link.target = '_blank';
+                        link.download = 'Center_MOU.pdf';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                      }
+                    } else {
+                      const link = document.createElement('a');
+                      link.href = '/mou_template.pdf';
+                      link.target = '_blank';
+                      link.download = 'MOU_Template.pdf';
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
                     }
-                    const link = document.createElement('a');
-                    link.href = dlUrl;
-                    link.target = '_blank';
-                    link.download = url ? 'Center_MOU.pdf' : 'MOU_Template.pdf';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
                   }}
               >
                 <Download className="w-4 h-4 mr-2" /> Download MOU

@@ -27,12 +27,21 @@ export const getCenterPayments = asyncHandler(async (req: Request, res: Response
 
 export const getCompanyCenterPayments = asyncHandler(async (req: Request, res: Response) => {
   const user = req.user as any;
-  const companyId = user.companyId;
+  let companyId = user.companyId;
+
+  // If companyId not in JWT, look it up from DB via userId
+  if (!companyId) {
+    const mongoose = require("mongoose");
+    const User = mongoose.model("User");
+    const dbUser = await User.findById(user.userId).select("companyId").lean() as any;
+    companyId = dbUser?.companyId?.toString();
+  }
 
   if (!companyId) {
-    return sendResponse(res, HTTP_STATUS.BAD_REQUEST, {
-      success: false,
-      message: "Company ID is required",
+    return sendResponse(res, HTTP_STATUS.OK, {
+      success: true,
+      message: "No company found for user",
+      data: [],
     });
   }
 

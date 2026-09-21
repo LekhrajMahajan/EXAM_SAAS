@@ -82,7 +82,19 @@ export const AssignExamStaffPage: React.FC = () => {
   // New state for reporting time
   const [reportingTime, setReportingTime] = useState<string>('')
   const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL')
+  const [statusFilter, setStatusFilter] = useState<string>('ALL')
+
+  const getCenterExamStatusLabel = (coreStatus?: string) => {
+    if (!coreStatus) return 'Exam Assigned';
+    switch (coreStatus) {
+      case 'PENDING_EXAM': return 'Exam Assigned';
+      case 'ACTIVE': return 'Active';
+      case 'EXAM_STARTED': return 'Exam Started';
+      case 'PENDING_RESULT_GENERATE': return 'Exam Ended';
+      case 'RESULT_GENERATED': return 'Result Generated';
+      default: return coreStatus.replace(/_/g, ' ');
+    }
+  };
 
   const formatDateTime = (dateStr?: string, timeStr?: string) => {
     if (!dateStr && !timeStr) return 'N/A'
@@ -123,7 +135,6 @@ export const AssignExamStaffPage: React.FC = () => {
         .then((res) => {
           if (res.data?.success) {
             const activeExams = res.data.data
-              .filter((item: any) => item.examId?.status === 'ACTIVE')
               .map((item: any) => item.examId)
             setDynamicExams(activeExams)
           }
@@ -294,14 +305,15 @@ export const AssignExamStaffPage: React.FC = () => {
     const matchesSearch = (assignment.examName || '')
       .toLowerCase()
       .includes(searchTerm.toLowerCase())
-    const isActive =
-      dynamicExams.some(
-        (e) => (e._id === assignment.examId || e.id === assignment.examId) && e.status === 'ACTIVE',
-      ) || (assignment as any).examId?.status === 'ACTIVE'
+      
+    const dynamicExam = dynamicExams.find(
+      (e) => e._id === assignment.examId || e.id === assignment.examId
+    );
+    const coreStatus = dynamicExam?.status || (assignment as any).examId?.status;
+    const mappedStatus = getCenterExamStatusLabel(coreStatus);
 
-    if (statusFilter === 'ACTIVE') return matchesSearch && isActive
-    if (statusFilter === 'INACTIVE') return matchesSearch && !isActive
-    return matchesSearch
+    if (statusFilter !== 'ALL' && mappedStatus !== statusFilter) return false;
+    return matchesSearch;
   })
 
   return (
@@ -358,11 +370,17 @@ export const AssignExamStaffPage: React.FC = () => {
               <SelectItem value='ALL' className='text-foreground focus:bg-muted py-2'>
                 All Status
               </SelectItem>
-              <SelectItem value='ACTIVE' className='text-foreground focus:bg-muted py-2'>
+              <SelectItem value='Exam Assigned' className='text-foreground focus:bg-muted py-2'>
+                Exam Assigned
+              </SelectItem>
+              <SelectItem value='Active' className='text-foreground focus:bg-muted py-2'>
                 Active
               </SelectItem>
-              <SelectItem value='INACTIVE' className='text-foreground focus:bg-muted py-2'>
-                Inactive
+              <SelectItem value='Exam Started' className='text-foreground focus:bg-muted py-2'>
+                Exam Started
+              </SelectItem>
+              <SelectItem value='Exam Ended' className='text-foreground focus:bg-muted py-2'>
+                Exam Ended
               </SelectItem>
             </SelectContent>
           </Select>
@@ -398,20 +416,20 @@ export const AssignExamStaffPage: React.FC = () => {
                       Staff Assigned
                     </span>
                     {/* Checking active status (dynamically found or passed via assignment) */}
-                    {dynamicExams.some(
-                      (e) =>
-                        (e._id === assignment.examId || e.id === assignment.examId) &&
-                        e.status === 'ACTIVE',
-                    ) || (assignment as any).examId?.status === 'ACTIVE' ? (
-                      <span className='flex items-center justify-center bg-[#2D3E2C] text-[#E4FD97] border-0 border-transparent rounded px-2.5 py-1 text-xs font-bold'>
-                        ACTIVE
-                      </span>
-                    ) : (
-                      <span className='flex items-center gap-1 bg-rose-500/10 text-rose-600 px-2 py-0.5 rounded-full text-[10px] font-semibold border border-rose-500/20'>
-                        <XCircle className='h-3 w-3' />
-                        INACTIVE
-                      </span>
-                    )}
+                    {(() => {
+                      const dynamicExam = dynamicExams.find(
+                        (e) => e._id === assignment.examId || e.id === assignment.examId
+                      );
+                      const coreStatus = dynamicExam?.status || (assignment as any).examId?.status;
+                      const displayLabel = getCenterExamStatusLabel(coreStatus);
+                      
+                      return (
+                        <span className='flex items-center justify-center bg-[#2D3E2C] text-[#E4FD97] border-0 border-transparent rounded px-2.5 py-1 text-xs font-bold'>
+                          <CheckCircle2 className='h-3 w-3 mr-1' />
+                          {displayLabel}
+                        </span>
+                      );
+                    })()}
                   </CardDescription>
                 </div>
                 {!isReadOnly && (

@@ -16,6 +16,7 @@ export const AssignCandidateSeatAllocationPage = () => {
   const { user } = useAuthStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedExam, setSelectedExam] = useState<string>('ALL');
+  const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCandidate, setSelectedCandidate] = useState<any | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
@@ -33,6 +34,18 @@ export const AssignCandidateSeatAllocationPage = () => {
     }
   }, [selectedExam, fetchAllocations, user?.centerId]);
 
+  const getCenterExamStatusLabel = (coreStatus?: string) => {
+    if (!coreStatus) return 'Exam Assigned';
+    switch (coreStatus) {
+      case 'PENDING_EXAM': return 'Exam Assigned';
+      case 'ACTIVE': return 'Active';
+      case 'EXAM_STARTED': return 'Exam Started';
+      case 'PENDING_RESULT_GENERATE': return 'Exam Ended';
+      case 'RESULT_GENERATED': return 'Result Generated';
+      default: return coreStatus.replace(/_/g, ' ');
+    }
+  };
+
   // Group allocations by exam and then by lab
   const groupedAllocations = allocations.reduce((acc, allocation) => {
     const candidate = (allocation.candidateId || allocation) as any;
@@ -47,12 +60,21 @@ export const AssignCandidateSeatAllocationPage = () => {
 
     const examId = allocation.examId?._id || allocation.examId || 'unassigned_exam';
     const examName = allocation.examId?.examTitle || allocation.examName || 'Unknown Exam';
+    const fullExam = Array.isArray(exams) ? exams.find((e) => e._id === examId || e.id === examId) : null;
+    const examStatus = fullExam?.status || allocation.examId?.status;
+    const mappedStatus = getCenterExamStatusLabel(examStatus);
+
+    if (statusFilter !== 'ALL' && mappedStatus !== statusFilter) {
+      return acc;
+    }
+
     const labId = allocation.labId?._id || 'unassigned_lab';
     const labName = allocation.labId?.labName || 'Unknown Lab';
 
     if (!acc[examId]) {
       acc[examId] = {
         examName,
+        examStatus,
         labs: {}
       };
     }
@@ -66,7 +88,7 @@ export const AssignCandidateSeatAllocationPage = () => {
 
     acc[examId].labs[labId].candidates.push(candidate);
     return acc;
-  }, {} as Record<string, { examName: string; labs: Record<string, { labName: string; candidates: any[] }> }>);
+  }, {} as Record<string, { examName: string; examStatus?: string; labs: Record<string, { labName: string; candidates: any[] }> }>);
 
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
@@ -108,6 +130,30 @@ export const AssignCandidateSeatAllocationPage = () => {
                 </SelectContent>
               </Select>
             </div>
+            <div className="w-full sm:w-48">
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className='w-full bg-background'>
+                  <SelectValue placeholder='Filter Status' />
+                </SelectTrigger>
+                <SelectContent className='bg-background border-border'>
+                  <SelectItem value='ALL' className='text-foreground focus:bg-muted py-2'>
+                    All Status
+                  </SelectItem>
+                  <SelectItem value='Exam Assigned' className='text-foreground focus:bg-muted py-2'>
+                    Exam Assigned
+                  </SelectItem>
+                  <SelectItem value='Active' className='text-foreground focus:bg-muted py-2'>
+                    Active
+                  </SelectItem>
+                  <SelectItem value='Exam Started' className='text-foreground focus:bg-muted py-2'>
+                    Exam Started
+                  </SelectItem>
+                  <SelectItem value='Exam Ended' className='text-foreground focus:bg-muted py-2'>
+                    Exam Ended
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -126,8 +172,11 @@ export const AssignCandidateSeatAllocationPage = () => {
               {Object.entries(groupedAllocations).map(([examId, examData]) => (
                 <AccordionItem key={examId} value={examId} className="border rounded-md overflow-hidden bg-background">
                   <AccordionTrigger className="px-4 hover:bg-muted/50 transition-colors">
-                    <div className="flex items-center text-base font-semibold text-left">
+                    <div className="flex items-center text-base font-semibold text-left flex-wrap gap-2">
                       <span className="text-primary">{examData.examName}</span>
+                      <span className="flex items-center justify-center bg-[#2D3E2C] text-[#E4FD97] border-0 border-transparent rounded px-2.5 py-0.5 text-[10px] uppercase font-bold tracking-wider">
+                        {getCenterExamStatusLabel(examData.examStatus)}
+                      </span>
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="pt-2 pb-2 px-4 bg-muted/10">

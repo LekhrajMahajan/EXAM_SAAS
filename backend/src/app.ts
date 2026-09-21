@@ -133,7 +133,6 @@ app.use("/api/v1", rolePermissionRoutes);
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/centers", centerRoutes);
 app.use("/api/v1/centers/admin-requests", companyAdminRequestRoutes);
-app.use("/api/v1/company-center-payments", companyCenterPaymentRoutes);
 app.use("/api/v1/rooms", roomRoutes);
 app.use("/api/v1/seats", seatRoutes);
 app.use("/api/v1/candidates", candidateRoutes);

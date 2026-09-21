@@ -1,7 +1,7 @@
 import { Badge } from "@/shared/components/ui/badge";
 
 interface CenterStatusBadgeProps {
-  status: 'Active' | 'Inactive' | 'Pending' | 'Approved' | 'Rejected' | 'Maintenance' | 'Working' | 'Faulty' | 'Repair';
+  status: 'Active' | 'Inactive' | 'Pending' | 'Approved' | 'Rejected' | 'Maintenance' | 'Working' | 'Faulty' | 'Repair' | 'Pending Verification';
 }
 
 export const CenterStatusBadge = ({ status }: CenterStatusBadgeProps) => {
@@ -16,6 +16,7 @@ export const CenterStatusBadge = ({ status }: CenterStatusBadgeProps) => {
       case 'FAULTY':
         return 'bg-destructive/10 text-destructive hover:bg-destructive/20 border-destructive/20';
       case 'PENDING':
+      case 'PENDING VERIFICATION':
       case 'MAINTENANCE':
       case 'REPAIR':
         return 'bg-amber-100 text-amber-800 hover:bg-amber-200 border-amber-200';

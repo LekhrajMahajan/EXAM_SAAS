@@ -27,7 +27,7 @@ export const connectDatabase = async () => {
             `MongoDB Connected : ${connection.connection.host}`
         );
 
-        // Auto-drop email index for managers to support multiple paper setters with same email
+        // Auto-drop email index for managers and centerentrycheckers
         try {
             const db = mongoose.connection.db;
             if (db) {
@@ -37,7 +37,20 @@ export const connectDatabase = async () => {
             }
         } catch (e: any) {
             if (e.codeName !== 'IndexNotFound') {
-                console.log("Note: email_1 index not dropped (might not exist).");
+                console.log("Note: email_1 index not dropped on managers (might not exist).");
+            }
+        }
+
+        try {
+            const db = mongoose.connection.db;
+            if (db) {
+                const collection = db.collection('centerentrycheckers');
+                await collection.dropIndex('email_1');
+                console.log("Dropped email_1 index on centerentrycheckers collection successfully.");
+            }
+        } catch (e: any) {
+            if (e.codeName !== 'IndexNotFound') {
+                console.log("Note: email_1 index not dropped on centerentrycheckers (might not exist).");
             }
         }
     } catch (error) {

@@ -247,18 +247,27 @@ export const SIDEBAR_MENU: SidebarMenuItem[] = [
     ]
   },
   {
-    id: 'ca-centers',
+    id: 'ca-centers-group',
     title: 'Centers',
     icon: Building2,
     path: '/company/centers',
     roles: ['Company Admin'],
-  },
-  {
-    id: 'ca-center-requests',
-    title: 'Center Requests',
-    icon: Inbox,
-    path: '/company/centers/admin-requests',
-    roles: ['Company Admin'],
+    children: [
+      {
+        id: 'ca-center-requests',
+        title: 'Center Requests',
+        icon: Inbox,
+        path: '/company/centers/admin-requests',
+        roles: ['Company Admin'],
+      },
+      {
+        id: 'ca-centers-details',
+        title: 'Center Details',
+        icon: Building2,
+        path: '/company/centers',
+        roles: ['Company Admin'],
+      }
+    ]
   },
   {
     id: 'ca-staff',
@@ -314,18 +323,27 @@ export const SIDEBAR_MENU: SidebarMenuItem[] = [
     ]
   },
   {
-    id: 'ca-papers',
-    title: 'Assign Exam to Center',
+    id: 'ca-assignments-group',
+    title: 'Assign Exam or Candidate',
     icon: FileSignature,
     path: '/company/papers',
     roles: ['Company Admin'],
-  },
-  {
-    id: 'ca-candidates',
-    title: 'Assign Candidate to Center',
-    icon: UserCircle,
-    path: '/company/candidates',
-    roles: ['Company Admin'],
+    children: [
+      {
+        id: 'ca-papers',
+        title: 'Assign Exam to Center',
+        icon: FileSignature,
+        path: '/company/papers',
+        roles: ['Company Admin'],
+      },
+      {
+        id: 'ca-candidates',
+        title: 'Assign Candidate to Center',
+        icon: UserCircle,
+        path: '/company/candidates',
+        roles: ['Company Admin'],
+      },
+    ]
   },
 
   {

@@ -140,7 +140,7 @@ router.get("/face-verification-logs/:candidateId", liveMonitoringController.mock
 router.get("/live-violations", liveMonitoringController.mockLiveViolations);
 router.get("/heartbeat-monitor", liveMonitoringController.mockHeartbeatMonitor);
 
-router.get("/centers", authenticate, authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.TECHNICAL_MANAGER, UserRole.EXAM_MANAGER, UserRole.OBSERVER), liveMonitoringController.mockDashboard);
+router.get("/centers", authenticate, authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.TECHNICAL_MANAGER, UserRole.EXAM_MANAGER, UserRole.OBSERVER), liveMonitoringController.mockCenters);
 router.get("/violations", authenticate, authorize(UserRole.MASTER_ADMIN, UserRole.COMPANY_ADMIN, UserRole.TECHNICAL_MANAGER, UserRole.EXAM_MANAGER, UserRole.OBSERVER), liveMonitoringController.mockLiveViolations);
 
 router.get(

@@ -1358,9 +1358,9 @@ class ReportService extends BaseService<any> {
     async getExamSummary(query: any) {
         const totalExams = await Exam.countDocuments({ isDeleted: false });
         const scheduledExams = await Exam.countDocuments({ status: ExamStatus.ACTIVE, isDeleted: false });
-        const runningExams = await Exam.countDocuments({ status: ExamStatus.ACTIVE, isDeleted: false }); // Fallback to ACTIVE
-        const completedExams = await Exam.countDocuments({ status: ExamStatus.COMPLETED, isDeleted: false });
-        const cancelledExams = await Exam.countDocuments({ status: ExamStatus.CANCELLED, isDeleted: false });
+        const runningExams = await Exam.countDocuments({ status: ExamStatus.EXAM_STARTED, isDeleted: false });
+        const completedExams = await Exam.countDocuments({ status: ExamStatus.PENDING_RESULT_GENERATE, isDeleted: false });
+        const cancelledExams = await Exam.countDocuments({ status: 'CANCELLED' as any, isDeleted: false });
 
         const totalExamSessions = (await Exam.distinct('shiftId', { isDeleted: false })).length;
         const totalShifts = (await Exam.distinct('shiftId', { isDeleted: false })).length;
@@ -1370,7 +1370,7 @@ class ReportService extends BaseService<any> {
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
         
         const completionTrend = await Exam.aggregate([
-            { $match: { isDeleted: false, status: ExamStatus.COMPLETED, createdAt: { $gte: thirtyDaysAgo } } },
+            { $match: { isDeleted: false, status: ExamStatus.PENDING_RESULT_GENERATE, createdAt: { $gte: thirtyDaysAgo } } },
             {
                 $group: {
                     _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },

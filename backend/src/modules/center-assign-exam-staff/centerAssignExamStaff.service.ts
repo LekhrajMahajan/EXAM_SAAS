@@ -95,7 +95,10 @@ export class CenterAssignExamStaffService {
 
           const staffDoc = await CenterStaff.findById(assign.staffId);
           if (staffDoc && staffDoc.email) {
-            let entryCheckerDoc = await CenterEntryChecker.findOne({ email: staffDoc.email });
+            let entryCheckerDoc = await CenterEntryChecker.findOne({ 
+              email: staffDoc.email,
+              centerId: staffDoc.centerId
+            });
             const temporaryPassword = `Emp@${crypto.randomBytes(4).toString("hex")}1!`;
             
             if (entryCheckerDoc) {

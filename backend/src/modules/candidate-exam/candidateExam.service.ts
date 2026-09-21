@@ -218,68 +218,135 @@ class CandidateExamService {
       }
     }
     
-    // 1. Find Candidate
+    // 1. Find Candidate(s)
     const ImportCandidate = mongoose.models.importcandidate;
     const Candidate = mongoose.models.Candidate;
     
     // ImportCandidate has dateOfBirth field (String)
-    let candidate: any = await ImportCandidate.findOne({ 
+    const importedCands: any[] = await ImportCandidate.find({ 
       applicationNo, 
       dateOfBirth: { $in: dobVariations } 
-    });
-    let isImported = true;
+    }).lean();
     
-    if (!candidate) {
-      // Candidate has dob field (Date/String depending on how it was saved, but we can query by dob)
-      // Since payload dateOfBirth might be a string like "2000-01-01", we should try to match it.
-      // Assuming Candidate dob can be queried with string if Mongoose casts it, or we might need to parse.
-      candidate = await Candidate.findOne({ applicationNo, dob: dateOfBirth });
-      isImported = false;
-    }
+    const nativeCands: any[] = await Candidate.find({ 
+      applicationNo, 
+      dob: { $in: dobVariations } 
+    }).lean();
+
+    // Map them to include the isImported flag so the rest of the logic knows
+    const candidates = [
+      ...importedCands.map(c => ({ ...c, isImported: true })),
+      ...nativeCands.map(c => ({ ...c, isImported: false }))
+    ];
     
-    if (!candidate) {
+    if (candidates.length === 0) {
       throw new ApiError(HTTP_STATUS.UNAUTHORIZED, "Invalid Application Number or Date of Birth.");
     }
-    
-    if (!candidate.isLoginEnabled) {
-      // Fallback: Check if candidate is marked as PRESENT in Attendance, in case isLoginEnabled wasn't synced
-      const Attendance = mongoose.models.Attendance || mongoose.models.attendance;
-      let isActuallyVerified = false;
-      
-      if (Attendance) {
-        const attendance = await Attendance.findOne({
-          candidateId: candidate._id,
-          attendanceStatus: "PRESENT"
-        });
+
+    const Exam = mongoose.models.Exam;
+    const CandidateExamAnswer = mongoose.models.CandidateExamAnswer || mongoose.model("CandidateExamAnswer", new mongoose.Schema({}, { strict: false, collection: 'candidateexamanswer' }));
+    const Attendance = mongoose.models.Attendance || mongoose.models.attendance;
+
+    let validCandidate: any = null;
+    let validExam: any = null;
+    let errorToThrow: any = null;
+
+    for (let cand of candidates) {
+      try {
+        const isImported = cand.isImported;
         
-        if (attendance) {
-          isActuallyVerified = true;
-          // Self-heal: enable login for future
-          candidate.isLoginEnabled = true;
-          await candidate.save().catch((err: any) => console.error("Failed to self-heal isLoginEnabled:", err));
+        if (!cand.isLoginEnabled) {
+          // Fallback: Check if candidate is marked as PRESENT in Attendance
+          let isActuallyVerified = false;
+          if (Attendance) {
+            const attendance = await Attendance.findOne({
+              candidateId: cand._id,
+              attendanceStatus: "PRESENT"
+            });
+            if (attendance) {
+              isActuallyVerified = true;
+              cand.isLoginEnabled = true;
+              // Self-heal
+              const Model = isImported ? ImportCandidate : Candidate;
+              await Model.updateOne({ _id: cand._id }, { $set: { isLoginEnabled: true } }).catch((err: any) => console.error("Failed to self-heal isLoginEnabled:", err));
+            }
+          }
+          if (!isActuallyVerified) {
+            throw new ApiError(HTTP_STATUS.FORBIDDEN, "Your login credentials are not enabled yet. Please complete verification with the Entry Checker.");
+          }
+        }
+        
+        // 2. Check Exam
+        const examId = cand.examId;
+        if (!examId) {
+          throw new ApiError(HTTP_STATUS.BAD_REQUEST, "No exam assigned to this candidate.");
+        }
+        
+        const exam = await Exam.findById(examId);
+        if (!exam) {
+          throw new ApiError(HTTP_STATUS.NOT_FOUND, "Assigned exam not found.");
+        }
+        
+        if (!exam.finalPaperId) {
+          throw new ApiError(HTTP_STATUS.FORBIDDEN, "The final paper for this exam has not been set by the Paper Setter yet.");
+        }
+        
+        // Check if the        // 3. Is already submitted?
+        // Check using both possible IDs (the unique candidateId from import, or the internal _id)
+        const checkCandidateId = cand.candidateId ? cand.candidateId : cand._id;
+        
+        // Fetch all submissions for this candidate to avoid MongoDB casting issues with strict: false schema
+        const candidateSubmissions = await CandidateExamAnswer.find({ 
+          $or: [
+            { candidateId: cand._id },
+            { candidateId: checkCandidateId },
+            { candidateId: cand._id.toString() },
+            { applicationNo: cand.applicationNo }
+          ]
+        }).lean();
+        
+        // Filter in memory by examId (comparing string values)
+        const existingSubmission = candidateSubmissions.find((sub: any) => 
+          sub.examId && (sub.examId.toString() === exam._id.toString() || sub.examId.toString() === exam.examCode)
+        );
+        
+        if (existingSubmission) {
+          throw new ApiError(HTTP_STATUS.FORBIDDEN, `You have already submitted this exam.`);
+        }
+
+        // Check if we reached here, this is a potentially valid candidate
+        validCandidate = cand;
+        validExam = exam;
+        break; // Stop loop, we found an un-submitted valid exam for this candidate
+
+      } catch (err: any) {
+        // Keep the error to throw if no valid candidate is found
+        // Prioritize actionable errors over 'already submitted'
+        if (!errorToThrow) {
+          errorToThrow = err;
+        } else {
+          const newMsg = err.message || "";
+          const oldMsg = errorToThrow.message || "";
+          
+          // If the new error is about verification or time, it's more relevant for an active exam
+          if (newMsg.includes("not enabled yet") || newMsg.includes("will be enabled 15 minutes before")) {
+            errorToThrow = err;
+          }
+          // If the old error is 'already submitted' and the new one is anything else, prefer the new one
+          else if (oldMsg.includes("already submitted") && !newMsg.includes("already submitted")) {
+            errorToThrow = err;
+          }
         }
       }
-      
-      if (!isActuallyVerified) {
-        throw new ApiError(HTTP_STATUS.FORBIDDEN, "Your login credentials are not enabled yet. Please complete verification with the Entry Checker.");
-      }
     }
-    
-    // 2. Check Exam
-    const examId = candidate.examId;
-    if (!examId) {
-      throw new ApiError(HTTP_STATUS.BAD_REQUEST, "No exam assigned to this candidate.");
+
+    if (!validCandidate || !validExam) {
+      if (errorToThrow) throw errorToThrow;
+      throw new ApiError(HTTP_STATUS.UNAUTHORIZED, "No valid exams available for this candidate.");
     }
-    
-    const Exam = mongoose.models.Exam;
-    const exam = await Exam.findById(examId);
-    if (!exam) {
-      throw new ApiError(HTTP_STATUS.NOT_FOUND, "Assigned exam not found.");
-    }
-    
-    if (!exam.finalPaperId) {
-      throw new ApiError(HTTP_STATUS.FORBIDDEN, "The final paper for this exam has not been set by the Paper Setter yet.");
-    }
+
+    const candidate = validCandidate;
+    const exam = validExam;
     
     // 3. Time Check
     let loginWindowStart: Date | null = null;
@@ -330,7 +397,7 @@ class CandidateExamService {
         id: candidate._id, 
         applicationNo: candidate.applicationNo,
         role: 'candidate',
-        isImported
+        isImported: candidate.isImported
       },
       process.env.JWT_SECRET || "default_secret",
       { expiresIn: "12h" }
@@ -496,7 +563,7 @@ class CandidateExamService {
   */
 
   async getQuestions(query: any) {
-    const { examId, sessionId } = query;
+    const { examId, sessionId, fetchBulk } = query;
     const questionNo = query.questionNo ? parseInt(query.questionNo) : 1;
     
     if (!examId) {
@@ -603,6 +670,33 @@ class CandidateExamService {
       questionType: pq.questionId?.questionType || "MCQ"
     }));
 
+    let allQuestions: any[] | undefined = undefined;
+    if (fetchBulk === 'true') {
+      allQuestions = shuffledPaperQuestions.map((pq: any, i: number) => {
+        const actualQ = pq.questionId;
+        const sOptions = (actualQ?.options || []).map((opt: any) => ({
+          id: opt.optionId || opt._id?.toString(),
+          text: opt.optionText || opt.optionLabel,
+          image: opt.image
+        }));
+        return {
+          _id: pq._id,
+          questionNumber: i + 1,
+          section: pq.sectionCode || pq.sectionName || "Default",
+          questionType: actualQ?.questionType,
+          difficulty: actualQ?.difficulty,
+          marks: pq.marks,
+          negativeMarks: pq.negativeMarks,
+          questionText: actualQ?.question,
+          options: sOptions,
+          attachments: actualQ?.attachments,
+          selectedOption: null,
+          answerStatus: "NOT_VISITED",
+          markForReview: false
+        };
+      });
+    }
+
     // Fetch real sectionTimings from ExamSession (persisted in DB)
     let realSectionTimings: any[] = [];
     let partOrder: string[] = [];
@@ -657,6 +751,7 @@ class CandidateExamService {
         nextAvailable: safeQuestionNo < totalQuestions
       },
       paletteList,
+      allQuestions,
       questionPalette: {
         answered: 0,
         notAnswered: 0,

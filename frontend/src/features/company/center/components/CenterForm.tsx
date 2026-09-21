@@ -183,6 +183,7 @@ export const CenterForm = ({ initialValues, isEditing }: CenterFormProps) => {
       facilities: selectedFacilities,
       mouFileName: existingMouName,
       mouFileUrl: (initialValues as any)?.mouFileUrl || (initialValues as any)?.mouPdfUrl || undefined,
+      mouPdfUrl: (initialValues as any)?.mouFileUrl || (initialValues as any)?.mouPdfUrl || undefined,
     } as any;
 
     if (resolvedBranchId && resolvedBranchId !== "[object Object]") {
@@ -205,6 +206,7 @@ export const CenterForm = ({ initialValues, isEditing }: CenterFormProps) => {
         });
         if (uploadRes.data?.success) {
           payload.mouFileUrl = uploadRes.data.data.url;
+          payload.mouPdfUrl = uploadRes.data.data.url;
           payload.mouFileName = mouFile.name;
         }
       } catch (err) {
@@ -249,21 +251,7 @@ export const CenterForm = ({ initialValues, isEditing }: CenterFormProps) => {
                 Configure primary identification, branch assignment, and exam center codes for this location.
               </p>
             </div>
-            {/* Operational Status toggle indicator matching image 2 */}
-            <div className="hidden sm:flex items-center gap-3 bg-muted/50 border border-border rounded-xl px-4 py-2">
-              <div>
-                <p className="text-[11px] font-bold text-foreground/90 uppercase tracking-wide">Operational Status</p>
-                <p className="text-[10px] text-muted-foreground">Ready for assessments</p>
-              </div>
-              <div 
-                onClick={() => form.setValue("status", form.watch("status") === "Active" ? "Inactive" : "Active")}
-                className={`w-11 h-6 rounded-full flex items-center p-0.5 cursor-pointer shadow-md transition-colors ${
-                  form.watch("status") === "Active" ? "bg-primary justify-end" : "bg-muted-foreground/30 justify-start"
-                }`}
-              >
-                <div className="w-5 h-5 bg-white rounded-full shadow" />
-              </div>
-            </div>
+
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-12 gap-5">

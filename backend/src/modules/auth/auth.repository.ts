@@ -94,11 +94,11 @@ class AuthRepository extends BaseRepository<IUser> {
   }
 
   async findById(id: string, populateFields?: string[]) {
-    let user = await Admin.findOne({ _id: id, isDeleted: false });
-    if (!user) user = await Manager.findOne({ _id: id, isDeleted: false });
-    if (!user) user = await Candidate.findOne({ _id: id, isDeleted: false });
-    if (!user) user = await User.findOne({ _id: id, isDeleted: false });
-    if (!user) user = await CenterEntryChecker.findOne({ _id: id, isDeleted: false });
+    let user = await Admin.findOne({ _id: id, isDeleted: { $ne: true } });
+    if (!user) user = await Manager.findOne({ _id: id, isDeleted: { $ne: true } });
+    if (!user) user = await Candidate.findOne({ _id: id, isDeleted: { $ne: true } });
+    if (!user) user = await User.findOne({ _id: id, isDeleted: { $ne: true } });
+    if (!user) user = await CenterEntryChecker.findOne({ _id: id, isDeleted: { $ne: true } });
     return user;
   }
 
